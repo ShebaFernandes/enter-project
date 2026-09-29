@@ -20,20 +20,20 @@
 
 **Purpose**: Establish reproducible tooling and freeze the existing HTML/CSS/JavaScript experience as a read-only preservation baseline.
 
-- [ ] T001 Inventory screens, entry points, controls, states, storage keys, handoffs, speech behavior, and responsive behavior in the unmodified mockup in `docs/baseline/mockup-inventory.md`
-- [ ] T002 [P] Capture synthetic-data screenshots at 320, 375, 768, 1024, and 1440 CSS pixels and 200% zoom in `app/tests/browser/baselines/README.md`
-- [ ] T003 [P] Record keyboard order, focus behavior, labels, live regions, validation, dialogs, and known accessibility gaps in `docs/baseline/accessibility-inventory.md`
-- [ ] T004 Create the Django modular-monolith and consolidated frontend skeleton defined by the plan in `app/manage.py`, `app/config/`, `app/modules/`, and `app/frontend/`
-- [ ] T005 Pin Python runtime, test, lint, type-check, SBOM, and dependency-audit tooling in `app/pyproject.toml`
-- [ ] T006 [P] Configure TypeScript, Vite, ESLint, formatting, axe, and Playwright without a UI framework in `app/package.json`, `app/tsconfig.json`, `app/vite.config.ts`, and `app/playwright.config.ts`
-- [ ] T007 [P] Add non-root, pinned, reproducible web and worker images in `app/Dockerfile` and `app/docker/entrypoint.sh`
-- [ ] T008 Add local PostgreSQL/pgvector, Valkey, S3-compatible storage, and captured-mail services using synthetic data in `compose.yaml`
-- [ ] T009 Add stable bootstrap, migration, fixture, check, contract, browser, security, DAST, load-test, and AI-evaluation commands in `Makefile`
-- [ ] T010 [P] Define validated configuration and a secret-free example for local, test, and production environments in `app/config/environment.py` and `.env.example`
+- [X] T001 Inventory screens, entry points, controls, states, storage keys, handoffs, speech behavior, and responsive behavior in the unmodified mockup in `docs/baseline/mockup-inventory.md`
+- [X] T002 [P] Capture synthetic-data screenshots at 320, 375, 768, 1024, and 1440 CSS pixels and 200% zoom in `app/tests/browser/baselines/README.md`
+- [X] T003 [P] Record keyboard order, focus behavior, labels, live regions, validation, dialogs, and known accessibility gaps in `docs/baseline/accessibility-inventory.md`
+- [X] T004 Create the Django modular-monolith and consolidated frontend skeleton defined by the plan in `app/manage.py`, `app/config/`, `app/modules/`, and `app/frontend/`
+- [X] T005 Pin Python runtime, test, lint, type-check, SBOM, and dependency-audit tooling in `app/pyproject.toml`
+- [X] T006 [P] Configure TypeScript, Vite, ESLint, formatting, axe, and Playwright without a UI framework in `app/package.json`, `app/tsconfig.json`, `app/vite.config.ts`, and `app/playwright.config.ts`
+- [X] T007 [P] Add non-root, pinned, reproducible web and worker images in `app/Dockerfile` and `app/docker/entrypoint.sh`
+- [X] T008 Add local PostgreSQL/pgvector, Valkey, S3-compatible storage, and captured-mail services using synthetic data in `compose.yaml`
+- [X] T009 Add stable bootstrap, migration, fixture, check, contract, browser, security, DAST, load-test, and AI-evaluation commands in `Makefile`
+- [X] T010 [P] Define validated configuration and a secret-free example for local, test, and production environments in `app/config/environment.py` and `.env.example`
 - [ ] T011 [P] Create synthetic factories for all roles, tenants, visibility modes, workflow states, long content, failures, stale versions, and recruiter-entered synthetic candidates in `app/tests/factories/`
 - [ ] T012 Configure lint/type/schema, unit/database/contract, browser/accessibility, SAST/DAST, container/IaC, and evidence-retention CI stages in `.github/workflows/ci.yml`
-- [ ] T013 Document module ownership, permitted dependencies, and the ban on direct cross-module model mutation in `docs/architecture-decisions/0001-modular-monolith.md`
-- [ ] T014 Record supported current/previous Chrome, Edge, Firefox, and Safari versions and the representative manual/automated test matrix in `docs/quality/browser-support.md`
+- [X] T013 Document module ownership, permitted dependencies, and the ban on direct cross-module model mutation in `docs/architecture-decisions/0001-modular-monolith.md`
+- [X] T014 Record supported current/previous Chrome, Edge, Firefox, and Safari versions and the representative manual/automated test matrix in `docs/quality/browser-support.md`
 
 **Checkpoint**: The repository is reproducible and the original mockup has a reviewable visual, behavioral, responsive, speech, and accessibility baseline.
 
@@ -45,34 +45,34 @@
 
 **Critical**: No story implementation begins until authorization, isolation, audit, safe-storage, and opening-prerequisite tests pass.
 
-- [ ] T015 Configure secure cookies, CSRF/trusted origins, CSP, HTTPS/HSTS, upload limits, redacted logging, and India-region allowlists in `app/config/settings/base.py`, `app/config/settings/local.py`, and `app/config/settings/production.py`
-- [ ] T016 [P] Implement correlation IDs, RFC 9457 problem responses, safe exception mapping, and progress-event primitives in `app/modules/operations/middleware.py` and `app/modules/operations/problems.py`
-- [ ] T017 [P] Implement strong ETags and `If-Match` conflicts containing authorized stored state, attempted changes, changed fields, and a fresh ETag in `app/modules/operations/concurrency.py`
-- [ ] T018 [P] Implement idempotency-key persistence and response replay for create and consequential operations in `app/modules/operations/idempotency.py`
-- [ ] T019 Create identity records with immutable Cognito subject, verified-email lookup HMAC, encrypted email, lifecycle status, and authentication timestamps in `app/modules/identity/models.py`
-- [ ] T020 Create tenant, business-unit, membership, opening, and hiring-team model shells with the exact states and constraints in `app/modules/tenancy/models.py` and `app/modules/recruiting/models.py`
+- [X] T015 Configure secure cookies, CSRF/trusted origins, CSP, HTTPS/HSTS, upload limits, redacted logging, and India-region allowlists in `app/config/settings/base.py`, `app/config/settings/local.py`, and `app/config/settings/production.py`
+- [X] T016 [P] Implement correlation IDs, RFC 9457 problem responses, safe exception mapping, and progress-event primitives in `app/modules/operations/middleware.py` and `app/modules/operations/problems.py`
+- [X] T017 [P] Implement strong ETags and `If-Match` conflicts containing authorized stored state, attempted changes, changed fields, and a fresh ETag in `app/modules/operations/concurrency.py`
+- [X] T018 [P] Implement idempotency-key persistence and response replay for create and consequential operations in `app/modules/operations/idempotency.py`
+- [X] T019 Create identity records with immutable Cognito subject, verified-email lookup HMAC, encrypted email, lifecycle status, and authentication timestamps in `app/modules/identity/models.py`
+- [X] T020 Create tenant, business-unit, membership, opening, and hiring-team model shells with the exact states and constraints in `app/modules/tenancy/models.py` and `app/modules/recruiting/models.py`
 - [ ] T021 Create the application shell with unique `(opening_id, candidate_profile_id)`, independent version/history references, `CandidateFacingStatus=APPLIED|PROFILE_VIEWED|SHORTLISTED|RECRUITER_INTERESTED|INTERVIEW_REQUESTED|OFFER_MADE|NOT_SELECTED|WITHDRAWN`, and nullable `suggested_candidate_status` in `app/modules/recruiting/models.py`
 - [ ] T022 Create the recruiter-entered candidate shell with mandatory `source_type=RECRUITER_ENTERED_SYNTHETIC`, visible source label, tenant ownership, no contact/resume fields, and no candidate-profile merge path in `app/modules/recruiting/models.py`
 - [ ] T023 Generate reviewed constraints and indexes for T019–T022 in `app/modules/identity/migrations/`, `app/modules/tenancy/migrations/`, and `app/modules/recruiting/migrations/`
-- [ ] T024 Implement candidate and Platform Security Admin assignments separately from tenant membership and select exactly one server-validated tenant context per request in `app/modules/tenancy/context.py`
+- [X] T024 Implement candidate and Platform Security Admin assignments separately from tenant membership and select exactly one server-validated tenant context per request in `app/modules/tenancy/context.py`
 - [ ] T025 Implement Cognito OIDC/PKCE callbacks, candidate email verification, workforce federation, MFA assurance, rotating `__Host-` sessions, revocation, and global sign-out in `app/modules/identity/services.py` and `app/modules/identity/views.py`
 - [ ] T026 Implement deny-by-default role, purpose, tenant, object, field, consent, and grant authorization from the matrix in `app/modules/tenancy/policy.py`
-- [ ] T027 Implement transaction-local RLS context derived only from authenticated server state and fail closed when missing or invalid in `app/modules/tenancy/rls.py` and `app/modules/tenancy/migrations/0002_rls.py`
-- [ ] T028 Implement platform-only tenant provisioning plus tenant merge/split/suspend/reactivate/close authorization boundaries in `app/modules/tenancy/provisioning.py` and `app/modules/tenancy/platform_views.py`
-- [ ] T029 Implement business-unit lifecycle and opening create/read/update/pause/close services needed by downstream stories in `app/modules/tenancy/business_units.py` and `app/modules/recruiting/openings.py`
-- [ ] T030 Implement business-unit, opening, and platform tenant-provisioning endpoints from the OpenAPI contract in `app/modules/tenancy/views.py` and `app/modules/recruiting/opening_views.py`
+- [X] T027 Implement transaction-local RLS context derived only from authenticated server state and fail closed when missing or invalid in `app/modules/tenancy/rls.py` and `app/modules/tenancy/migrations/0002_rls.py`
+- [X] T028 Implement platform-only tenant provisioning plus tenant merge/split/suspend/reactivate/close authorization boundaries in `app/modules/tenancy/provisioning.py` and `app/modules/tenancy/platform_views.py`
+- [X] T029 Implement business-unit lifecycle and opening create/read/update/pause/close services needed by downstream stories in `app/modules/tenancy/business_units.py` and `app/modules/recruiting/openings.py`
+- [X] T030 Implement business-unit, opening, and platform tenant-provisioning endpoints from the OpenAPI contract in `app/modules/tenancy/views.py` and `app/modules/recruiting/opening_views.py`
 - [ ] T031 Implement tenant-scoped recruiter-entered synthetic candidate creation/listing with immutable provenance and environment enforcement in `app/modules/recruiting/recruiter_entered.py` and `app/modules/recruiting/opening_views.py`
 - [ ] T032 Create purpose-specific access grants and break-glass requests with a required non-empty `field_scope`, exact read scope, different-admin approval, one-hour maximum, revocation, and immediate Tenant Admin notification in `app/modules/tenancy/grants.py`
-- [ ] T033 Implement immutable, value-minimized, hash-chained audit events that exclude resumes, note bodies, tokens, contacts, and notification bodies in `app/modules/audit/models.py` and `app/modules/audit/service.py`
-- [ ] T034 [P] Implement daily KMS-signed audit checkpoints to S3 Object Lock and fail privileged actions if durable auditing fails in `app/modules/audit/checkpoints.py`
-- [ ] T035 [P] Implement versioned encryption and blind-index/HMAC helpers with plaintext-log protections in `app/modules/operations/crypto.py`
-- [ ] T036 Implement the transactional outbox, minimized event envelopes, processed-event idempotency, relay, and reconciliation in `app/modules/operations/outbox.py` and `app/modules/operations/workers.py`
+- [X] T033 Implement immutable, value-minimized, hash-chained audit events that exclude resumes, note bodies, tokens, contacts, and notification bodies in `app/modules/audit/models.py` and `app/modules/audit/service.py`
+- [X] T034 [P] Implement daily KMS-signed audit checkpoints to S3 Object Lock and fail privileged actions if durable auditing fails in `app/modules/audit/checkpoints.py`
+- [X] T035 [P] Implement versioned encryption and blind-index/HMAC helpers with plaintext-log protections in `app/modules/operations/crypto.py`
+- [X] T036 Implement the transactional outbox, minimized event envelopes, processed-event idempotency, relay, and reconciliation in `app/modules/operations/outbox.py` and `app/modules/operations/workers.py`
 - [ ] T037 Create notification records with encrypted destination, consent basis, internal `QUEUED|SENDING|SENT|FAILED|CANCELLED` state, candidate-safe `PENDING|SENT|FAILED|CANCELLED` projection mapping, unique idempotency key, at most five attempts over 24 hours, and safe terminal errors in `app/modules/communications/models.py`
 - [ ] T038 Implement SES and disabled-until-approved WhatsApp adapters with signed callbacks, bounded retry, DLQ redrive, and duplicate suppression in `app/modules/communications/adapters.py` and `app/modules/communications/workers.py`
 - [ ] T039 [P] Define SQS queues/DLQs, EventBridge schedules, KMS keys, Secrets Manager entries, and queue alarms in `infra/modules/async/main.tf`
-- [ ] T040 Implement verified-identity-plus-network rate limits for sign-in, OTP, uploads, applications, searches, and exports in `app/modules/abuse/service.py`
+- [X] T040 Implement verified-identity-plus-network rate limits for sign-in, OTP, uploads, applications, searches, and exports in `app/modules/abuse/service.py`
 - [ ] T041 Implement escalating temporary delays, `Retry-After`, anomaly tightening, step-up challenge, audited overrides, and no permanent automatic lockout in `app/modules/abuse/policy.py` and `app/modules/abuse/views.py`
-- [ ] T042 [P] Add contract tests for sessions, RFC 9457 errors, ETags, idempotency, rate-limit headers, and non-enumerating responses in `app/tests/contract/test_foundation_contracts.py`
+- [X] T042 [P] Add contract tests for sessions, RFC 9457 errors, ETags, idempotency, rate-limit headers, and non-enumerating responses in `app/tests/contract/test_foundation_contracts.py`
 - [ ] T043 [P] Add exhaustive five-role operation-matrix, guessed-ID, revoked-session, stale-link, and tenant-switch tests in `app/tests/security/test_authorization_matrix.py`
 - [ ] T044 [P] Add RLS tests for missing/wrong/correct tenant contexts, cross-tenant joins, and object/field grants in `app/tests/database/test_rls_isolation.py`
 - [ ] T045 [P] Add break-glass tests for missing/empty `field_scope`, self-approval denial, independent approval, narrow scope, notification, expiry, revocation, service-layer revalidation, and audit completeness in `app/tests/security/test_emergency_access.py`
@@ -81,7 +81,7 @@
 - [ ] T048 [P] Add notification tests for idempotency, callback validation, five-attempt/24-hour bounds, DLQ behavior, internal delivery states, `QUEUED`/`SENDING` to candidate-facing `PENDING` mapping, and non-exposure of internal states in `app/tests/integration/test_notification_delivery.py`
 - [ ] T049 [P] Add tenant-governance/opening prerequisite tests for platform-only provisioning, unit isolation, hiring-team scope, and recruiter-entered synthetic provenance in `app/tests/security/test_tenant_opening_foundation.py`
 - [ ] T050 Add request/response/error, examples, conditional-schema, `InternalRecruitingStatus` preview, `CandidateFacingStatus` publication, saved-search no-top-level-opening, notification-projection, and local-reference validation against all paths in `specs/001-recruiter-candidate-workflows/contracts/openapi.yaml` in `app/tests/contract/test_openapi_conformance.py`
-- [ ] T051 Add event-schema compatibility and data-minimization validation against `specs/001-recruiter-candidate-workflows/contracts/events.md` in `app/tests/contract/test_event_contracts.py`
+- [X] T051 Add event-schema compatibility and data-minimization validation against `specs/001-recruiter-candidate-workflows/contracts/events.md` in `app/tests/contract/test_event_contracts.py`
 
 **Checkpoint**: Shared security controls and the platform-provisioned tenant/business-unit/opening foundation are ready before search or applications.
 

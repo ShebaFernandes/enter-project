@@ -1,0 +1,13 @@
+.git/
+.github/
+.venv/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+*.log*
+.env*
+Dockerfile*
+.dockerignore
+enter_recruiter_recruiter_candidate_ux.html
+

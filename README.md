@@ -4,7 +4,7 @@ Enter is a planned production-ready recruiting platform for candidates, recruite
 
 ## Current status
 
-The project has completed its specification and implementation-planning work. Application development has not started yet: all 199 items in the implementation backlog are currently open, and the existing HTML prototype remains unchanged as the visual and functional baseline.
+The project has completed specification and implementation planning. The Phase 1 setup and a deliberately bounded portion of the Phase 2 security/tenant/opening foundation are now implemented. The existing HTML prototype remains unchanged as the visual and functional baseline; candidate workflows, search, applications, AI, communications, and AWS deployment have not started.
 
 | Area | Status |
 |---|---|
@@ -16,7 +16,7 @@ The project has completed its specification and implementation-planning work. Ap
 | Data model | Designed |
 | API, event, authorization, and AI contracts | Defined |
 | Implementation plan and task backlog | Completed |
-| Application implementation | Not started |
+| Application implementation | Phase 1–2 foundation in progress |
 | Production deployment | Not started |
 
 ## Planned product capabilities
@@ -88,7 +88,7 @@ AI is intentionally bounded and advisory. It may suggest resume fields, interpre
 
 The implementation is expected to require Python 3.13, Node.js 22 LTS, PostgreSQL 16 with `pgvector` and `pg_trgm`, a Docker-compatible runtime, Terraform, and a synthetic-data-only AWS development environment.
 
-The following command interface is planned but is not available yet:
+The local command interface is available:
 
 ```bash
 make bootstrap

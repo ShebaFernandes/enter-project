@@ -1,0 +1,11 @@
+node_modules/
+.venv/
+.mypy_cache/
+.pytest_cache/
+static/dist/
+staticfiles/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+uv.lock

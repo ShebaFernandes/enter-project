@@ -1,0 +1,28 @@
+{
+  "name": "enter-frontend",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "scripts": {
+    "build": "vite build",
+    "check": "tsc --noEmit && eslint . && prettier --check frontend tests/browser *.config.js *.config.ts package.json tsconfig.json",
+    "format": "prettier --write frontend tests/browser *.config.js *.config.ts package.json tsconfig.json",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@eslint/js": "9.36.0",
+    "@types/node": "24.7.2",
+    "@playwright/test": "1.55.1",
+    "eslint": "9.36.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.4.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.44.1",
+    "vite": "7.3.6"
+  }
+}

@@ -1,0 +1,75 @@
+[project]
+name = "enter-recruiting"
+version = "0.1.0"
+description = "India-first recruiter and candidate workflow platform"
+requires-python = ">=3.13,<3.15"
+dependencies = [
+  "Django==5.2.17",
+  "djangorestframework==3.17.2",
+  "psycopg[binary,pool]==3.2.10",
+  "pydantic==2.12.0",
+  "cryptography==50.0.0",
+  "PyJWT[crypto]==2.13.0",
+  "httpx==0.28.1",
+  "boto3==1.40.45",
+  "redis==6.4.0",
+  "gunicorn==23.0.0",
+  "uvicorn[standard]==0.37.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.0.3",
+  "pytest-django==4.11.1",
+  "pytest-cov==7.0.0",
+  "hypothesis==6.140.3",
+  "factory-boy==3.3.3",
+  "freezegun==1.5.5",
+  "PyYAML==6.0.3",
+  "jsonschema==4.25.1",
+  "ruff==0.13.2",
+  "mypy==1.18.2",
+  "django-stubs==5.2.7",
+  "djangorestframework-stubs==3.16.4",
+  "bandit==1.9.4",
+  "pip-audit==2.9.0",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["config", "modules"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = ["postgres: requires PostgreSQL/RLS", "contract: contract validation", "security: security boundary"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S", "DJ", "UP"]
+ignore = ["S101", "DJ008"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict = false
+check_untyped_defs = true
+warn_unused_ignores = true
+disable_error_code = ["attr-defined"]
+exclude = ["migrations"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.coverage.run]
+branch = true
+omit = ["*/migrations/*", "manage.py"]
