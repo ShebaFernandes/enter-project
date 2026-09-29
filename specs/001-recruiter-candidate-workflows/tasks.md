@@ -1,0 +1,424 @@
+# Tasks: Integrated Recruiter and Candidate Workflows
+
+**Input**: Design documents from `specs/001-recruiter-candidate-workflows/`
+
+**Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, and `.specify/memory/constitution.md`
+
+**Tests**: Required. Within each user-story phase, write the listed tests first and confirm that they fail for the intended missing behavior before implementation.
+
+**Organization**: Tasks are dependency ordered and grouped by user story. The shared tenant/business-unit/opening shell is foundational because Matching roles and applications depend on active openings. US6 precedes US4 so applicant linking exists before the combined sourced/applicant management tests.
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: May run in parallel after phase prerequisites are satisfied because it targets different files and has no dependency on incomplete work.
+- **[Story]**: Maps the task to a specification user story.
+- Every checklist item names an exact target path.
+
+---
+
+## Phase 1: Setup and Mockup Baseline
+
+**Purpose**: Establish reproducible tooling and freeze the existing HTML/CSS/JavaScript experience as a read-only preservation baseline.
+
+- [ ] T001 Inventory screens, entry points, controls, states, storage keys, handoffs, speech behavior, and responsive behavior in the unmodified mockup in `docs/baseline/mockup-inventory.md`
+- [ ] T002 [P] Capture synthetic-data screenshots at 320, 375, 768, 1024, and 1440 CSS pixels and 200% zoom in `app/tests/browser/baselines/README.md`
+- [ ] T003 [P] Record keyboard order, focus behavior, labels, live regions, validation, dialogs, and known accessibility gaps in `docs/baseline/accessibility-inventory.md`
+- [ ] T004 Create the Django modular-monolith and consolidated frontend skeleton defined by the plan in `app/manage.py`, `app/config/`, `app/modules/`, and `app/frontend/`
+- [ ] T005 Pin Python runtime, test, lint, type-check, SBOM, and dependency-audit tooling in `app/pyproject.toml`
+- [ ] T006 [P] Configure TypeScript, Vite, ESLint, formatting, axe, and Playwright without a UI framework in `app/package.json`, `app/tsconfig.json`, `app/vite.config.ts`, and `app/playwright.config.ts`
+- [ ] T007 [P] Add non-root, pinned, reproducible web and worker images in `app/Dockerfile` and `app/docker/entrypoint.sh`
+- [ ] T008 Add local PostgreSQL/pgvector, Valkey, S3-compatible storage, and captured-mail services using synthetic data in `compose.yaml`
+- [ ] T009 Add stable bootstrap, migration, fixture, check, contract, browser, security, DAST, load-test, and AI-evaluation commands in `Makefile`
+- [ ] T010 [P] Define validated configuration and a secret-free example for local, test, and production environments in `app/config/environment.py` and `.env.example`
+- [ ] T011 [P] Create synthetic factories for all roles, tenants, visibility modes, workflow states, long content, failures, stale versions, and recruiter-entered synthetic candidates in `app/tests/factories/`
+- [ ] T012 Configure lint/type/schema, unit/database/contract, browser/accessibility, SAST/DAST, container/IaC, and evidence-retention CI stages in `.github/workflows/ci.yml`
+- [ ] T013 Document module ownership, permitted dependencies, and the ban on direct cross-module model mutation in `docs/architecture-decisions/0001-modular-monolith.md`
+- [ ] T014 Record supported current/previous Chrome, Edge, Firefox, and Safari versions and the representative manual/automated test matrix in `docs/quality/browser-support.md`
+
+**Checkpoint**: The repository is reproducible and the original mockup has a reviewable visual, behavioral, responsive, speech, and accessibility baseline.
+
+---
+
+## Phase 2: Foundational Security, Shared Data, and Opening Prerequisites
+
+**Purpose**: Deliver the shared security controls and the tenant/opening shell required by search and applications.
+
+**Critical**: No story implementation begins until authorization, isolation, audit, safe-storage, and opening-prerequisite tests pass.
+
+- [ ] T015 Configure secure cookies, CSRF/trusted origins, CSP, HTTPS/HSTS, upload limits, redacted logging, and India-region allowlists in `app/config/settings/base.py`, `app/config/settings/local.py`, and `app/config/settings/production.py`
+- [ ] T016 [P] Implement correlation IDs, RFC 9457 problem responses, safe exception mapping, and progress-event primitives in `app/modules/operations/middleware.py` and `app/modules/operations/problems.py`
+- [ ] T017 [P] Implement strong ETags and `If-Match` conflicts containing authorized stored state, attempted changes, changed fields, and a fresh ETag in `app/modules/operations/concurrency.py`
+- [ ] T018 [P] Implement idempotency-key persistence and response replay for create and consequential operations in `app/modules/operations/idempotency.py`
+- [ ] T019 Create identity records with immutable Cognito subject, verified-email lookup HMAC, encrypted email, lifecycle status, and authentication timestamps in `app/modules/identity/models.py`
+- [ ] T020 Create tenant, business-unit, membership, opening, and hiring-team model shells with the exact states and constraints in `app/modules/tenancy/models.py` and `app/modules/recruiting/models.py`
+- [ ] T021 Create the application shell with unique `(opening_id, candidate_profile_id)`, independent version/history references, `CandidateFacingStatus=APPLIED|PROFILE_VIEWED|SHORTLISTED|RECRUITER_INTERESTED|INTERVIEW_REQUESTED|OFFER_MADE|NOT_SELECTED|WITHDRAWN`, and nullable `suggested_candidate_status` in `app/modules/recruiting/models.py`
+- [ ] T022 Create the recruiter-entered candidate shell with mandatory `source_type=RECRUITER_ENTERED_SYNTHETIC`, visible source label, tenant ownership, no contact/resume fields, and no candidate-profile merge path in `app/modules/recruiting/models.py`
+- [ ] T023 Generate reviewed constraints and indexes for T019–T022 in `app/modules/identity/migrations/`, `app/modules/tenancy/migrations/`, and `app/modules/recruiting/migrations/`
+- [ ] T024 Implement candidate and Platform Security Admin assignments separately from tenant membership and select exactly one server-validated tenant context per request in `app/modules/tenancy/context.py`
+- [ ] T025 Implement Cognito OIDC/PKCE callbacks, candidate email verification, workforce federation, MFA assurance, rotating `__Host-` sessions, revocation, and global sign-out in `app/modules/identity/services.py` and `app/modules/identity/views.py`
+- [ ] T026 Implement deny-by-default role, purpose, tenant, object, field, consent, and grant authorization from the matrix in `app/modules/tenancy/policy.py`
+- [ ] T027 Implement transaction-local RLS context derived only from authenticated server state and fail closed when missing or invalid in `app/modules/tenancy/rls.py` and `app/modules/tenancy/migrations/0002_rls.py`
+- [ ] T028 Implement platform-only tenant provisioning plus tenant merge/split/suspend/reactivate/close authorization boundaries in `app/modules/tenancy/provisioning.py` and `app/modules/tenancy/platform_views.py`
+- [ ] T029 Implement business-unit lifecycle and opening create/read/update/pause/close services needed by downstream stories in `app/modules/tenancy/business_units.py` and `app/modules/recruiting/openings.py`
+- [ ] T030 Implement business-unit, opening, and platform tenant-provisioning endpoints from the OpenAPI contract in `app/modules/tenancy/views.py` and `app/modules/recruiting/opening_views.py`
+- [ ] T031 Implement tenant-scoped recruiter-entered synthetic candidate creation/listing with immutable provenance and environment enforcement in `app/modules/recruiting/recruiter_entered.py` and `app/modules/recruiting/opening_views.py`
+- [ ] T032 Create purpose-specific access grants and break-glass requests with a required non-empty `field_scope`, exact read scope, different-admin approval, one-hour maximum, revocation, and immediate Tenant Admin notification in `app/modules/tenancy/grants.py`
+- [ ] T033 Implement immutable, value-minimized, hash-chained audit events that exclude resumes, note bodies, tokens, contacts, and notification bodies in `app/modules/audit/models.py` and `app/modules/audit/service.py`
+- [ ] T034 [P] Implement daily KMS-signed audit checkpoints to S3 Object Lock and fail privileged actions if durable auditing fails in `app/modules/audit/checkpoints.py`
+- [ ] T035 [P] Implement versioned encryption and blind-index/HMAC helpers with plaintext-log protections in `app/modules/operations/crypto.py`
+- [ ] T036 Implement the transactional outbox, minimized event envelopes, processed-event idempotency, relay, and reconciliation in `app/modules/operations/outbox.py` and `app/modules/operations/workers.py`
+- [ ] T037 Create notification records with encrypted destination, consent basis, internal `QUEUED|SENDING|SENT|FAILED|CANCELLED` state, candidate-safe `PENDING|SENT|FAILED|CANCELLED` projection mapping, unique idempotency key, at most five attempts over 24 hours, and safe terminal errors in `app/modules/communications/models.py`
+- [ ] T038 Implement SES and disabled-until-approved WhatsApp adapters with signed callbacks, bounded retry, DLQ redrive, and duplicate suppression in `app/modules/communications/adapters.py` and `app/modules/communications/workers.py`
+- [ ] T039 [P] Define SQS queues/DLQs, EventBridge schedules, KMS keys, Secrets Manager entries, and queue alarms in `infra/modules/async/main.tf`
+- [ ] T040 Implement verified-identity-plus-network rate limits for sign-in, OTP, uploads, applications, searches, and exports in `app/modules/abuse/service.py`
+- [ ] T041 Implement escalating temporary delays, `Retry-After`, anomaly tightening, step-up challenge, audited overrides, and no permanent automatic lockout in `app/modules/abuse/policy.py` and `app/modules/abuse/views.py`
+- [ ] T042 [P] Add contract tests for sessions, RFC 9457 errors, ETags, idempotency, rate-limit headers, and non-enumerating responses in `app/tests/contract/test_foundation_contracts.py`
+- [ ] T043 [P] Add exhaustive five-role operation-matrix, guessed-ID, revoked-session, stale-link, and tenant-switch tests in `app/tests/security/test_authorization_matrix.py`
+- [ ] T044 [P] Add RLS tests for missing/wrong/correct tenant contexts, cross-tenant joins, and object/field grants in `app/tests/database/test_rls_isolation.py`
+- [ ] T045 [P] Add break-glass tests for missing/empty `field_scope`, self-approval denial, independent approval, narrow scope, notification, expiry, revocation, service-layer revalidation, and audit completeness in `app/tests/security/test_emergency_access.py`
+- [ ] T046 [P] Add audit tests for minimization, hash-chain verification, durable checkpoints, denied access, overrides, admin actions, and DLQ redrive in `app/tests/security/test_audit_controls.py`
+- [ ] T047 [P] Add rate-limit tests for every identity/network threshold, escalation, anomaly tightening, override, and recovery path in `app/tests/security/test_abuse_controls.py`
+- [ ] T048 [P] Add notification tests for idempotency, callback validation, five-attempt/24-hour bounds, DLQ behavior, internal delivery states, `QUEUED`/`SENDING` to candidate-facing `PENDING` mapping, and non-exposure of internal states in `app/tests/integration/test_notification_delivery.py`
+- [ ] T049 [P] Add tenant-governance/opening prerequisite tests for platform-only provisioning, unit isolation, hiring-team scope, and recruiter-entered synthetic provenance in `app/tests/security/test_tenant_opening_foundation.py`
+- [ ] T050 Add request/response/error, examples, conditional-schema, `InternalRecruitingStatus` preview, `CandidateFacingStatus` publication, saved-search no-top-level-opening, notification-projection, and local-reference validation against all paths in `specs/001-recruiter-candidate-workflows/contracts/openapi.yaml` in `app/tests/contract/test_openapi_conformance.py`
+- [ ] T051 Add event-schema compatibility and data-minimization validation against `specs/001-recruiter-candidate-workflows/contracts/events.md` in `app/tests/contract/test_event_contracts.py`
+
+**Checkpoint**: Shared security controls and the platform-provisioned tenant/business-unit/opening foundation are ready before search or applications.
+
+---
+
+## Phase 3: User Story 1 — Candidate Creates and Controls a Profile (Priority: P1) — Recommended MVP
+
+**Goal**: A verified candidate can create a truthful profile, control visibility and consent, and exercise all privacy rights.
+
+**Independent Test**: Create and publish a synthetic candidate profile, exercise all four visibility modes, and complete every rights-center path with the specified verification, timing, hold, status, and accessibility behavior.
+
+### Tests for User Story 1
+
+- [ ] T052 [P] [US1] Add validation tests for required fields, fractional nonnegative experience, currency/period compensation, availability-date consistency, safe HTTP(S) links, optional fields, and the 300-character narrative in `app/tests/unit/candidate/test_profile_validation.py`
+- [ ] T053 [P] [US1] Add resume tests for type/size, quarantine, malware scan, parse states, provenance, hallucination prevention, manual fallback, and no pre-scan disclosure in `app/tests/integration/candidate/test_resume_pipeline.py`
+- [ ] T054 [P] [US1] Add visibility tests for non-empty `APPROVED_RECRUITERS` audiences, non-empty `MATCHING_ROLES` preferences, Applied roles only, Not looking, withdrawal, immediate hiding, schema validation, and service-layer revalidation in `app/tests/security/test_candidate_visibility.py`
+- [ ] T055 [P] [US1] Add API tests for immediate verified access/correction/withdrawal/hiding and request-state/support-escalation behavior in `app/tests/contract/test_candidate_rights_api.py`
+- [ ] T056 [P] [US1] Add export tests for full scope, 24-hour completion, authenticated delivery, 24-hour expiry, rate limiting, and auditing in `app/tests/integration/candidate/test_rights_export.py`
+- [ ] T057 [P] [US1] Add deletion tests for absent/stale/recent step-up, required consequence confirmation, immediate hiding, 30-day completion, exact versioned `ActiveProcessRetentionException` fields/lifecycle, terminating-event resolution, legal holds, irreversible analytics, and service-layer revalidation in `app/tests/integration/candidate/test_rights_deletion.py`
+- [ ] T058 [P] [US1] Add browser tests for profile editing, consent, conflicts, rights status, exports, deletion, support escalation, keyboard use, and responsive reflow in `app/tests/browser/candidate/rights-center.spec.ts`
+
+### Implementation for User Story 1
+
+- [ ] T059 [P] [US1] Create profile, skill, contact, link, visibility, consent, resume, extracted-fact, and evidence models with the exact constraints in `app/modules/candidate/models.py`
+- [ ] T060 [P] [US1] Create rights request, rights export, legal hold, deletion ledger, and versioned `ActiveProcessRetentionException` with candidate/application reference, policy version, legal basis, retained scope, lifecycle state, start/review/resolution dates, terminating event, approver, and audit references in `app/modules/privacy/models.py`
+- [ ] T061 [US1] Generate profile/privacy migrations with one profile per verified identity, publication constraints, and rights indexes in `app/modules/candidate/migrations/` and `app/modules/privacy/migrations/`
+- [ ] T062 [US1] Implement profile access, correction, completeness, truthful-field validation, publication, and optimistic reconciliation in `app/modules/candidate/services.py`
+- [ ] T063 [US1] Implement four-mode visibility and consent policy with non-empty explicit audience for `APPROVED_RECRUITERS`, deterministic preferences for `MATCHING_ROLES`, immediate withdrawal/hiding, conditional validation, and no discoverability before valid consent in `app/modules/candidate/visibility.py`
+- [ ] T064 [US1] Implement quarantined upload, MIME/signature/size checks, malware scan gate, parsing, provenance, partial/failure states, and manual fallback in `app/modules/candidate/resume_service.py`
+- [ ] T065 [US1] Implement rights access/correction/withdrawal/hiding orchestration, visible states, expected completion, failure reason, and escalation in `app/modules/privacy/services.py`
+- [ ] T066 [US1] Implement minimized export generation, authenticated download, 24-hour SLA/expiry, cleanup, and audit in `app/modules/privacy/export_service.py` and `app/modules/privacy/workers.py`
+- [ ] T067 [US1] Implement recent subject-bound step-up plus explicit consequence confirmation, immediate hiding, versioned `ActiveProcessRetentionException` creation/review/resolution, 30-day erasure, anonymized aggregates, and deletion evidence in `app/modules/privacy/deletion_service.py`
+- [ ] T068 [US1] Implement profile, visibility, resume, and rights endpoints from the OpenAPI contract in `app/modules/candidate/views.py`, `app/modules/privacy/views.py`, and `app/config/urls.py`
+- [ ] T069 [P] [US1] Build the accessible profile editor, evidence review, completion summary, consent, and visibility controls in `app/frontend/candidate/profile.ts` and `app/frontend/styles/candidate-profile.css`
+- [ ] T070 [P] [US1] Build resume idle/reading/success/partial/failure UI with manual-entry recovery in `app/frontend/candidate/resume.ts` and `app/frontend/templates/candidate/profile.html`
+- [ ] T071 [US1] Build the verified rights center with request history, export expiry, deletion confirmation, holds, failures, and escalation in `app/frontend/candidate/rights-center.ts` and `app/frontend/templates/candidate/rights-center.html`
+- [ ] T072 [US1] Add 320px-through-desktop reflow, 200% zoom, focus, error summaries, live regions, and reduced motion in `app/frontend/styles/forms.css` and `app/frontend/styles/responsive.css`
+- [ ] T073 [US1] Add consent-renewal scheduling 30 days before 12-month inactivity expiry, active-process exception review/terminating-event handling, and expiry deletion/anonymization in `app/modules/privacy/retention.py` and `app/modules/privacy/workers.py`
+- [ ] T074 [US1] Add candidate lifecycle and rights audit emission without sensitive values in `app/modules/privacy/audit.py`
+- [ ] T075 [US1] Run and record failing-then-passing US1 evidence in `docs/evidence/us1-candidate-profile-and-rights.md`
+
+**Checkpoint**: US1 is independently deployable with synthetic data as the recommended MVP.
+
+---
+
+## Phase 4: User Story 2 — Recruiter Searches for Candidates (Priority: P1)
+
+**Goal**: An authorized recruiter can sign in and execute explainable deterministic searches with typed or optional speech input.
+
+**Independent Test**: Sign in through the recruiter entry point, test typed and speech states, then search a fixed corpus and prove every result satisfies strict criteria and applicable visibility grants.
+
+### Tests for User Story 2
+
+- [ ] T076 [P] [US2] Add recruiter identity tests for verified work email, personal/invalid/unverified rejection, non-enumeration, sign-out, saved-route denial, and navigation-history protection in `app/tests/browser/recruiter/authentication.spec.ts`
+- [ ] T077 [P] [US2] Add search contract tests proving `criteria.context` is authoritative, `AD_HOC` rejects any `opening_id` property, `OPENING` requires exactly one active `opening_id`, no independent opening field is accepted/exposed, and grouped criteria, pagination, status filters, recent searches, evidence, examples, and declared errors conform in `app/tests/contract/test_search_api.py`
+- [ ] T078 [P] [US2] Add deterministic eligibility tests proving only valid active-opening `OPENING` searches retrieve `MATCHING_ROLES`, `AD_HOC` retrieves only explicitly authorized `APPROVED_RECRUITERS`, preferences are never bypassed, Applied roles only/Not looking remain excluded, and AI cannot establish eligibility in `app/tests/security/test_search_visibility.py`
+- [ ] T079 [P] [US2] Add ranking tests for requirement/preference/exclusion groups, `ANY|ALL` semantics, duplicate/missing/cross-search group references, stable IDs, unknowns, stable ties, and protected/proxy exclusion in `app/tests/unit/search/test_ranking.py`
+- [ ] T080 [P] [US2] Add browser tests for side-panel states, empty/loading/error/results/filter/detail states, persistence, keyboard use, and responsive cards in `app/tests/browser/recruiter/search.spec.ts`
+- [ ] T081 [P] [US2] Add speech tests for unsupported, denied, listening, transcribing, ready, failed, editable transcript, and no-auto-submit states in `app/tests/browser/recruiter/speech-search.spec.ts`
+
+### Implementation for User Story 2
+
+- [ ] T082 [P] [US2] Create search definition whose authoritative `criteria.context` is `AD_HOC` without `opening_id` or `OPENING` with exactly one `opening_id`, plus optional server-derived read-only opening index, stable criteria-group/criterion entities with `ANY|ALL`, result snapshot, evidence, and recent-search models with seven-day expiry and six-ad-hoc-search cap in `app/modules/search/models.py`
+- [ ] T083 [US2] Generate constraints requiring any derived opening foreign key to be null for `AD_HOC` and equal `criteria.context.opening_id` for `OPENING`, plus active-reference support, group/criterion uniqueness and composite references, indexes, tenant uniqueness, and retention migrations in `app/modules/search/migrations/`
+- [ ] T084 [US2] Implement work-identity eligibility, global navigation/session projection, sign-out, and protected-route history controls in `app/modules/identity/recruiter_access.py` and `app/frontend/shared/navigation.ts`
+- [ ] T085 [US2] Implement service-layer validation of the sole authoritative `criteria.context` before ranking: exactly one active tenant-owned opening plus preferences for `MATCHING_ROLES`, no `opening_id` property and explicit audience for `AD_HOC`, derived-field equality, and submitted-application team authorization for Applied roles only in `app/modules/search/eligibility.py`
+- [ ] T086 [US2] Implement requirement/preference/exclusion group evaluation with exact `ANY|ALL` semantics, group-reference validation, explainable scoring, stable ordering, unknown disclosure, and protected-field denial in `app/modules/search/engine.py`
+- [ ] T087 [US2] Implement tenant-safe context-aware search, pagination, filters, candidate detail projection, and recent-search endpoints with OpenAPI-aligned conditional validation in `app/modules/search/views.py`
+- [ ] T088 [US2] Add query indexes, full-text/vector preparation, query timeouts, and safe degradation in `app/modules/search/query.py`
+- [ ] T089 [P] [US2] Build recruiter entry, signed-in navigation, prompt, side panel, cards, filters, evidence, and detail dialog in `app/frontend/recruiter/search.ts` and `app/frontend/templates/recruiter/search.html`
+- [ ] T090 [P] [US2] Implement progressive Web Speech integration with typed fallback and all declared states in `app/frontend/recruiter/speech-search.ts`
+- [ ] T091 [P] [US2] Implement 320px keyboard-safe recruiter search layouts in `app/frontend/styles/recruiter-search.css`
+- [ ] T092 [US2] Add refresh persistence and unsaved-navigation protection for prompt, criteria, filters, and selection in `app/frontend/shared/persistence.ts`
+- [ ] T093 [US2] Add search access/result-view audit events and minimized metrics in `app/modules/search/audit.py`
+- [ ] T094 [US2] Run and record fixed-corpus, visibility, authentication, and speech evidence in `docs/evidence/us2-deterministic-search.md`
+
+**Checkpoint**: US2 returns only authorized, deterministically eligible candidates and preserves typed search when speech is unavailable.
+
+---
+
+## Phase 5: User Story 3 — Recruiter Reviews Search Intent (Priority: P1)
+
+**Goal**: Recruiters inspect, quantify, and correct interpreted criteria before ambiguous searches run.
+
+**Independent Test**: Submit clear and ambiguous prompts, edit every criterion type, and verify estimated impact and final results use exactly the confirmed criteria.
+
+### Tests for User Story 3
+
+- [ ] T095 [P] [US3] Add structured-criteria tests for stable group/criterion IDs, required group references, `ANY|ALL`, supported fields, ambiguity, exclusions, protected data, malicious text, and deterministic estimated counts in `app/tests/unit/ai/test_intent_extraction.py`
+- [ ] T096 [P] [US3] Add contract tests proving ambiguous prompts route to review, every criterion references one submitted group, invalid/duplicate references fail, and recruiter edits override model output without changing stable IDs in `app/tests/contract/test_criteria_review_api.py`
+- [ ] T097 [P] [US3] Add browser tests for group and criterion add/edit/remove, stable IDs, group membership, `ANY|ALL`, estimated impact, original prompt, keyboard use, errors, and reflow in `app/tests/browser/recruiter/criteria-review.spec.ts`
+- [ ] T098 [P] [US3] Add golden-set, injection, timeout, invalid-output, and no-model fallback evaluations in `app/tests/ai/test_search_intent_eval.py`
+
+### Implementation for User Story 3
+
+- [ ] T099 [US3] Implement versioned intent schemas with stable criteria-group/criterion IDs, `ANY|ALL`, required group references, ambiguity thresholds, validation, and protected-attribute rejection in `app/modules/ai/intent_schema.py`
+- [ ] T100 [US3] Implement the bounded Bedrock adapter with regional endpoint, timeout, constrained output, and redacted telemetry in `app/modules/ai/bedrock.py`
+- [ ] T101 [US3] Implement LangGraph only for parse-validate-clarify with minimized checkpoints and deterministic fallback in `app/modules/ai/search_graph.py`
+- [ ] T102 [US3] Implement deterministic estimated-count and criteria preview/update/execute endpoints that preserve IDs and reject missing/duplicate/cross-search group references in `app/modules/search/criteria_views.py`
+- [ ] T103 [P] [US3] Build criteria review with original prompt, stable groups and criteria, group membership, `ANY|ALL` controls, exclusions, estimated impact, and confirmation in `app/frontend/recruiter/criteria-review.ts` and `app/frontend/templates/recruiter/criteria-review.html`
+- [ ] T104 [US3] Configure synthetic/de-identified LangSmith development/staging tracing and production-off default in `app/modules/ai/observability.py`
+- [ ] T105 [US3] Run and record ambiguity, estimated-impact, and AI-boundary evidence in `docs/evidence/us3-criteria-review.md`
+
+**Checkpoint**: US3 keeps model output advisory and makes every operative criterion and expected impact visible.
+
+---
+
+## Phase 6: User Story 6 — Candidate Applies and Tracks Progress (Priority: P2)
+
+**Goal**: Candidates can review open roles, submit independent applications, and track the canonical eight statuses.
+
+**Independent Test**: Apply to multiple roles with one profile and prove independent answers, consent, timestamps, audit, progress, and notification preferences.
+
+### Tests for User Story 6
+
+- [ ] T106 [P] [US6] Add public-opening/application API tests for one profile/multiple applications, unique role application, consent/timestamps, candidate-confirmed `WITHDRAWN`, idempotency, validation, and rate limits in `app/tests/contract/test_application_api.py`
+- [ ] T107 [P] [US6] Add status tests proving initial `APPLIED`, only the approved eight public values, application-scoped `WITHDRAWN`, nullable unmapped suggestions, per-application isolation, explicit recruiter publication, and no internal leakage in `app/tests/integration/candidate/test_application_status.py`
+- [ ] T108 [P] [US6] Add browser tests for public role essentials, validation, duplicate submission, eight-status progress, channel preferences, candidate-safe `PENDING|SENT|FAILED|CANCELLED` notification states, keyboard use, and reflow in `app/tests/browser/candidate/application.spec.ts`
+- [ ] T109 [P] [US6] Add failure tests for closed roles, data/auth outages, notification outage, stale edits, safe retry, refresh persistence, and unsaved warnings in `app/tests/integration/candidate/test_application_failures.py`
+
+### Implementation for User Story 6
+
+- [ ] T110 [US6] Extend application storage for answers, consent context, immutable submission time, the approved eight-status enum, nullable `suggested_candidate_status`, channel preferences, and candidate-work link without history overwrite in `app/modules/recruiting/application_models.py`
+- [ ] T111 [US6] Generate application-answer, consent, preference, and status-history migrations in `app/modules/recruiting/migrations/`
+- [ ] T112 [US6] Implement public opening read, application submit, and candidate-confirmed application withdrawal with profile reuse, open-state validation, uniqueness, idempotency, initial `APPLIED`, and application-scoped `WITHDRAWN` events in `app/modules/recruiting/applications.py`
+- [ ] T113 [US6] Implement candidate-owned application listing/status history using exactly `APPLIED|PROFILE_VIEWED|SHORTLISTED|RECRUITER_INTERESTED|INTERVIEW_REQUESTED|OFFER_MADE|NOT_SELECTED|WITHDRAWN` in `app/modules/recruiting/candidate_progress.py`
+- [ ] T114 [US6] Implement public role, application, candidate-confirmed withdrawal, progress, and per-application notification-preference endpoints from OpenAPI in `app/modules/recruiting/candidate_views.py`
+- [ ] T115 [US6] Implement consent-aware email/WhatsApp status notifications with internal-to-candidate delivery-state projection, no `SENDING` exposure, and retry-safe links in `app/modules/communications/application_notifications.py`
+- [ ] T116 [P] [US6] Build accessible public role details and quick application with validation and duplicate-safe submission in `app/frontend/candidate/application.ts` and `app/frontend/templates/candidate/application.html`
+- [ ] T117 [P] [US6] Build the application list, eight-status timeline, channel preferences, and `PENDING|SENT|FAILED|CANCELLED` delivery display in `app/frontend/candidate/progress.ts` and `app/frontend/templates/candidate/progress.html`
+- [ ] T118 [US6] Add responsive layouts, one-second feedback, refresh persistence, and unsaved-navigation protection in `app/frontend/styles/candidate-applications.css` and `app/frontend/shared/persistence.ts`
+- [ ] T119 [US6] Add application, consent, status, and notification audit events without answer/contact values in `app/modules/recruiting/application_audit.py`
+- [ ] T120 [US6] Run and record multi-role, status-vocabulary, persistence, and failure evidence in `docs/evidence/us6-application-progress.md`
+
+**Checkpoint**: US6 provides independent per-role applications before US4 links and manages applicant records.
+
+---
+
+## Phase 7: User Story 4 — Recruiter Evaluates and Manages Candidates (Priority: P2)
+
+**Goal**: Recruiters manage sourced and applied candidates, notes, reasons, status publication, and consent-checked contact/share actions.
+
+**Independent Test**: Manage an applicant and sourced candidate, link without merging, reconcile stale edits, preview status publication, cancel Not relevant, and preview/confirm a minimum-data disclosure.
+
+### Tests for User Story 4
+
+- [ ] T121 [P] [US4] Add candidate-work tests for first view/note/shortlist/status creation, contextual reuse, optional opening, and later application linking without merge in `app/tests/integration/recruiting/test_candidate_work_record.py`
+- [ ] T122 [P] [US4] Add status tests proving `/status-preview` accepts only `InternalRecruitingStatus` and returns a nullable `CandidateFacingStatus`, unmapped states return null, publication accepts only the eight-value `CandidateFacingStatus`, null suggestions cannot publish without an explicitly selected valid value, and recruiter confirmation, notification gating, and audit remain mandatory in `app/tests/contract/test_candidate_statuses.py`
+- [ ] T123 [P] [US4] Add note tests for exactly one owner, role access, tenant isolation, stale reconciliation, refresh persistence, and audit redaction in `app/tests/security/test_recruiter_notes.py`
+- [ ] T124 [P] [US4] Add Not relevant tests for structured reason/note requirement, cancellation restoring prior state, and contextual isolation in `app/tests/integration/recruiting/test_not_relevant.py`
+- [ ] T125 [P] [US4] Add contact/share tests for destination preview, minimum fields, current consent, cross-tenant denial, dual audit history, idempotency, and provider failure in `app/tests/security/test_candidate_disclosures.py`
+- [ ] T126 [P] [US4] Add browser tests for detail, notes, shortlist, status preview, conflict reconciliation, disclosure preview/confirmation, keyboard use, persistence, and mobile layout in `app/tests/browser/recruiter/candidate-management.spec.ts`
+
+### Implementation for User Story 4
+
+- [ ] T127 [P] [US4] Create candidate-work, note, shortlist, status-event, and disclosure-request models with exact uniqueness and ownership constraints in `app/modules/recruiting/work_models.py`
+- [ ] T128 [US4] Generate candidate-work, note-owner XOR, shortlist, status-event, application-link, and disclosure migrations in `app/modules/recruiting/migrations/`
+- [ ] T129 [US4] Implement idempotent create-or-reuse candidate-work behavior for first authorized view, note, shortlist, or status mutation in `app/modules/recruiting/candidate_work.py`
+- [ ] T130 [US4] Implement application/candidate-work notes with object authorization, encryption, conflicts, persistence, and independent histories in `app/modules/recruiting/notes.py`
+- [ ] T131 [US4] Implement internal states/reasons, Not relevant cancellation, canonical eight-status mapping including Offered-to-`OFFER_MADE`, and null suggestions for Sourced, Not relevant, Hired, or unknown states in `app/modules/recruiting/statuses.py`
+- [ ] T132 [US4] Implement `InternalRecruitingStatus` preview-to-nullable-`CandidateFacingStatus` mapping and publication restricted to an explicitly selected valid eight-value `CandidateFacingStatus`, including null-suggestion rejection without selection, explicit confirmation, idempotent notification enqueue, and candidate-safe delivery-state projection in `app/modules/recruiting/status_service.py`
+- [ ] T133 [US4] Implement disclosure preview/confirmation with execution-time consent/object reauthorization, minimum fields, visible state, and dual audit history in `app/modules/recruiting/disclosures.py`
+- [ ] T134 [US4] Implement candidate detail, candidate-work, notes, shortlist, internal-status, status publication, and disclosure endpoints from OpenAPI in `app/modules/recruiting/views.py`
+- [ ] T135 [P] [US4] Build candidate detail, notes, shortlist, reasons, internal status, and status preview UI in `app/frontend/recruiter/candidate-detail.ts` and `app/frontend/templates/recruiter/candidate-detail.html`
+- [ ] T136 [P] [US4] Build destination/purpose/minimum-field disclosure preview, confirmation, pending, success, unavailable, and failure UI in `app/frontend/recruiter/disclosure.ts`
+- [ ] T137 [US4] Implement stored-versus-attempted conflict reconciliation in `app/frontend/shared/conflict-resolution.ts`
+- [ ] T138 [US4] Apply refresh persistence and unsaved-navigation warnings to notes, reasons, filters, shortlist selection, and status edits in `app/frontend/shared/persistence.ts`
+- [ ] T139 [US4] Add audit events for views, notes, shortlists, status, reasons, conflicts, disclosures, and notification overrides in `app/modules/recruiting/audit.py`
+- [ ] T140 [US4] Run and record sourced/applicant separation, status, Not relevant, persistence, and disclosure evidence in `docs/evidence/us4-candidate-management.md`
+
+**Checkpoint**: US4 safely manages both contexts and completes the contact/share workflow without leaking candidate data.
+
+---
+
+## Phase 8: User Story 5 — Recruiter Compares a Shortlist (Priority: P2)
+
+**Goal**: Recruiters compare consistent authorized evidence without generated recommendations or automated employment decisions.
+
+**Independent Test**: Compare two or more candidates, handle no-selection and disappearing-selection states, then return to the preserved result context using keyboard and mobile layouts.
+
+### Tests for User Story 5
+
+- [ ] T141 [P] [US5] Add comparison API tests for consistent fields, stable order, missing evidence, selection limits, disappearing candidates, and tenant/object authorization in `app/tests/contract/test_comparison_api.py`
+- [ ] T142 [P] [US5] Add browser tests for no selection, selecting/removing, side-by-side evidence, state preservation, focus return, keyboard use, 320px layout, and 200% zoom in `app/tests/browser/recruiter/comparison.spec.ts`
+- [ ] T143 [P] [US5] Add boundary tests proving comparison produces no generated recommendation and cannot reject, shortlist, contact, or change status in `app/tests/security/test_comparison_boundaries.py`
+
+### Implementation for User Story 5
+
+- [ ] T144 [US5] Implement authorized deterministic comparison projections with consistent evidence, unknowns, and field ordering in `app/modules/recruiting/comparison.py`
+- [ ] T145 [US5] Implement the OpenAPI comparison endpoint with per-request reauthorization and no model-generated summary in `app/modules/recruiting/comparison_views.py`
+- [ ] T146 [P] [US5] Build accessible responsive comparison table/cards, empty guidance, missing-data labels, removal controls, and focus-return path in `app/frontend/recruiter/comparison.ts` and `app/frontend/templates/recruiter/comparison.html`
+- [ ] T147 [US5] Preserve comparison selection through allowed result interactions and remove newly unauthorized candidates with explanation in `app/frontend/recruiter/comparison.ts`
+- [ ] T148 [US5] Run and record comparison, preservation, and no-automation evidence in `docs/evidence/us5-comparison.md`
+
+**Checkpoint**: US5 supports deterministic human comparison without the removed AI-summary feature.
+
+---
+
+## Phase 9: User Story 7 — Recruiter Organizes Hiring Work (Priority: P3)
+
+**Goal**: Tenant users manage organization context, saved searches, audit metadata, and access reviews without changing tenant boundaries or gaining candidate-content access.
+
+**Independent Test**: Use the foundational tenant/opening shell, add a visibly synthetic candidate, run/reopen an opening-linked search, inspect redacted audit metadata, and complete an access review and revocation.
+
+### Tests for User Story 7
+
+- [ ] T149 [P] [US7] Add organization contract tests for unit/opening lifecycle, synthetic provenance, saved-search restoration/change detection, rejection of top-level client `opening_id`, sole use of `criteria.context.opening_id`, conflicts, and declared errors in `app/tests/contract/test_hiring_organization_api.py`
+- [ ] T150 [P] [US7] Add audit-access tests proving role redaction, no candidate content, non-enumeration, and an `AUDIT_READ` event for allowed/denied/failed access in `app/tests/security/test_audit_access.py`
+- [ ] T151 [P] [US7] Add access-review tests for memberships, privileged roles, purpose grants, emergency grants, audit access, independent review, revocation, exceptions, and overdue state in `app/tests/security/test_access_reviews.py`
+- [ ] T152 [P] [US7] Add Tenant Admin browser tests for organization, saved searches, redacted audit view, access review, and emergency notification/revocation in `app/tests/browser/admin/tenant-governance.spec.ts`
+
+### Implementation for User Story 7
+
+- [ ] T153 [P] [US7] Create saved-search models referencing authoritative search criteria without an independently writable opening field, plus owner/version and `MEMBERSHIP|PRIVILEGED_ROLE|PURPOSE_GRANT|EMERGENCY_GRANT|AUDIT_ACCESS` review types in `app/modules/search/models.py` and `app/modules/tenancy/review_models.py`
+- [ ] T154 [US7] Generate saved-search constraints ensuring any derived opening index is server-maintained and equals `criteria.context.opening_id`, plus access-review constraints/indexes in `app/modules/search/migrations/` and `app/modules/tenancy/migrations/`
+- [ ] T155 [US7] Implement named saved searches separately from six recent searches, deriving opening context exclusively from `criteria.context`, rejecting independent client opening input, and detecting changes since save in `app/modules/search/saved_searches.py`
+- [ ] T156 [US7] Implement redacted audit queries whose allowed, denied, and failed reads emit minimized `AUDIT_READ` events in `app/modules/audit/query_service.py`
+- [ ] T157 [US7] Implement periodic access-review population, assignment, decision, exception expiry, revocation, and overdue escalation in `app/modules/tenancy/access_reviews.py`
+- [ ] T158 [US7] Implement saved-search endpoints that accept and return no top-level `opening_id`, plus redacted audit and access-review endpoints from OpenAPI in `app/modules/search/saved_views.py`, `app/modules/audit/views.py`, and `app/modules/tenancy/review_views.py`
+- [ ] T159 [P] [US7] Build organization, synthetic-candidate source label, opening, and saved-search management UI that submits no top-level `opening_id` and renders opening context only from `criteria.context` in `app/frontend/recruiter/organization.ts` and `app/frontend/templates/recruiter/organization.html`
+- [ ] T160 [P] [US7] Build redacted audit and access-review UI without candidate-content rendering in `app/frontend/admin/access-review.ts` and `app/frontend/templates/admin/access-review.html`
+- [ ] T161 [P] [US7] Build emergency-access notification, scope, expiry, and revoke UI without candidate content in `app/frontend/admin/emergency-access.ts` and `app/frontend/templates/admin/emergency-access.html`
+- [ ] T162 [US7] Emit minimized audit events for organization changes, synthetic records, saved searches, audit reads, reviews, and revocations in `app/modules/tenancy/audit.py`
+- [ ] T163 [US7] Run and record tenant-governance, organization, audit-access, and access-review evidence in `docs/evidence/us7-hiring-organization.md`
+
+**Checkpoint**: US7 completes organization and governance workflows without weakening tenant or candidate-content boundaries.
+
+---
+
+## Phase 10: Production Hardening, Manual Review, and Release Evidence
+
+**Purpose**: Validate accessibility, usability, privacy, incident response, security, AI promotion, recovery, scale, and existing-functionality preservation.
+
+- [ ] T164 [P] Create AWS network, regional WAF/ALB, ECS/Fargate, private subnets/endpoints, and multi-AZ topology in `infra/environments/production/main.tf` and `infra/modules/platform/`
+- [ ] T165 [P] Configure CloudFront only for versioned public static assets and explicitly deny authenticated routes, HTML, APIs, uploads, downloads, exports, and candidate content in `infra/modules/platform/cloudfront.tf`
+- [ ] T166 [P] Create encrypted RDS/pgvector, Valkey, S3 quarantine/clean/export buckets, deletion policies, and cross-account audit storage in `infra/modules/data/`
+- [ ] T167 [P] Configure Cognito, SES, CloudWatch, OpenTelemetry, Security Hub, GuardDuty, CloudTrail, Config, and alert routing in `infra/modules/security/` and `infra/modules/observability/`
+- [ ] T168 Configure point-in-time recovery for 15-minute RPO, encrypted 35-day backups, quarterly restore automation, and four-hour RTO in `infra/modules/recovery/` and `docs/runbooks/disaster-recovery.md`
+- [ ] T169 Define 99.9% availability, p95 search under three seconds, queue/rights/audit/security signals, and browser interaction budgets in `docs/operations/slos.md` and `infra/modules/observability/alarms.tf`
+- [ ] T170 [P] Add million-profile/100-tenant/1,000-user fixtures and search/load scenarios in `app/tests/load/data.py` and `app/tests/load/search.js`
+- [ ] T171 Run capacity tests and record p50/p95/p99 latency, saturation, errors, isolation, audit, and remediation in `docs/evidence/capacity-and-performance.md`
+- [ ] T172 [P] Add failure injection for identity, authorization, database, storage, scan, parser, model, email, WhatsApp, queue, cache, and audit sink in `app/tests/resilience/test_failure_matrix.py`
+- [ ] T173 [P] Add stale-write tests for consent, visibility, status, note, and administration reconciliation in `app/tests/integration/test_concurrency.py`
+- [ ] T174 [P] Add retention tests for renewal, inactivity deletion, all required `ActiveProcessRetentionException` fields and version/lifecycle transitions, terminating-event deletion resumption, legal-hold separation, snapshot/export expiry, and backup propagation in `app/tests/integration/test_retention.py`
+- [ ] T175 [P] Add automated axe, keyboard, focus, semantic, live-region, contrast, zoom, and reduced-motion checks for every critical page in `app/tests/accessibility/critical-flows.spec.ts`
+- [ ] T176 Conduct post-implementation manual keyboard, representative screen-reader, 200% zoom, high-contrast, reduced-motion, touch/pointer, long-content, and 320px-through-desktop review in `docs/evidence/manual-accessibility-review.md`
+- [ ] T177 Remediate and manually re-test every accessibility finding, blocking release on unresolved Level A/AA or critical-flow failures in `docs/evidence/manual-accessibility-remediation.md`
+- [ ] T178 [P] Add viewport and visual regression against the approved mockup without modifying the source mockup in `app/tests/browser/regression/mockup-preservation.spec.ts`
+- [ ] T179 [P] Add end-to-end tests for conditional visibility/deletion/emergency access, `AD_HOC` versus active-opening `OPENING` search, grouped `ANY|ALL` criteria, eight-status applications, candidate-safe notification states, retention exceptions, candidate management/disclosure, comparison, organization, and audit reviews in `app/tests/e2e/critical-journeys.spec.ts`
+- [ ] T180 [P] Add instrumented browser assertions that navigation, save, filtering, and status feedback begins within one second in `app/tests/browser/performance/interaction-feedback.spec.ts`
+- [ ] T181 [P] Add SAST, secret, dependency, container, IaC, SBOM-signing, and severity gates in `.github/workflows/security.yml`
+- [ ] T182 Add authenticated and unauthenticated OWASP ZAP DAST against production-topology staging with blocking triage rules in `.github/workflows/dast.yml` and `app/tests/security/zap-rules.tsv`
+- [ ] T183 Conduct threat modeling for tenant escape, IDOR, malware, prompt injection, disclosure, status misuse, support abuse, and emergency access in `docs/security/threat-model.md`
+- [ ] T184 Run model-promotion evaluation for schema/citation quality, protected-trait/proxy leakage, fairness, injection, privacy/residency, lifecycle, latency, cost, and fallback in `docs/evidence/ai-model-promotion.md`
+- [ ] T185 Commission and close an independent penetration-test remediation log before real candidate data in `docs/security/penetration-test-remediation.md`
+- [ ] T186 Write the candidate-data incident runbook covering detection, triage, containment, evidence, India notification decisions/approval, tenant/candidate communications, recovery, and post-incident testing in `docs/runbooks/candidate-data-incident-response.md`
+- [ ] T187 Execute a candidate-data incident tabletop exercise, close findings, and retain participant/decision/timing evidence in `docs/evidence/candidate-data-incident-exercise.md`
+- [ ] T188 Execute a pre-release access review for memberships, privileged roles, purpose grants, emergency grants, and audit access; record revocations and expiring exceptions in `docs/evidence/pre-release-access-review.md`
+- [ ] T189 Create migration rehearsal, reversible expand/migrate/contract steps, mockup route strangling, and rollback criteria in `docs/runbooks/migration-and-rollback.md`
+- [ ] T190 Define feature flags, synthetic-only environments, pilot controls, launch gates, incident rollback, and no-real-data approval in `docs/runbooks/rollout.md`
+- [ ] T191 [P] Create moderated usability protocols covering SC-001, SC-002 timing, SC-003, SC-005, SC-007, SC-008, SC-012, and privacy-rights tasks in `docs/usability/moderated-test-protocol.md`
+- [ ] T192 Execute moderated candidate testing for timed profile preview, visibility, application progress, and privacy rights in `docs/evidence/moderated-candidate-usability.md`
+- [ ] T193 Execute moderated recruiter testing for search intent, explanations, comparison, notes, disclosure, and status publication in `docs/evidence/moderated-recruiter-usability.md`
+- [ ] T194 Remediate usability findings and rerun failed scenarios to specified thresholds in `docs/evidence/moderated-usability-remediation.md`
+- [ ] T195 Perform India legal/privacy review for notices, consent, disclosures, processors, rights, active-process policy, retention, incidents, and WhatsApp in `docs/compliance/india-launch-review.md`
+- [ ] T196 Restore an isolated 35-day encrypted backup and verify data integrity, tenant isolation, authorization, and audit continuity in `docs/evidence/backup-restore-exercise.md`
+- [ ] T197 Replay deletion, consent-withdrawal, tenant-access-revocation, and emergency-grant-revocation events through the recovery point before enabling restored access in `docs/evidence/deletion-event-replay.md`
+- [ ] T198 Execute regional recovery/failover and prove no more than 15 minutes loss and four hours recovery after replay in `docs/evidence/recovery-exercise.md`
+- [ ] T199 Run the complete quickstart and launch gates, recording commands, versions, outcomes, waivers, and approvers in `docs/evidence/production-readiness.md`
+
+**Checkpoint**: Production remains blocked until every required gate has passing evidence or an authorized, bounded constitution exception.
+
+---
+
+## Dependencies and Execution Order
+
+### Phase Dependencies
+
+1. **Setup** starts immediately.
+2. **Foundation** follows Setup and delivers the tenant/business-unit/opening shell before search or applications.
+3. **US1** follows Foundation and is the synthetic-data MVP.
+4. **US2** follows Foundation plus the opening shell; production Matching roles also requires US1 visibility.
+5. **US3** follows US2 search execution.
+6. **US6** follows US1 and the opening shell and creates application behavior before applicant-management integration.
+7. **US4** follows US2 and US6 so sourced records can link to implemented applications without merging.
+8. **US5** follows US2 and US4 because comparison consumes authorized result and shortlist state.
+9. **US7** follows the shared shell and US2 because saved-search restoration uses implemented searches; its audit/access-review work is otherwise independent.
+10. **Production hardening** follows all launch stories, although infrastructure and protocol authoring may begin earlier.
+
+### Dependency Graph
+
+```text
+Setup → Foundation (tenant/business-unit/opening shell) → US1 (MVP)
+                     ├─→ US2 → US3
+                     ├─→ US6 ─┐
+                     └─────────┴→ US4 → US5
+                          US2 ───────→ US7 saved-search integration
+
+All launch stories → manual accessibility + incident + access review + DAST/AI + restore/replay gates
+```
+
+### Parallel Opportunities
+
+- Setup tasks marked `[P]` can run concurrently after T004 establishes directories.
+- Foundation policy, operations, audit, communications, infrastructure, and test files marked `[P]` can proceed in parallel after shared models stabilize.
+- Tests marked `[P]` within a story can be authored together before implementation.
+- After Foundation, US1 and the non-search parts of US7 may proceed alongside US2 using synthetic fixtures, but the numbered integration order remains authoritative.
+- Production infrastructure, test automation, manual-review protocols, incident-runbook drafting, and usability-protocol drafting can run concurrently; executions wait for the integrated product.
+
+---
+
+## Implementation Strategy
+
+### Recommended MVP
+
+Complete **Setup + Foundation + US1** and demonstrate with synthetic data only. This validates candidate control, resume safety, privacy rights, accessibility, and the tenant/opening security foundation before recruiter discovery is enabled.
+
+### Incremental Delivery
+
+1. Setup and Foundation, including platform-only tenant and active-opening prerequisites.
+2. US1 candidate-control MVP.
+3. US2 deterministic search, then US3 criteria review.
+4. US6 applications and progress.
+5. US4 sourced/applicant management and disclosures, then US5 comparison.
+6. US7 saved searches, audit access, and access reviews.
+7. Complete every production hardening and pre-release evidence task.
+
+### Deferred Features
+
+- **Real recruiter-entered candidate records** are deferred; launch supports only visibly synthetic tenant fixtures. Enabling real recruiter-entered people requires a separate specification and privacy review.
+- **WhatsApp delivery** remains disabled until provider, residency, templates, consent, and callbacks are approved; the UI exposes unavailable/pending state.
+- **AI-dependent enhancements** remain feature-flagged off until T184 promotion evidence passes. Core resume entry, criteria review, search, and comparison remain deterministic/manual.
+- **AI-generated comparison summaries are not in launch scope** and have no implementation task.
+
+### Scope Discipline
+
+- Preserve `enter_recruiter_recruiter_candidate_ux.html` as a read-only baseline.
+- Keep eligibility, authorization, status publication, disclosures, and employment decisions deterministic and human-controlled.
+- Do not accept real candidate data until privacy, legal, accessibility, security, incident, access-review, backup/replay, recovery, and production-readiness gates pass.
+- Retain failing-then-passing evidence for tests and manual evidence for constitution-required reviews.

@@ -1,0 +1,1812 @@
+openapi: 3.1.0
+info:
+  title: Recruiter and Candidate Workflow API
+  version: 1.0.0
+  description: >-
+    Same-origin API contract for the server-rendered application. Authentication uses a secure
+    HttpOnly application session; unsafe methods also require CSRF protection. All protected
+    operations are authorized by actor, tenant, object, purpose, consent, and field scope.
+    Protected operations return non-enumerating 401/403/404 problems as applicable. Unsafe
+    operations additionally declare 409 conflicts, 422 validation failures, 429 temporary limits,
+    and 503 safe-degradation responses when those outcomes are possible.
+servers:
+  - url: /api/v1
+security:
+  - applicationSession: []
+tags:
+  - name: Identity
+  - name: Candidate
+  - name: Recruiting
+  - name: Search
+  - name: Administration
+paths:
+  /session:
+    get:
+      tags: [Identity]
+      operationId: getSession
+      responses:
+        '200':
+          description: Current actor and effective tenant context
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Session'}
+        '401': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Identity]
+      operationId: signOut
+      responses:
+        '204': {description: Session ended}
+  /candidate/profile:
+    get:
+      tags: [Candidate]
+      operationId: getOwnProfile
+      responses:
+        '200':
+          description: Candidate-owned profile
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateProfile'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      tags: [Candidate]
+      operationId: updateOwnProfile
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: {$ref: '#/components/schemas/CandidateProfilePatch'}
+      responses:
+        '200':
+          description: Updated profile
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateProfile'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /candidate/profile/publish:
+    post:
+      tags: [Candidate]
+      operationId: publishOwnProfile
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Published profile
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateProfile'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /candidate/visibility:
+    put:
+      tags: [Candidate]
+      operationId: replaceOwnVisibility
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VisibilityChange'}
+      responses:
+        '200':
+          description: Visibility changed and projections invalidated
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Visibility'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /candidate/rights-requests:
+    get:
+      tags: [Candidate]
+      operationId: listOwnRightsRequests
+      responses:
+        '200':
+          description: Candidate-visible rights request history and current state
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/RightsRequest'}
+    post:
+      tags: [Candidate]
+      operationId: createRightsRequest
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RightsRequestCreate'}
+      responses:
+        '202':
+          description: Request accepted; immediate actions have already taken effect where applicable
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RightsRequest'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /candidate/rights-requests/{rightsRequestId}:
+    get:
+      tags: [Candidate]
+      operationId: getOwnRightsRequest
+      parameters:
+        - $ref: '#/components/parameters/RightsRequestId'
+      responses:
+        '200':
+          description: Current request scope, status, timing, exception, and next action
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RightsRequest'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /candidate/rights-requests/{rightsRequestId}/download:
+    post:
+      tags: [Candidate]
+      operationId: createRightsExportDownload
+      parameters:
+        - $ref: '#/components/parameters/RightsRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Short-lived authenticated download for a complete export; request readiness and 24-hour artifact expiry are rechecked
+        '409': {$ref: '#/components/responses/Problem'}
+  /candidate/rights-requests/{rightsRequestId}/escalations:
+    post:
+      tags: [Candidate]
+      operationId: escalateRightsRequest
+      parameters:
+        - $ref: '#/components/parameters/RightsRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: {type: string, minLength: 1, maxLength: 2000}
+      responses:
+        '202': {description: Failed, disputed, inaccessible, or overdue request escalated without copying unnecessary candidate data}
+        '409': {$ref: '#/components/responses/Problem'}
+  /candidate/resumes/uploads:
+    post:
+      tags: [Candidate]
+      operationId: createResumeUpload
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename, content_type, size_bytes, sha256]
+              properties:
+                filename: {type: string, maxLength: 255}
+                content_type: {type: string, enum: [application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document]}
+                size_bytes: {type: integer, minimum: 1, maximum: 10485760}
+                sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+      responses:
+        '201':
+          description: Short-lived quarantine upload grant
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [resume_id, upload_url, expires_at]
+                properties:
+                  resume_id: {$ref: '#/components/schemas/Id'}
+                  upload_url: {type: string, format: uri}
+                  required_headers: {type: object, additionalProperties: {type: string}}
+                  expires_at: {type: string, format: date-time}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /candidate/resumes/{resumeId}:
+    get:
+      tags: [Candidate]
+      operationId: getResumeProcessingState
+      parameters:
+        - $ref: '#/components/parameters/ResumeId'
+      responses:
+        '200':
+          description: Resume scan, parse, and review state
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ResumeState'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /candidate/applications:
+    get:
+      tags: [Candidate]
+      operationId: listOwnApplications
+      responses:
+        '200':
+          description: Candidate-owned applications with independent status histories
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Application'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Candidate]
+      operationId: submitApplication
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opening_id, resume_id, answers, consent_record_id, notification_preferences]
+              properties:
+                opening_id: {$ref: '#/components/schemas/Id'}
+                resume_id: {$ref: '#/components/schemas/Id'}
+                answers: {type: object}
+                consent_record_id: {$ref: '#/components/schemas/Id'}
+                notification_preferences:
+                  type: object
+                  required: [email, whatsapp]
+                  properties:
+                    email: {type: boolean}
+                    whatsapp: {type: boolean}
+      responses:
+        '201':
+          description: Per-role application created exactly once
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Application'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /candidate/applications/{applicationId}:
+    get:
+      tags: [Candidate]
+      operationId: getOwnApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationId'
+      responses:
+        '200':
+          description: Candidate-facing application state
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Application'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /candidate/applications/{applicationId}/withdraw:
+    post:
+      tags: [Candidate]
+      operationId: withdrawOwnApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_status, confirm]
+              properties:
+                candidate_status: {const: WITHDRAWN}
+                confirm: {const: true}
+              additionalProperties: false
+      responses:
+        '200':
+          description: Candidate-confirmed withdrawal published for this application
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Application'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /candidate/applications/{applicationId}/notification-preferences:
+    put:
+      tags: [Candidate]
+      operationId: replaceOwnApplicationNotificationPreferences
+      parameters:
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, whatsapp]
+              properties:
+                email: {type: boolean}
+                whatsapp: {type: boolean}
+      responses:
+        '200': {description: Independent channel preferences saved}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /public/openings/{openingId}:
+    get:
+      security: []
+      tags: [Recruiting]
+      operationId: getPublicOpening
+      parameters:
+        - $ref: '#/components/parameters/OpeningId'
+      responses:
+        '200':
+          description: Public essentials for an open role without tenant-private fields
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Opening'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /platform/tenants:
+    post:
+      tags: [Administration]
+      operationId: provisionTenant
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contracted_company_name, legal_boundary_reference]
+              properties:
+                contracted_company_name: {type: string, minLength: 1, maxLength: 300}
+                legal_boundary_reference: {type: string, minLength: 1, maxLength: 300}
+      responses:
+        '201': {description: Tenant provisioned by the separately authorized, audited platform-onboarding function}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/business-units:
+    get:
+      tags: [Administration]
+      operationId: listBusinessUnits
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Business units in the effective tenant
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/BusinessUnit'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Administration]
+      operationId: createBusinessUnit
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 300}
+                description: {type: string, maxLength: 2000}
+      responses:
+        '201':
+          description: Tenant-owned organizational context created without changing isolation
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BusinessUnit'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/business-units/{businessUnitId}:
+    patch:
+      tags: [Administration]
+      operationId: updateBusinessUnit
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/BusinessUnitId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: {type: string, minLength: 1, maxLength: 300}
+                description: {type: string, maxLength: 2000}
+                status: {type: string, enum: [ACTIVE, INACTIVE]}
+      responses:
+        '200':
+          description: Business unit updated without changing the tenant boundary
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BusinessUnit'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/openings:
+    get:
+      tags: [Recruiting]
+      operationId: listOpenings
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Authorized opening summaries in the effective tenant
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Opening'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Recruiting]
+      operationId: createOpening
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [business_unit_id, title, location, work_mode, employment_type]
+              properties:
+                business_unit_id: {$ref: '#/components/schemas/Id'}
+                title: {type: string, minLength: 1, maxLength: 300}
+                location: {type: object}
+                work_mode: {type: string, enum: [REMOTE, HYBRID, ON_SITE, FLEXIBLE]}
+                employment_type: {type: string}
+                description: {type: string, maxLength: 20000}
+                hiring_team_ids: {type: array, items: {$ref: '#/components/schemas/Id'}}
+      responses:
+        '201':
+          description: Opening created inside the active tenant and business unit
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Opening'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/openings/{openingId}:
+    get:
+      tags: [Recruiting]
+      operationId: getOpening
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/OpeningId'
+      responses:
+        '200':
+          description: Authorized tenant opening
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Opening'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    patch:
+      tags: [Recruiting]
+      operationId: updateOpening
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/OpeningId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title: {type: string, minLength: 1, maxLength: 300}
+                description: {type: string, maxLength: 20000}
+                hiring_team_ids: {type: array, items: {$ref: '#/components/schemas/Id'}}
+                state: {type: string, enum: [DRAFT, OPEN, PAUSED, CLOSED]}
+      responses:
+        '200':
+          description: Opening updated with optimistic concurrency
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Opening'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/recruiter-entered-candidates:
+    get:
+      tags: [Recruiting]
+      operationId: listRecruiterEnteredCandidates
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant-scoped synthetic recruiter-entered candidate fixtures
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/RecruiterEnteredCandidate'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Recruiting]
+      operationId: createRecruiterEnteredCandidate
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecruiterEnteredCandidateCreate'}
+      responses:
+        '201':
+          description: Visibly synthetic tenant record created with immutable source label
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecruiterEnteredCandidate'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/searches/interpret:
+    post:
+      tags: [Search]
+      operationId: interpretSearch
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt, context]
+              properties:
+                prompt: {type: string, minLength: 1, maxLength: 4000}
+                context: {$ref: '#/components/schemas/SearchContext'}
+      responses:
+        '200':
+          description: Validated criteria or manual-review fallback
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchInterpretation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/SafeDegradation'}
+  /tenants/{tenantId}/searches:
+    post:
+      tags: [Search]
+      operationId: executeSearch
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SearchCriteria'}
+      responses:
+        '200':
+          description: Authorized evidence-first candidate results
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/SearchResult'}
+                  next_cursor: {type: [string, 'null']}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/SafeDegradation'}
+  /tenants/{tenantId}/saved-searches:
+    get:
+      tags: [Search]
+      operationId: listSavedSearches
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Actor-authorized named saved searches
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/SavedSearch'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Search]
+      operationId: createSavedSearch
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, search_id]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 200}
+                search_id: {$ref: '#/components/schemas/Id'}
+              additionalProperties: false
+      responses:
+        '201':
+          description: Search saved separately from six-item recent history
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SavedSearch'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/saved-searches/{searchId}:
+    get:
+      tags: [Search]
+      operationId: reopenSavedSearch
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/SearchId'
+      responses:
+        '200':
+          description: Saved prompt, criteria, opening, result context, and detected changes
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SavedSearch'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /tenants/{tenantId}/candidates/{candidateId}:
+    get:
+      tags: [Recruiting]
+      operationId: getAuthorizedCandidateDetail
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateId'
+      responses:
+        '200':
+          description: Field-filtered candidate detail after current consent and object authorization
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateDetail'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /tenants/{tenantId}/applications/{applicationId}/notes:
+    get:
+      tags: [Recruiting]
+      operationId: listApplicationNotes
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ApplicationId'
+      responses:
+        '200':
+          description: Authorized private notes in the exact application context
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/RecruiterNote'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Recruiting]
+      operationId: createRecruiterNote
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: {type: string, minLength: 1, maxLength: 5000}
+      responses:
+        '201':
+          description: Private tenant/application note created
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/candidate-work:
+    post:
+      tags: [Recruiting]
+      operationId: createOrReuseCandidateWork
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_id, originating_search_id, trigger]
+              properties:
+                candidate_id: {$ref: '#/components/schemas/Id'}
+                originating_search_id: {$ref: '#/components/schemas/Id'}
+                opening_id: {anyOf: [{$ref: '#/components/schemas/Id'}, {type: 'null'}]}
+                trigger: {type: string, enum: [VIEW, NOTE, SHORTLIST, STATUS_CHANGE]}
+      responses:
+        '200':
+          description: Existing contextual record reused
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateWork'}
+        '201':
+          description: Contextual record created without creating an application
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateWork'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/candidate-work/{candidateWorkId}/notes:
+    get:
+      tags: [Recruiting]
+      operationId: listCandidateWorkNotes
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateWorkId'
+      responses:
+        '200':
+          description: Authorized private notes in the exact sourced-candidate context
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/RecruiterNote'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Recruiting]
+      operationId: createCandidateWorkNote
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateWorkId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: {type: string, minLength: 1, maxLength: 5000}
+      responses:
+        '201':
+          description: Private note created in the exact sourced-candidate context
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/candidate-work/{candidateWorkId}:
+    get:
+      tags: [Recruiting]
+      operationId: getCandidateWork
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateWorkId'
+      responses:
+        '200':
+          description: Authorized sourced-candidate work context
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateWork'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    patch:
+      tags: [Recruiting]
+      operationId: updateCandidateWork
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateWorkId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                internal_status: {$ref: '#/components/schemas/InternalRecruitingStatus'}
+                shortlisted: {type: boolean}
+                structured_reasons: {type: array, items: {type: string}}
+                explanatory_note: {type: [string, 'null'], maxLength: 2000}
+      responses:
+        '200':
+          description: Contextual sourced-candidate state updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateWork'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/applications/{applicationId}/internal-status:
+    put:
+      tags: [Recruiting]
+      operationId: updateApplicationInternalStatus
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [internal_status]
+              properties:
+                internal_status: {type: string, enum: [SOURCED, SHORTLISTED, CONTACTED, SCREENING, INTERVIEWING, OFFERED, REJECTED, NOT_RELEVANT, HIRED]}
+                structured_reasons: {type: array, items: {type: string}}
+                explanatory_note: {type: [string, 'null'], maxLength: 2000}
+      responses:
+        '200': {description: Internal application status saved without publishing a candidate status}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/applications/{applicationId}/status-preview:
+    post:
+      tags: [Recruiting]
+      operationId: previewCandidateStatus
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [internal_status]
+              properties:
+                internal_status: {$ref: '#/components/schemas/InternalRecruitingStatus'}
+              additionalProperties: false
+              description: Maps an internal recruiting status to a nullable candidate-facing suggestion; it does not publish.
+      responses:
+        '200':
+          description: Non-published candidate status and notification preview
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StatusPreview'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/applications/{applicationId}/status-publish:
+    post:
+      tags: [Recruiting]
+      operationId: publishCandidateStatus
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preview_id, candidate_status, confirm]
+              properties:
+                preview_id: {$ref: '#/components/schemas/Id'}
+                candidate_status: {$ref: '#/components/schemas/CandidateFacingStatus'}
+                confirm: {const: true}
+                notify_channels:
+                  type: array
+                  items: {type: string, enum: [EMAIL, WHATSAPP]}
+              additionalProperties: false
+              description: Publishes only an explicitly selected valid CandidateFacingStatus after recruiter confirmation, including when the preview suggestion was null.
+      responses:
+        '202':
+          description: Status committed; selected notifications queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [application, notifications]
+                properties:
+                  application: {$ref: '#/components/schemas/Application'}
+                  notifications:
+                    type: array
+                    items: {$ref: '#/components/schemas/CandidateNotificationState'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/comparisons:
+    post:
+      tags: [Recruiting]
+      operationId: compareCandidates
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ComparisonRequest'}
+      responses:
+        '200':
+          description: Deterministic authorized side-by-side evidence; no generated hiring recommendation
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ComparisonResult'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/candidates/{candidateId}/disclosures/preview:
+    post:
+      tags: [Recruiting]
+      operationId: previewCandidateDisclosure
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DisclosureRequest'}
+      responses:
+        '200':
+          description: Non-disclosing preview of destination, purpose, and currently permitted fields
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DisclosurePreview'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/candidates/{candidateId}/disclosures:
+    post:
+      tags: [Recruiting]
+      operationId: confirmCandidateDisclosure
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CandidateId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preview_id, preview_hash, confirm]
+              properties:
+                preview_id: {$ref: '#/components/schemas/Id'}
+                preview_hash: {type: string}
+                confirm: {const: true}
+      responses:
+        '202': {description: Disclosure re-authorized at execution time and queued or handed off with visible state}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '503': {$ref: '#/components/responses/SafeDegradation'}
+  /tenants/{tenantId}/exports:
+    post:
+      tags: [Recruiting]
+      operationId: requestExport
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202': {description: Export queued for execution-time reauthorization}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /tenants/{tenantId}/audit-events:
+    get:
+      tags: [Administration]
+      operationId: listRedactedTenantAuditEvents
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Role-filtered, redacted administrative audit metadata; the read is itself audited
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/AuditEventSummary'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /tenants/{tenantId}/access-reviews:
+    get:
+      tags: [Administration]
+      operationId: listAccessReviews
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Authorized access-review schedule and decisions without candidate content
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/AccessReview'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Administration]
+      operationId: createAccessReview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AccessReviewCreate'}
+      responses:
+        '201':
+          description: Review population snapshotted and assigned
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AccessReview'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/access-reviews/{accessReviewId}/complete:
+    post:
+      tags: [Administration]
+      operationId: completeAccessReview
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AccessReviewId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decisions]
+              properties:
+                decisions: {type: array, minItems: 1, items: {type: object}}
+      responses:
+        '200':
+          description: Review completed and required revocations/exceptions recorded
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AccessReview'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /administration/emergency-access-requests:
+    post:
+      tags: [Administration]
+      operationId: requestEmergencyAccess
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EmergencyAccessRequest'}
+      responses:
+        '201': {description: Request recorded; no access until independent approval}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /administration/emergency-access-requests/{emergencyRequestId}/approval:
+    post:
+      tags: [Administration]
+      operationId: decideEmergencyAccess
+      parameters:
+        - $ref: '#/components/parameters/EmergencyRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: {type: string, enum: [APPROVE, REJECT]}
+                reason: {type: string, minLength: 20, maxLength: 2000}
+      responses:
+        '200': {description: Decision by a different designated Platform Security Admin recorded; approval activates notification and automatic expiry}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+  /tenants/{tenantId}/emergency-access-grants/{emergencyRequestId}/revoke:
+    post:
+      tags: [Administration]
+      operationId: revokeEmergencyAccessAsTenantAdmin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/EmergencyRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204': {description: Affected Tenant Admin revoked the grant without receiving content access}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+components:
+  securitySchemes:
+    applicationSession:
+      type: apiKey
+      in: cookie
+      name: __Host-enter_session
+  parameters:
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema: {type: string}
+      description: Strong ETag from the latest authorized representation.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 200}
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    ResumeId:
+      name: resumeId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    RightsRequestId:
+      name: rightsRequestId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    CandidateWorkId:
+      name: candidateWorkId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    CandidateId:
+      name: candidateId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    BusinessUnitId:
+      name: businessUnitId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    OpeningId:
+      name: openingId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    SearchId:
+      name: searchId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    AccessReviewId:
+      name: accessReviewId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+    EmergencyRequestId:
+      name: emergencyRequestId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Id'}
+  headers:
+    ETag:
+      description: Strong version tag for optimistic concurrency.
+      schema: {type: string}
+    RetryAfter:
+      description: Safe retry delay in seconds.
+      schema: {type: integer, minimum: 1}
+  responses:
+    Problem:
+      description: RFC 9457 problem details with non-enumerating public text
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Unauthorized:
+      description: Authentication is missing, expired, revoked, or insufficiently assured
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Forbidden:
+      description: Denied without confirming whether the tenant, actor, grant, or target exists
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    NotFound:
+      description: Resource is absent or intentionally concealed from the caller
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    ValidationFailed:
+      description: Request validation failed without changing stored state
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    RateLimited:
+      description: Temporary abuse-protection delay; never a permanent automatic lockout
+      headers:
+        Retry-After: {$ref: '#/components/headers/RetryAfter'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    SafeDegradation:
+      description: Optional service unavailable; core/manual path remains safe
+      content:
+        application/problem+json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Problem'
+              - type: object
+                properties:
+                  fallback: {type: string, enum: [MANUAL_CRITERIA, MANUAL_PROFILE_ENTRY, RETRY_LATER]}
+    Conflict:
+      description: Stale write rejected; client must reconcile explicitly
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ConflictProblem'}
+  schemas:
+    Id:
+      type: string
+      format: uuid
+    BusinessUnit:
+      type: object
+      required: [id, tenant_id, name, status, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        tenant_id: {$ref: '#/components/schemas/Id'}
+        name: {type: string, minLength: 1, maxLength: 300}
+        description: {type: [string, 'null'], maxLength: 2000}
+        status: {type: string, enum: [ACTIVE, INACTIVE]}
+        version: {type: integer, minimum: 1}
+    Opening:
+      type: object
+      required: [id, tenant_id, business_unit_id, title, location, work_mode, employment_type, state, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        tenant_id: {$ref: '#/components/schemas/Id'}
+        business_unit_id: {$ref: '#/components/schemas/Id'}
+        title: {type: string, minLength: 1, maxLength: 300}
+        location: {type: object}
+        work_mode: {type: string, enum: [REMOTE, HYBRID, ON_SITE, FLEXIBLE]}
+        employment_type: {type: string}
+        description: {type: [string, 'null'], maxLength: 20000}
+        hiring_team_ids: {type: array, items: {$ref: '#/components/schemas/Id'}}
+        state: {type: string, enum: [DRAFT, OPEN, PAUSED, CLOSED]}
+        version: {type: integer, minimum: 1}
+    RecruiterEnteredCandidateCreate:
+      type: object
+      additionalProperties: false
+      required: [display_name, location, experience_years, skills, confirm_synthetic]
+      properties:
+        display_name: {type: string, minLength: 1, maxLength: 200}
+        location: {type: object}
+        experience_years: {type: number, minimum: 0, multipleOf: 0.01}
+        skills: {type: array, minItems: 1, items: {type: string, minLength: 1}}
+        confirm_synthetic: {const: true}
+    RecruiterEnteredCandidate:
+      allOf:
+        - $ref: '#/components/schemas/RecruiterEnteredCandidateCreate'
+        - type: object
+          required: [id, tenant_id, source_type, source_label, version]
+          properties:
+            id: {$ref: '#/components/schemas/Id'}
+            tenant_id: {$ref: '#/components/schemas/Id'}
+            source_type: {const: RECRUITER_ENTERED_SYNTHETIC}
+            source_label: {const: Recruiter-entered synthetic record}
+            version: {type: integer, minimum: 1}
+    Session:
+      type: object
+      required: [actor_id, role, expires_at]
+      properties:
+        actor_id: {$ref: '#/components/schemas/Id'}
+        role: {type: string, enum: [CANDIDATE, RECRUITER, HIRING_MANAGER, TENANT_ADMIN, PLATFORM_SECURITY_ADMIN]}
+        tenant_id: {anyOf: [{$ref: '#/components/schemas/Id'}, {type: 'null'}]}
+        expires_at: {type: string, format: date-time}
+    CandidateProfile:
+      type: object
+      required: [id, full_name, location, experience_years, skills, profile_state, visibility, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        full_name: {type: string, maxLength: 200}
+        location: {type: object}
+        headline: {type: [string, 'null'], maxLength: 300}
+        current_role: {type: [string, 'null'], maxLength: 200}
+        current_company: {type: [string, 'null'], maxLength: 200}
+        experience_years: {type: number, minimum: 0, multipleOf: 0.01}
+        skills: {type: array, minItems: 1, items: {type: string, minLength: 1}}
+        role_categories: {type: array, items: {type: string}}
+        preferred_locations: {type: array, items: {type: string}}
+        work_arrangements: {type: array, items: {type: string, enum: [FLEXIBLE, REMOTE, HYBRID, ON_SITE]}}
+        meaningful_work: {type: [string, 'null'], maxLength: 300}
+        notice_period: {type: [string, 'null']}
+        availability_date: {type: [string, 'null'], format: date}
+        compensation:
+          anyOf:
+            - type: object
+              required: [currency, amount_minor, period]
+              properties:
+                currency: {type: string, pattern: '^[A-Z]{3}$'}
+                amount_minor: {type: integer, minimum: 0}
+                period: {type: string, enum: [HOUR, DAY, MONTH, YEAR]}
+            - type: 'null'
+        professional_links: {type: array, items: {type: string, format: uri, pattern: '^https?://'}}
+        contact_preferences: {type: object}
+        profile_state: {type: string, enum: [DRAFT, REVIEW_REQUIRED, PUBLISHED, HIDDEN, DELETION_PENDING, DELETED]}
+        visibility: {$ref: '#/components/schemas/Visibility'}
+        version: {type: integer, minimum: 1}
+    CandidateProfilePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        full_name: {type: string, maxLength: 200}
+        location: {type: object}
+        headline: {type: [string, 'null'], maxLength: 300}
+        current_role: {type: [string, 'null'], maxLength: 200}
+        current_company: {type: [string, 'null'], maxLength: 200}
+        experience_years: {type: number, minimum: 0, multipleOf: 0.01}
+        skills: {type: array, minItems: 1, items: {type: string, minLength: 1}}
+        role_categories: {type: array, items: {type: string}}
+        preferred_locations: {type: array, items: {type: string}}
+        work_arrangements: {type: array, items: {type: string, enum: [FLEXIBLE, REMOTE, HYBRID, ON_SITE]}}
+        meaningful_work: {type: [string, 'null'], maxLength: 300}
+        notice_period: {type: [string, 'null']}
+        availability_date: {type: [string, 'null'], format: date}
+        compensation:
+          anyOf:
+            - type: object
+              required: [currency, amount_minor, period]
+              properties:
+                currency: {type: string, pattern: '^[A-Z]{3}$'}
+                amount_minor: {type: integer, minimum: 0}
+                period: {type: string, enum: [HOUR, DAY, MONTH, YEAR]}
+            - type: 'null'
+        professional_links: {type: array, items: {type: string, format: uri, pattern: '^https?://'}}
+        contact_preferences: {type: object}
+    Visibility:
+      type: object
+      required: [mode, version]
+      properties:
+        mode: {type: string, enum: [APPROVED_RECRUITERS, MATCHING_ROLES, APPLIED_ROLES_ONLY, NOT_LOOKING]}
+        approved_tenant_ids:
+          type: array
+          items: {$ref: '#/components/schemas/Id'}
+        matching_preferences:
+          type: object
+          description: Deterministic candidate-controlled role, location, work-arrangement, and other eligibility preferences used only for MATCHING_ROLES.
+        version: {type: integer, minimum: 1}
+      allOf:
+        - if:
+            properties: {mode: {const: APPROVED_RECRUITERS}}
+          then:
+            required: [approved_tenant_ids]
+            properties: {approved_tenant_ids: {minItems: 1}}
+        - if:
+            properties: {mode: {const: MATCHING_ROLES}}
+          then:
+            required: [matching_preferences]
+            properties: {matching_preferences: {minProperties: 1}}
+    VisibilityChange:
+      oneOf:
+        - type: object
+          required: [mode, consent_record_id, approved_tenant_ids]
+          properties:
+            mode: {const: APPROVED_RECRUITERS}
+            approved_tenant_ids: {type: array, minItems: 1, uniqueItems: true, items: {$ref: '#/components/schemas/Id'}}
+            consent_record_id: {$ref: '#/components/schemas/Id'}
+          additionalProperties: false
+        - type: object
+          required: [mode, consent_record_id, matching_preferences]
+          properties:
+            mode: {const: MATCHING_ROLES}
+            matching_preferences: {type: object, minProperties: 1, description: Deterministic candidate-controlled eligibility preferences; AI cannot satisfy them.}
+            consent_record_id: {$ref: '#/components/schemas/Id'}
+          additionalProperties: false
+        - type: object
+          required: [mode, consent_record_id]
+          properties:
+            mode: {type: string, enum: [APPLIED_ROLES_ONLY, NOT_LOOKING]}
+            consent_record_id: {$ref: '#/components/schemas/Id'}
+          additionalProperties: false
+    ResumeState:
+      type: object
+      required: [id, scan_status, parse_status]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        scan_status: {type: string, enum: [UPLOADING, SCANNING, CLEAN, SCAN_FAILED, REJECTED]}
+        parse_status: {type: string, enum: [NOT_STARTED, PARSING, REVIEW_REQUIRED, READY, PARSE_FAILED]}
+        manual_entry_available: {type: boolean}
+        suggestions: {type: array, items: {type: object}}
+    Application:
+      type: object
+      required: [id, opening_id, resume_id, candidate_status, notification_preferences, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        opening_id: {$ref: '#/components/schemas/Id'}
+        resume_id: {$ref: '#/components/schemas/Id'}
+        candidate_status: {$ref: '#/components/schemas/CandidateFacingStatus'}
+        notification_preferences:
+          type: object
+          required: [email, whatsapp]
+          properties:
+            email: {type: boolean}
+            whatsapp: {type: boolean}
+        notification_states:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateNotificationState'}
+        version: {type: integer, minimum: 1}
+    SearchInterpretation:
+      type: object
+      required: [original_prompt, criteria, requires_review, ai_status]
+      properties:
+        original_prompt: {type: string}
+        criteria: {$ref: '#/components/schemas/SearchCriteria'}
+        requires_review: {type: boolean}
+        ambiguities: {type: array, items: {type: string}}
+        ai_status: {type: string, enum: [USED, NOT_NEEDED, UNAVAILABLE, INVALID_OUTPUT]}
+    SearchCriteria:
+      type: object
+      required: [context, groups, criteria]
+      properties:
+        context: {$ref: '#/components/schemas/SearchContext'}
+        groups:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/CriteriaGroup'}
+        criteria:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/Criterion'}
+        cursor: {type: [string, 'null']}
+        limit: {type: integer, minimum: 1, maximum: 100, default: 25}
+      description: Group and criterion IDs must be unique within the search; every criterion.group_id must reference exactly one submitted group. These cross-reference and active-opening invariants are enforced by the service.
+      example:
+        context: {type: OPENING, opening_id: 018f62f4-7c42-7e8a-b810-0a65d77be112}
+        groups:
+          - {id: 018f62f4-7c42-7e8a-b810-0a65d77be201, purpose: REQUIREMENT, operator: ALL, label: Core fit}
+          - {id: 018f62f4-7c42-7e8a-b810-0a65d77be202, purpose: PREFERENCE, operator: ANY, label: Preferred skills}
+        criteria:
+          - {id: 018f62f4-7c42-7e8a-b810-0a65d77be301, group_id: 018f62f4-7c42-7e8a-b810-0a65d77be201, field: location, operator: EQ, value: Bengaluru}
+          - {id: 018f62f4-7c42-7e8a-b810-0a65d77be302, group_id: 018f62f4-7c42-7e8a-b810-0a65d77be202, field: skill, operator: CONTAINS, value: Python}
+        limit: 25
+    SearchContext:
+      oneOf:
+        - type: object
+          required: [type]
+          properties:
+            type: {const: AD_HOC}
+          additionalProperties: false
+        - type: object
+          required: [type, opening_id]
+          properties:
+            type: {const: OPENING}
+            opening_id: {$ref: '#/components/schemas/Id'}
+          additionalProperties: false
+      description: This is the sole authoritative search context. OPENING contains exactly one opening_id and must resolve to an active tenant-owned opening at execution. AD_HOC contains no opening_id. Only OPENING can discover MATCHING_ROLES; AD_HOC is limited to an explicit APPROVED_RECRUITERS audience.
+    CriteriaGroup:
+      type: object
+      required: [id, purpose, operator]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        purpose: {type: string, enum: [REQUIREMENT, PREFERENCE, EXCLUSION]}
+        operator: {type: string, enum: [ANY, ALL]}
+        label: {type: [string, 'null'], maxLength: 200}
+      additionalProperties: false
+    Criterion:
+      type: object
+      required: [id, group_id, field, operator, value]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        group_id: {$ref: '#/components/schemas/Id'}
+        field: {type: string, minLength: 1, maxLength: 100}
+        operator: {type: string, enum: [EQ, NE, LT, LTE, GT, GTE, IN, NOT_IN, CONTAINS, EXISTS]}
+        value: {}
+      additionalProperties: false
+    SearchResult:
+      type: object
+      required: [candidate_id, evidence, unknowns]
+      properties:
+        candidate_id: {$ref: '#/components/schemas/Id'}
+        summary: {type: object}
+        evidence:
+          type: array
+          items:
+            type: object
+            required: [evidence_id, label, provenance]
+            properties:
+              evidence_id: {$ref: '#/components/schemas/Id'}
+              label: {type: string}
+              provenance: {type: string, enum: [CANDIDATE_REPORTED, RESUME_ACCEPTED, APPLICATION]}
+        unknowns: {type: array, items: {type: string}}
+        explanation: {type: [string, 'null']}
+    SavedSearch:
+      type: object
+      required: [id, name, search_id, prompt, criteria, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        name: {type: string, minLength: 1, maxLength: 200}
+        search_id: {$ref: '#/components/schemas/Id'}
+        prompt: {type: string}
+        criteria: {$ref: '#/components/schemas/SearchCriteria'}
+        result_context: {type: object}
+        changed_since_save: {type: array, items: {type: string}}
+        version: {type: integer, minimum: 1}
+      additionalProperties: false
+      description: criteria.context is the sole authoritative search context; no independent opening_id is accepted or exposed.
+    CandidateDetail:
+      type: object
+      required: [candidate_id, permitted_fields, evidence, unknowns]
+      properties:
+        candidate_id: {$ref: '#/components/schemas/Id'}
+        permitted_fields: {type: object}
+        evidence: {type: array, items: {type: object}}
+        unknowns: {type: array, items: {type: string}}
+        access_context: {type: object}
+    ComparisonRequest:
+      type: object
+      required: [candidate_ids, context_type, context_id]
+      properties:
+        candidate_ids: {type: array, minItems: 2, maxItems: 10, uniqueItems: true, items: {$ref: '#/components/schemas/Id'}}
+        context_type: {type: string, enum: [SEARCH, OPENING, SHORTLIST]}
+        context_id: {$ref: '#/components/schemas/Id'}
+    ComparisonResult:
+      type: object
+      required: [fields, candidates]
+      properties:
+        fields: {type: array, items: {type: string}}
+        candidates: {type: array, items: {$ref: '#/components/schemas/CandidateDetail'}}
+    DisclosureRequest:
+      type: object
+      required: [context_type, context_id, purpose, destination, requested_fields]
+      properties:
+        context_type: {type: string, enum: [APPLICATION, CANDIDATE_WORK]}
+        context_id: {$ref: '#/components/schemas/Id'}
+        purpose: {type: string, minLength: 1, maxLength: 200}
+        destination: {type: object}
+        requested_fields: {type: array, minItems: 1, items: {type: string}}
+    DisclosurePreview:
+      type: object
+      required: [preview_id, preview_hash, destination, purpose, permitted_fields, expires_at]
+      properties:
+        preview_id: {$ref: '#/components/schemas/Id'}
+        preview_hash: {type: string}
+        destination: {type: object}
+        purpose: {type: string}
+        permitted_fields: {type: array, items: {type: string}}
+        excluded_fields: {type: array, items: {type: string}}
+        expires_at: {type: string, format: date-time}
+    CandidateFacingStatus:
+      type: string
+      enum: [APPLIED, PROFILE_VIEWED, SHORTLISTED, RECRUITER_INTERESTED, INTERVIEW_REQUESTED, OFFER_MADE, NOT_SELECTED, WITHDRAWN]
+    InternalRecruitingStatus:
+      type: string
+      enum: [SOURCED, SHORTLISTED, CONTACTED, SCREENING, INTERVIEWING, OFFERED, REJECTED, NOT_RELEVANT, HIRED]
+    StatusPreview:
+      type: object
+      required: [preview_id, internal_status, suggested_candidate_status, notification_preview, expires_at]
+      properties:
+        preview_id: {$ref: '#/components/schemas/Id'}
+        internal_status: {$ref: '#/components/schemas/InternalRecruitingStatus'}
+        suggested_candidate_status:
+          oneOf:
+            - $ref: '#/components/schemas/CandidateFacingStatus'
+            - type: 'null'
+          description: Null when the internal status has no approved candidate-facing mapping.
+        notification_preview: {type: [object, 'null']}
+        expires_at: {type: string, format: date-time}
+    InternalNotificationDelivery:
+      type: object
+      required: [id, channel, state]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        channel: {type: string, enum: [EMAIL, WHATSAPP]}
+        state: {type: string, enum: [QUEUED, SENDING, SENT, FAILED, CANCELLED]}
+        safe_error: {type: [string, 'null']}
+      description: Internal worker/administrative representation; never returned by candidate-facing APIs.
+    CandidateNotificationState:
+      type: object
+      required: [id, channel, state]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        channel: {type: string, enum: [EMAIL, WHATSAPP]}
+        state: {type: string, enum: [PENDING, SENT, FAILED, CANCELLED]}
+        safe_error: {type: [string, 'null']}
+      description: Candidate-safe projection; internal QUEUED and SENDING both map to PENDING.
+    EmergencyAccessRequest:
+      type: object
+      required: [reason_code, reason, object_scope, field_scope, operation_scope, requested_minutes, incident_reference]
+      properties:
+        reason_code: {type: string}
+        reason: {type: string, minLength: 20, maxLength: 2000}
+        object_scope: {type: object}
+        field_scope: {type: array, minItems: 1, uniqueItems: true, items: {type: string, minLength: 1}}
+        operation_scope: {type: array, items: {type: string, enum: [READ]}}
+        requested_minutes: {type: integer, minimum: 1, maximum: 60}
+        incident_reference: {type: string, maxLength: 200}
+    CandidateWork:
+      type: object
+      required: [id, candidate_id, originating_search_id, internal_status, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        candidate_id: {$ref: '#/components/schemas/Id'}
+        originating_search_id: {$ref: '#/components/schemas/Id'}
+        opening_id: {anyOf: [{$ref: '#/components/schemas/Id'}, {type: 'null'}]}
+        internal_status: {$ref: '#/components/schemas/InternalRecruitingStatus'}
+        shortlisted: {type: boolean}
+        version: {type: integer, minimum: 1}
+    RecruiterNote:
+      type: object
+      required: [id, context_type, context_id, author_id, body, version, created_at]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        context_type: {type: string, enum: [APPLICATION, CANDIDATE_WORK]}
+        context_id: {$ref: '#/components/schemas/Id'}
+        author_id: {$ref: '#/components/schemas/Id'}
+        body: {type: string, minLength: 1, maxLength: 5000}
+        version: {type: integer, minimum: 1}
+        created_at: {type: string, format: date-time}
+    AuditEventSummary:
+      type: object
+      required: [id, occurred_at, actor_id, effective_role, action, target_type, outcome]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        occurred_at: {type: string, format: date-time}
+        actor_id: {$ref: '#/components/schemas/Id'}
+        effective_role: {type: string}
+        action: {type: string}
+        target_type: {type: string}
+        outcome: {type: string, enum: [ALLOWED, DENIED, FAILED]}
+        reason_code: {type: [string, 'null']}
+        correlation_id: {type: [string, 'null']}
+    AccessReviewCreate:
+      type: object
+      required: [review_type, due_at]
+      properties:
+        review_type: {type: string, enum: [MEMBERSHIP, PRIVILEGED_ROLE, PURPOSE_GRANT, EMERGENCY_GRANT, AUDIT_ACCESS]}
+        due_at: {type: string, format: date-time}
+        reviewer_id: {$ref: '#/components/schemas/Id'}
+    AccessReview:
+      type: object
+      required: [id, review_type, state, due_at, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        review_type: {type: string, enum: [MEMBERSHIP, PRIVILEGED_ROLE, PURPOSE_GRANT, EMERGENCY_GRANT, AUDIT_ACCESS]}
+        state: {type: string, enum: [PENDING, IN_PROGRESS, COMPLETED, OVERDUE]}
+        population_hash: {type: string}
+        due_at: {type: string, format: date-time}
+        completed_at: {type: [string, 'null'], format: date-time}
+        decision_counts: {type: object}
+        version: {type: integer, minimum: 1}
+    RightsRequestCreate:
+      oneOf:
+        - type: object
+          required: [request_type]
+          properties:
+            request_type: {type: string, enum: [ACCESS, WITHDRAW_CONSENT, HIDE_PROFILE, EXPORT]}
+            scope: {type: object}
+          additionalProperties: false
+        - type: object
+          required: [request_type, correction]
+          properties:
+            request_type: {const: CORRECTION}
+            scope: {type: object}
+            correction: {type: object, minProperties: 1}
+          additionalProperties: false
+        - type: object
+          required: [request_type, confirm_consequences, step_up_proof]
+          properties:
+            request_type: {const: DELETE}
+            scope: {type: object}
+            confirm_consequences: {const: true}
+            step_up_proof: {type: string, minLength: 1, writeOnly: true, description: Service validates recency and subject binding.}
+          additionalProperties: false
+    RightsRequest:
+      type: object
+      required: [id, request_type, state, submitted_at, expected_completion_at]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        request_type: {type: string, enum: [ACCESS, CORRECTION, WITHDRAW_CONSENT, HIDE_PROFILE, EXPORT, DELETE]}
+        state: {type: string, enum: [PENDING, IN_PROGRESS, HELD, COMPLETED, FAILED, CANCELLED]}
+        scope: {type: object}
+        submitted_at: {type: string, format: date-time}
+        expected_completion_at: {type: string, format: date-time}
+        completed_at: {type: [string, 'null'], format: date-time}
+        safe_detail: {type: [string, 'null']}
+        exception_scope: {type: [object, 'null']}
+        active_process_exceptions:
+          type: array
+          items: {$ref: '#/components/schemas/ActiveProcessRetentionException'}
+        support_escalation_available: {type: boolean}
+    ActiveProcessRetentionException:
+      type: object
+      required: [id, version, candidate_id, application_id, policy_version, legal_basis, retained_data_scope, lifecycle_state, start_date, review_date, terminating_event, approver_id, audit_references]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        version: {type: integer, minimum: 1}
+        candidate_id: {$ref: '#/components/schemas/Id'}
+        application_id: {$ref: '#/components/schemas/Id'}
+        policy_version: {type: string, minLength: 1}
+        legal_basis: {type: string, minLength: 1}
+        retained_data_scope: {type: array, minItems: 1, uniqueItems: true, items: {type: string, minLength: 1}}
+        lifecycle_state: {type: string, enum: [ACTIVE, UNDER_REVIEW, RESOLVED, REVOKED]}
+        start_date: {type: string, format: date-time}
+        review_date: {type: string, format: date-time}
+        terminating_event: {type: string, minLength: 1}
+        resolution_date: {type: [string, 'null'], format: date-time}
+        approver_id: {$ref: '#/components/schemas/Id'}
+        audit_references: {type: array, minItems: 1, items: {$ref: '#/components/schemas/Id'}}
+    Problem:
+      type: object
+      required: [type, title, status, request_id]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        request_id: {type: string}
+        errors: {type: object, additionalProperties: {type: array, items: {type: string}}}
+    ConflictProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [current, attempted, changed_fields, current_etag]
+          properties:
+            current: {type: object}
+            attempted: {type: object}
+            changed_fields: {type: array, items: {type: string}}
+            current_etag: {type: string}
