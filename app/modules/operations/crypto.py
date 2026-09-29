@@ -7,6 +7,7 @@ import json
 
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 class CryptoError(Exception):
@@ -39,4 +40,10 @@ def blind_index(value: str, *, purpose: str) -> bytes:
 
 
 def safe_json(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        cls=DjangoJSONEncoder,
+    )

@@ -21,7 +21,9 @@ services:
       SERVICES: s3
       AWS_DEFAULT_REGION: ap-south-1
     ports: ["4566:4566"]
-    volumes: ["s3_data:/var/lib/localstack"]
+    volumes:
+      - s3_data:/var/lib/localstack
+      - ./app/docker/localstack:/etc/localstack/init/ready.d:ro
   mail:
     image: axllent/mailpit:v1.27.8@sha256:6abc8e633df15eaf785cfcf38bae48e66f64beecdc03121e249d0f9ec15f0707
     ports: ["1025:1025", "8025:8025"]
@@ -32,6 +34,11 @@ services:
         required: false
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ap-south-1
+      S3_ENDPOINT_URL: http://localhost:4566
+      RESUME_QUARANTINE_BUCKET: enter-resume-quarantine
     command: ["web"]
     volumes:
       - ./app:/workspace/app
@@ -40,6 +47,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
       valkey: {condition: service_started}
+      s3-local: {condition: service_started}
   worker:
     build: {context: ./app, target: runtime}
     env_file:
@@ -47,10 +55,16 @@ services:
         required: false
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ap-south-1
+      S3_ENDPOINT_URL: http://s3-local:4566
+      RESUME_QUARANTINE_BUCKET: enter-resume-quarantine
     command: ["worker"]
     volumes: ["./app:/workspace/app"]
     depends_on:
       postgres: {condition: service_healthy}
+      s3-local: {condition: service_started}
 volumes:
   postgres_data:
   s3_data:

@@ -15,6 +15,7 @@ PATH_ACTIONS = {
     "/applications": "application",
     "/searches": "search",
     "/exports": "export",
+    "/download": "export",
 }
 
 
@@ -26,8 +27,11 @@ def signal_token(request) -> str:
     return hashlib.sha256(f"{identity}|{network}".encode()).hexdigest()
 
 
-def action_for_path(path: str) -> str | None:
-    return next((action for fragment, action in PATH_ACTIONS.items() if fragment in path), None)
+def action_for_path(path: str, method: str) -> str | None:
+    action = next((action for fragment, action in PATH_ACTIONS.items() if fragment in path), None)
+    if action == "upload" and method != "POST":
+        return None
+    return action
 
 
 def check(request, action: str, anomaly_score: int = 0) -> tuple[bool, int, int]:
@@ -53,7 +57,7 @@ class RateLimitMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        action = action_for_path(request.path)
+        action = action_for_path(request.path, request.method)
         if action:
             allowed, remaining, retry_after = check(request, action)
             if not allowed:

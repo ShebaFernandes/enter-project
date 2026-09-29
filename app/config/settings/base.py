@@ -19,6 +19,8 @@ INSTALLED_APPS = [
     "modules.identity",
     "modules.tenancy",
     "modules.recruiting",
+    "modules.candidate",
+    "modules.privacy",
     "modules.communications",
     "modules.audit",
     "modules.abuse",
@@ -32,6 +34,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "modules.candidate.rls.CandidateIdentityRLSMiddleware",
     "modules.identity.services.IdentityStatusMiddleware",
     "modules.tenancy.context.TenantContextMiddleware",
     "modules.abuse.service.RateLimitMiddleware",
@@ -63,6 +66,9 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+AWS_REGION = ENV.aws_region
+S3_ENDPOINT_URL = ENV.s3_endpoint_url
+RESUME_QUARANTINE_BUCKET = ENV.resume_quarantine_bucket
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SESSION_COOKIE_NAME = "__Host-enter_session"
 SESSION_COOKIE_SECURE = True

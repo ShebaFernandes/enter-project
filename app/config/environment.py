@@ -30,6 +30,8 @@ class Environment:
     valkey_url: str
     aws_region: str
     allowed_aws_regions: tuple[str, ...]
+    s3_endpoint_url: str | None
+    resume_quarantine_bucket: str
     cognito_issuer: str
     cognito_client_id: str
     cognito_client_secret: str
@@ -75,6 +77,10 @@ class Environment:
             valkey_url=os.getenv("VALKEY_URL", "redis://localhost:6379/0"),
             aws_region=region,
             allowed_aws_regions=allowed,
+            s3_endpoint_url=os.getenv("S3_ENDPOINT_URL") or None,
+            resume_quarantine_bucket=os.getenv(
+                "RESUME_QUARANTINE_BUCKET", "enter-resume-quarantine"
+            ),
             cognito_issuer=os.getenv("COGNITO_ISSUER", "https://example.invalid/local"),
             cognito_client_id=os.getenv("COGNITO_CLIENT_ID", "local-client"),
             cognito_client_secret=os.getenv("COGNITO_CLIENT_SECRET", "local-secret"),

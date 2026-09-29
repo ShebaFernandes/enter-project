@@ -1,0 +1,25 @@
+@media (max-width: 40rem) {
+  .candidate-shell {
+    padding: 0.75rem;
+  }
+  [data-employment-list] fieldset {
+    grid-template-columns: 1fr;
+  }
+  .actions > button,
+  .rights-grid > button {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (min-width: 80rem) {
+  .candidate-shell {
+    padding-inline: 2rem;
+  }
+}

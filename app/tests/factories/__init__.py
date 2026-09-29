@@ -4,6 +4,13 @@ from datetime import timedelta
 import factory
 from django.utils import timezone
 
+from modules.candidate.models import (
+    CandidateProfile,
+    ConsentRecord,
+    EmploymentRecord,
+    ResumeAsset,
+    VisibilityRule,
+)
 from modules.communications.models import Notification
 from modules.identity.models import Identity, IdentityCapability
 from modules.operations.crypto import encrypt
@@ -211,3 +218,73 @@ class FailurePayloadFactory(factory.DictFactory):
     category = "SYNTHETIC_FAILURE"
     retryable = True
     detail = "Synthetic failure with no candidate data"
+
+
+class CandidateProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CandidateProfile
+
+    identity = factory.SubFactory(IdentityFactory)
+    full_name_ciphertext = factory.LazyFunction(lambda: encrypt("Synthetic Candidate"))
+    location = {"city": "Bengaluru", "country": "IN"}
+    experience_years = "4.50"
+
+
+class EmploymentRecordFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmploymentRecord
+
+    profile = factory.SubFactory(CandidateProfileFactory)
+    company = factory.Sequence(lambda n: f"Synthetic Employer {n}")
+    role_title = "Engineer"
+    start_date = factory.LazyFunction(lambda: timezone.now().date() - timedelta(days=730))
+    end_date = factory.LazyFunction(lambda: timezone.now().date() - timedelta(days=365))
+    start_date_state = EmploymentRecord.ValueState.CONFIRMED
+    end_date_state = EmploymentRecord.ValueState.CONFIRMED
+    employment_type = EmploymentRecord.EmploymentType.PERMANENT
+    employment_type_state = EmploymentRecord.ValueState.CONFIRMED
+    provenance = EmploymentRecord.Provenance.CANDIDATE_REPORTED
+
+
+class ConsentRecordFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ConsentRecord
+
+    profile = factory.SubFactory(CandidateProfileFactory)
+    purpose = "RECRUITING_DISCOVERY"
+    field_scope = ["profile", "employment_history", "skills"]
+    audience_scope = {"mode": "NOT_LOOKING"}
+    notice_version = "candidate-discovery-v1"
+    affirmative_action = "VISIBILITY_SAVE"
+    source_request_id = factory.Sequence(lambda n: f"synthetic-consent-{n}")
+    expires_at = factory.LazyFunction(lambda: timezone.now() + timedelta(days=365))
+
+
+class VisibilityRuleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = VisibilityRule
+
+    profile = factory.SelfAttribute("consent_record.profile")
+    consent_record = factory.SubFactory(ConsentRecordFactory)
+    mode = VisibilityRule.Mode.NOT_LOOKING
+    actor = factory.SelfAttribute("profile.identity")
+
+
+class ResumeAssetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ResumeAsset
+
+    profile = factory.SubFactory(CandidateProfileFactory)
+    quarantine_key = factory.Sequence(lambda n: f"quarantine/synthetic/{n}")
+    original_filename_ciphertext = factory.LazyFunction(lambda: encrypt("synthetic-resume.pdf"))
+    declared_mime = "application/pdf"
+    detected_mime = "application/pdf"
+    size_bytes = 1024
+    sha256 = "a" * 64
+
+    class Params:
+        clean = factory.Trait(
+            scan_status=ResumeAsset.ScanStatus.CLEAN,
+            parse_status=ResumeAsset.ParseStatus.READY,
+            clean_key=factory.Sequence(lambda n: f"clean/synthetic/{n}"),
+        )

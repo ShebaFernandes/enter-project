@@ -1,0 +1,56 @@
+{% extends "base.html" %} {% block content %}
+<div class="candidate-shell" data-rights-center>
+  <header>
+    <p class="eyebrow">Privacy</p>
+    <h1>Your data rights</h1>
+    <p>
+      Access and corrections are immediate. Exports are prepared within 24
+      hours. Deletion requires recent verification and hides your profile
+      immediately.
+    </p>
+    <a href="{% url 'candidate-profile-page' %}">Back to profile</a>
+  </header>
+  <div class="error-summary" role="alert" tabindex="-1" hidden></div>
+  <div role="status" aria-live="polite" data-rights-status></div>
+  <section aria-labelledby="rights-actions">
+    <h2 id="rights-actions">Choose an action</h2>
+    <div class="rights-grid">
+      <button data-right="ACCESS">Access my data</button>
+      <button data-right="EXPORT">Request an export</button>
+      <button data-right="WITHDRAW_CONSENT">Withdraw consent</button>
+      <button data-right="HIDE_PROFILE">Hide my profile</button>
+      <button data-right="DELETE" class="danger">Request deletion</button>
+    </div>
+  </section>
+  <section aria-labelledby="request-history">
+    <h2 id="request-history">Request history</h2>
+    <div data-rights-list></div>
+  </section>
+  <dialog data-deletion-dialog aria-labelledby="delete-title">
+    <h2 id="delete-title">Confirm profile deletion</h2>
+    <p>
+      Your profile is hidden immediately. Deletion completes within 30 days
+      except for clearly identified active-process or legal-hold records.
+    </p>
+    <label
+      >Recent verification proof <input name="step_up_proof" required
+    /></label>
+    <div class="actions">
+      <button data-confirm-delete>Confirm deletion</button>
+      <button data-cancel-delete>Cancel</button>
+    </div>
+  </dialog>
+  <dialog data-escalation-dialog aria-labelledby="escalation-title">
+    <h2 id="escalation-title">Ask privacy support for help</h2>
+    <p>Explain the issue without adding unnecessary sensitive information.</p>
+    <label
+      >Reason for escalation
+      <textarea name="escalation_reason" maxlength="2000" required></textarea>
+    </label>
+    <div class="actions">
+      <button data-confirm-escalation>Send to support</button>
+      <button data-cancel-escalation>Cancel</button>
+    </div>
+  </dialog>
+</div>
+{% endblock %}

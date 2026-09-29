@@ -1,11 +1,14 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Enter</title>
+    <link rel="stylesheet" href="{% static 'dist/assets/app.css' %}" />
   </head>
   <body>
     <main id="main">{% block content %}{% endblock %}</main>
+    <script type="module" src="{% static 'dist/assets/app.js' %}"></script>
   </body>
 </html>

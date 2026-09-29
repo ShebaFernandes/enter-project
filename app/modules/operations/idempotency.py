@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -30,7 +32,7 @@ def reserve(actor_key: str, key: str, request_body: object) -> tuple[Idempotency
 
 def complete(record: IdempotencyRecord, status_code: int, response_body: object) -> None:
     record.response_status = status_code
-    record.response_body = response_body
+    record.response_body = json.loads(json.dumps(response_body, cls=DjangoJSONEncoder))
     record.save(update_fields=["response_status", "response_body"])
 
 

@@ -5,6 +5,12 @@ export default defineConfig({
     manifest: true,
     outDir: "static/dist",
     emptyOutDir: true,
-    rollupOptions: { input: "frontend/shared/bootstrap.ts" },
+    rollupOptions: {
+      input: "frontend/shared/bootstrap.ts",
+      output: {
+        entryFileNames: "assets/app.js",
+        assetFileNames: "assets/app.[ext]",
+      },
+    },
   },
 });
