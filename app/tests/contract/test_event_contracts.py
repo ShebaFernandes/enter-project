@@ -19,7 +19,7 @@ def test_minimized_versioned_event_envelope_is_published():
         idempotency_key=f"tenant:{event_id}:1",
         tenant_id=event_id,
     )
-    published = []
+    published: list[dict[str, object]] = []
     assert publish_batch(published.append) == 1
     envelope = published[0]
     assert set(envelope) == {

@@ -113,6 +113,19 @@ class AccessGrant(models.Model):
     status = models.CharField(max_length=20, choices=Status, default=Status.ACTIVE)
     version = models.PositiveBigIntegerField(default=1)
 
+    class Meta:
+        indexes = [models.Index(fields=("tenant", "grantee", "status", "expires_at"))]
+
+    def clean(self):
+        if not self.purpose_code.strip():
+            raise ValidationError({"purpose_code": "Purpose is required."})
+        if not self.field_scope or any(not str(field).strip() for field in self.field_scope):
+            raise ValidationError({"field_scope": "At least one field is required."})
+        if not self.object_scope.get("ids"):
+            raise ValidationError({"object_scope": "At least one object is required."})
+        if self.expires_at <= self.valid_from:
+            raise ValidationError({"expires_at": "Expiry must follow activation."})
+
 
 class EmergencyAccessRequest(models.Model):
     class Status(models.TextChoices):
@@ -153,11 +166,20 @@ class EmergencyAccessRequest(models.Model):
         blank=True,
     )
     revoked_at = models.DateTimeField(null=True, blank=True)
+    tenant_admin_notified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
         if not self.field_scope:
             raise ValidationError({"field_scope": "At least one field is required."})
+        if not self.object_scope.get("ids"):
+            raise ValidationError({"object_scope": "At least one object is required."})
+        if self.operation_scope != ["READ"]:
+            raise ValidationError({"operation_scope": "Emergency access is read-only."})
+        if not self.reason_code.strip() or not self.reason.strip():
+            raise ValidationError({"reason": "A reason code and justification are required."})
+        if not self.incident_reference.strip():
+            raise ValidationError({"incident_reference": "An incident reference is required."})
         if not 1 <= self.requested_minutes <= 60:
             raise ValidationError({"requested_minutes": "Must be between 1 and 60."})
         if self.approver_id and self.approver_id == self.requester_id:

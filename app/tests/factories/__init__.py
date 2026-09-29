@@ -1,8 +1,19 @@
-import factory
+import uuid
+from datetime import timedelta
 
+import factory
+from django.utils import timezone
+
+from modules.communications.models import Notification
 from modules.identity.models import Identity, IdentityCapability
-from modules.recruiting.models import Opening
-from modules.tenancy.models import BusinessUnit, Tenant, TenantMembership
+from modules.operations.crypto import encrypt
+from modules.recruiting.models import (
+    Application,
+    CandidateFacingStatus,
+    Opening,
+    RecruiterEnteredCandidate,
+)
+from modules.tenancy.models import AccessGrant, BusinessUnit, Tenant, TenantMembership
 
 
 class IdentityFactory(factory.django.DjangoModelFactory):
@@ -11,7 +22,10 @@ class IdentityFactory(factory.django.DjangoModelFactory):
 
     cognito_subject = factory.Sequence(lambda n: f"synthetic-subject-{n}")
     email_lookup_hmac = factory.Sequence(lambda n: f"hmac-{n}".encode())
-    email_ciphertext = factory.Sequence(lambda n: f"cipher-{n}".encode())
+    email_ciphertext = factory.LazyAttribute(
+        lambda obj: encrypt(f"{obj.cognito_subject}@synthetic.invalid")
+    )
+    email_verified_at = factory.LazyFunction(timezone.now)
 
 
 class TenantFactory(factory.django.DjangoModelFactory):
@@ -23,6 +37,12 @@ class TenantFactory(factory.django.DjangoModelFactory):
     legal_boundary_reference = factory.Sequence(lambda n: f"contract-{n}")
     status = Tenant.Status.ACTIVE
 
+    class Params:
+        provisioning = factory.Trait(status=Tenant.Status.PROVISIONING)
+        active = factory.Trait(status=Tenant.Status.ACTIVE)
+        suspended = factory.Trait(status=Tenant.Status.SUSPENDED)
+        closed = factory.Trait(status=Tenant.Status.CLOSED)
+
 
 class MembershipFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -32,6 +52,12 @@ class MembershipFactory(factory.django.DjangoModelFactory):
     identity = factory.SubFactory(IdentityFactory)
     role = TenantMembership.Role.RECRUITER
     status = TenantMembership.Status.ACTIVE
+
+    class Params:
+        recruiter = factory.Trait(role=TenantMembership.Role.RECRUITER)
+        hiring_manager = factory.Trait(role=TenantMembership.Role.HIRING_MANAGER)
+        tenant_admin = factory.Trait(role=TenantMembership.Role.TENANT_ADMIN)
+        stale = factory.Trait(version=2, status=TenantMembership.Status.SUSPENDED)
 
 
 class BusinessUnitFactory(factory.django.DjangoModelFactory):
@@ -55,6 +81,12 @@ class OpeningFactory(factory.django.DjangoModelFactory):
     employment_type = "FULL_TIME"
     created_by = factory.SubFactory(IdentityFactory)
 
+    class Params:
+        draft = factory.Trait(state=Opening.State.DRAFT)
+        open = factory.Trait(state=Opening.State.OPEN)
+        paused = factory.Trait(state=Opening.State.PAUSED)
+        closed = factory.Trait(state=Opening.State.CLOSED)
+
 
 class CandidateCapabilityFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -63,3 +95,119 @@ class CandidateCapabilityFactory(factory.django.DjangoModelFactory):
     identity = factory.SubFactory(IdentityFactory)
     role = IdentityCapability.Role.CANDIDATE
     assigned_by = factory.SubFactory(IdentityFactory)
+
+
+class PlatformSecurityCapabilityFactory(CandidateCapabilityFactory):
+    role = IdentityCapability.Role.PLATFORM_SECURITY_ADMIN
+
+
+class ApplicationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Application
+
+    opening = factory.SubFactory(OpeningFactory)
+    tenant = factory.SelfAttribute("opening.tenant")
+    candidate_profile_id = factory.LazyFunction(uuid.uuid4)
+    state = Application.State.DRAFT
+
+    class Params:
+        submitted = factory.Trait(
+            state=Application.State.SUBMITTED, submitted_at=factory.LazyFunction(timezone.now)
+        )
+        active = factory.Trait(
+            state=Application.State.ACTIVE, submitted_at=factory.LazyFunction(timezone.now)
+        )
+        closed = factory.Trait(
+            state=Application.State.CLOSED,
+            submitted_at=factory.LazyFunction(timezone.now),
+            closed_at=factory.LazyFunction(timezone.now),
+        )
+        withdrawn = factory.Trait(
+            state=Application.State.WITHDRAWN,
+            submitted_at=factory.LazyFunction(timezone.now),
+            withdrawn_at=factory.LazyFunction(timezone.now),
+            candidate_status=CandidateFacingStatus.WITHDRAWN,
+        )
+        unmapped_status = factory.Trait(suggested_candidate_status=None)
+        stale = factory.Trait(version=2)
+
+
+class RecruiterEnteredCandidateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RecruiterEnteredCandidate
+
+    tenant = factory.SubFactory(TenantFactory)
+    created_by = factory.SubFactory(IdentityFactory)
+    display_name = factory.Sequence(lambda n: f"Synthetic Candidate {n}")
+    location = {"city": "Bengaluru", "country": "IN"}
+    experience_years = "4.50"
+    skills = ["Python", "Django"]
+
+    class Params:
+        long_content = factory.Trait(display_name="S" * 200, skills=["X" * 200])
+        stale = factory.Trait(version=2)
+
+
+class AccessGrantFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AccessGrant
+
+    tenant = factory.SubFactory(TenantFactory)
+    grantee = factory.SubFactory(IdentityFactory)
+    purpose_code = "RECRUITING_REVIEW"
+    field_scope = ["profile_state"]
+    object_scope = factory.LazyFunction(lambda: {"ids": [str(uuid.uuid4())]})
+    valid_from = factory.LazyFunction(timezone.now)
+    expires_at = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=1))
+
+
+class NotificationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Notification
+
+    tenant_id = factory.LazyFunction(uuid.uuid4)
+    channel = Notification.Channel.EMAIL
+    template_key = "synthetic-template"
+    template_version = "v1"
+    destination_ciphertext = factory.LazyFunction(lambda: encrypt("synthetic@example.invalid"))
+    consent_basis = "SECURITY_REQUIRED"
+    idempotency_key = factory.Sequence(lambda n: f"synthetic-notification-{n}")
+
+    class Params:
+        queued = factory.Trait(state=Notification.State.QUEUED)
+        sending = factory.Trait(state=Notification.State.SENDING, attempts=1)
+        sent = factory.Trait(
+            state=Notification.State.SENT,
+            attempts=1,
+            provider_reference="synthetic-provider-reference",
+        )
+        retrying = factory.Trait(state=Notification.State.QUEUED, attempts=2)
+        failed = factory.Trait(
+            state=Notification.State.FAILED,
+            attempts=5,
+            terminal_error_category="SYNTHETIC_FAILURE",
+        )
+        cancelled = factory.Trait(state=Notification.State.CANCELLED)
+
+
+class VisibilityPayloadFactory(factory.DictFactory):
+    mode = "NOT_LOOKING"
+    consent_record_id = factory.LazyFunction(lambda: str(uuid.uuid4()))
+
+    class Params:
+        approved_recruiters = factory.Trait(
+            mode="APPROVED_RECRUITERS",
+            approved_tenant_ids=factory.LazyFunction(lambda: [str(uuid.uuid4())]),
+        )
+        matching_roles = factory.Trait(
+            mode="MATCHING_ROLES",
+            matching_preferences={"roles": ["Software Engineer"], "locations": ["Bengaluru"]},
+        )
+        applied_roles_only = factory.Trait(mode="APPLIED_ROLES_ONLY")
+        not_looking = factory.Trait(mode="NOT_LOOKING")
+
+
+class FailurePayloadFactory(factory.DictFactory):
+    category = "SYNTHETIC_FAILURE"
+    retryable = True
+    detail = "Synthetic failure with no candidate data"

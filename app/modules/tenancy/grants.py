@@ -5,15 +5,54 @@ from django.db import transaction
 from django.utils import timezone
 
 from modules.audit.service import record_audit_event
+from modules.communications.models import Notification
+from modules.communications.service import queue_notification
 from modules.identity.models import IdentityCapability
+from modules.operations.crypto import decrypt
 
-from .models import EmergencyAccessRequest
+from .models import AccessGrant, EmergencyAccessRequest, TenantMembership
 
 
 def _is_security_admin(identity) -> bool:
     return identity.capabilities.filter(
         role=IdentityCapability.Role.PLATFORM_SECURITY_ADMIN, revoked_at__isnull=True
     ).exists()
+
+
+@transaction.atomic
+def create_access_grant(
+    *,
+    tenant,
+    grantee,
+    purpose_code: str,
+    field_scope: list[str],
+    object_scope: dict,
+    valid_from,
+    expires_at,
+    actor,
+) -> AccessGrant:
+    grant = AccessGrant(
+        tenant=tenant,
+        grantee=grantee,
+        purpose_code=purpose_code,
+        field_scope=field_scope,
+        object_scope=object_scope,
+        valid_from=valid_from,
+        expires_at=expires_at,
+    )
+    grant.full_clean()
+    grant.save()
+    record_audit_event(
+        actor=actor,
+        effective_role="TENANT_ADMIN",
+        tenant_id=tenant.id,
+        action="ACCESS_GRANT_CREATE",
+        target_type="access_grant",
+        target_id=str(grant.id),
+        outcome="ALLOWED",
+        metadata={"field_scope": field_scope, "purpose_code": purpose_code},
+    )
+    return grant
 
 
 @transaction.atomic
@@ -69,12 +108,32 @@ def approve_emergency_access(
         raise ValidationError("Only a pending request can be approved")
     if not request.field_scope:
         raise ValidationError("field_scope is required")
+    tenant_admins = list(
+        TenantMembership.objects.select_related("identity").filter(
+            tenant=request.tenant,
+            role=TenantMembership.Role.TENANT_ADMIN,
+            status=TenantMembership.Status.ACTIVE,
+        )
+    )
+    if not tenant_admins:
+        raise ValidationError("An active Tenant Admin is required for immediate notification")
     request.approver = approver
     request.approved_at = timezone.now()
     request.expires_at = timezone.now() + timedelta(minutes=min(request.requested_minutes, 60))
     request.status = EmergencyAccessRequest.Status.ACTIVE
+    request.tenant_admin_notified_at = timezone.now()
     request.full_clean()
     request.save()
+    for membership in tenant_admins:
+        queue_notification(
+            destination=decrypt(bytes(membership.identity.email_ciphertext)),
+            channel=Notification.Channel.EMAIL,
+            template_key="security-emergency-access-approved",
+            template_version="v1",
+            consent_basis="SECURITY_REQUIRED",
+            idempotency_key=f"emergency-access:{request.id}:tenant-admin:{membership.id}",
+            tenant_id=request.tenant_id,
+        )
     record_audit_event(
         actor=approver,
         effective_role="PLATFORM_SECURITY_ADMIN",
@@ -107,8 +166,16 @@ def revalidate_emergency_access(
 
 @transaction.atomic
 def revoke_emergency_access(*, request: EmergencyAccessRequest, actor) -> EmergencyAccessRequest:
-    if actor.id not in {request.requester_id, request.approver_id} and not _is_security_admin(
-        actor
+    tenant_admin = TenantMembership.objects.filter(
+        tenant=request.tenant,
+        identity=actor,
+        role=TenantMembership.Role.TENANT_ADMIN,
+        status=TenantMembership.Status.ACTIVE,
+    ).exists()
+    if (
+        actor.id not in {request.requester_id, request.approver_id}
+        and not _is_security_admin(actor)
+        and not tenant_admin
     ):
         raise ValidationError("Revocation unavailable")
     request.status = EmergencyAccessRequest.Status.REVOKED
@@ -117,7 +184,7 @@ def revoke_emergency_access(*, request: EmergencyAccessRequest, actor) -> Emerge
     request.save(update_fields=("status", "revoked_by", "revoked_at"))
     record_audit_event(
         actor=actor,
-        effective_role="PLATFORM_SECURITY_ADMIN",
+        effective_role="TENANT_ADMIN" if tenant_admin else "PLATFORM_SECURITY_ADMIN",
         tenant_id=request.tenant_id,
         action="EMERGENCY_ACCESS_REVOKE",
         target_type="emergency_access_request",

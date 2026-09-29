@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "modules.identity",
     "modules.tenancy",
     "modules.recruiting",
+    "modules.communications",
     "modules.audit",
     "modules.abuse",
 ]

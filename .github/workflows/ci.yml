@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   quality:
@@ -45,17 +46,30 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U enter -d enter_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
+      valkey:
+        image: valkey/valkey:8.1-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       DATABASE_URL: postgresql://enter:enter@127.0.0.1:5432/enter_test
-      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      APP_ENV: local
+      VALKEY_URL: redis://127.0.0.1:6379/0
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with: {version: "0.8.22", enable-cache: true}
       - run: uv sync --all-groups --frozen
         working-directory: app
-      - run: uv run pytest tests/contract tests/database tests/security
+      - run: uv run python manage.py migrate --noinput
         working-directory: app
+      - run: uv run pytest tests/contract tests/database tests/security tests/integration
+        working-directory: app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: postgres-contract-evidence, path: app/test-results/, retention-days: 35}
 
   browser-accessibility:
     runs-on: ubuntu-latest
@@ -69,12 +83,66 @@ jobs:
         working-directory: app
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: browser-accessibility-evidence, path: app/{playwright-report,test-results}/, retention-days: 35}
+        with:
+          name: browser-accessibility-evidence
+          path: |
+            app/playwright-report/
+            app/test-results/
+          retention-days: 35
 
   security-schema:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with: {version: "0.8.22", enable-cache: true}
+      - run: uv sync --all-groups --frozen
+        working-directory: app
+      - run: uv run pytest tests/contract/test_openapi_conformance.py
+        working-directory: app
       - run: docker build --check ./app
       - run: docker compose config --quiet
-      - run: echo "DAST and IaC scans are release-gated when deployable targets exist."
+      - uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra
+          framework: terraform
+          output_format: cli,sarif
+          output_file_path: console,checkov-results.sarif
+          soft_fail: false
+      - run: uv run pip-audit --format cyclonedx-json --output ../sbom.cdx.json
+        working-directory: app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-schema-evidence
+          path: |
+            trivy-results.sarif
+            checkov-results.sarif
+            sbom.cdx.json
+          retention-days: 35
+
+  dast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose up -d --build postgres valkey web
+      - run: curl --fail --retry 30 --retry-delay 2 http://127.0.0.1:8000/health/
+      - uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: http://127.0.0.1:8000
+          fail_action: true
+          artifact_name: dast-evidence
+      - if: always()
+        run: docker compose logs --no-color > dast-compose.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: dast-compose-evidence, path: dast-compose.log, retention-days: 35}

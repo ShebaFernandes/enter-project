@@ -10,7 +10,17 @@ from modules.tenancy.policy import authorize_opening
 
 from .models import Opening
 from .openings import create_opening, update_opening
-from .serializers import OpeningCreateSerializer, OpeningPatchSerializer, OpeningSerializer
+from .recruiter_entered import (
+    create_recruiter_entered_candidate,
+    list_recruiter_entered_candidates,
+)
+from .serializers import (
+    OpeningCreateSerializer,
+    OpeningPatchSerializer,
+    OpeningSerializer,
+    RecruiterEnteredCandidateCreateSerializer,
+    RecruiterEnteredCandidateSerializer,
+)
 
 
 class OpeningCollectionView(APIView):
@@ -68,3 +78,30 @@ class OpeningDetailView(APIView):
         response = Response(OpeningSerializer(opening).data)
         response["ETag"] = strong_etag(opening.pk, opening.version)
         return response
+
+
+class RecruiterEnteredCandidateCollectionView(APIView):
+    def get(self, request, tenant_id):
+        if request.tenant_id != tenant_id:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        candidates = list_recruiter_entered_candidates(membership=request.tenant_membership)
+        return Response(RecruiterEnteredCandidateSerializer(candidates, many=True).data)
+
+    def post(self, request, tenant_id):
+        if request.tenant_id != tenant_id:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        def operation():
+            serializer = RecruiterEnteredCandidateCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            candidate = create_recruiter_entered_candidate(
+                membership=request.tenant_membership,
+                actor=request.user,
+                values=dict(serializer.validated_data),
+            )
+            return Response(
+                RecruiterEnteredCandidateSerializer(candidate).data,
+                status=status.HTTP_201_CREATED,
+            )
+
+        return execute(request, operation)

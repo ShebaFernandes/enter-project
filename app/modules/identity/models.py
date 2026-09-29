@@ -61,3 +61,42 @@ class IdentityCapability(models.Model):
                 name="uniq_active_global_capability",
             )
         ]
+
+
+class SessionCredential(models.Model):
+    class Assurance(models.TextChoices):
+        VERIFIED_EMAIL_OTP = "VERIFIED_EMAIL_OTP"
+        WORKFORCE_MFA = "WORKFORCE_MFA"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    identity = models.ForeignKey(Identity, on_delete=models.CASCADE, related_name="sessions")
+    session_key_hash = models.BinaryField(unique=True, editable=False)
+    provider_session_id = models.CharField(max_length=255, blank=True, editable=False)
+    provider = models.CharField(max_length=80, editable=False)
+    assurance = models.CharField(max_length=40, choices=Assurance, editable=False)
+    refresh_token_ciphertext = models.BinaryField(null=True, editable=False)
+    authenticated_at = models.DateTimeField(editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    revoked_at = models.DateTimeField(null=True, editable=False)
+    revocation_reason = models.CharField(max_length=80, blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    class Meta:
+        indexes = [models.Index(fields=("identity", "revoked_at", "expires_at"))]
+
+
+class StepUpEvidence(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    identity = models.ForeignKey(Identity, on_delete=models.CASCADE, related_name="step_up_events")
+    session_credential = models.ForeignKey(
+        SessionCredential, on_delete=models.CASCADE, related_name="step_up_events"
+    )
+    purpose = models.CharField(max_length=100, editable=False)
+    method = models.CharField(max_length=40, choices=SessionCredential.Assurance, editable=False)
+    nonce_hash = models.BinaryField(unique=True, editable=False)
+    verified_at = models.DateTimeField(editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    revoked_at = models.DateTimeField(null=True, editable=False)
+
+    class Meta:
+        indexes = [models.Index(fields=("identity", "purpose", "expires_at"))]

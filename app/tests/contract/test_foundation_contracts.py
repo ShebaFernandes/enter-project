@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from django.test import RequestFactory
 from rest_framework.test import APIRequestFactory
@@ -19,8 +21,9 @@ def test_strong_etag_rejects_stale_write_with_reconciliation_payload():
             current={"status": "OPEN"},
             attempted={"status": "CLOSED"},
         )
-    assert caught.value.detail["changed_fields"] == ["status"]
-    assert caught.value.detail["current_etag"] == strong_etag("object-1", 2)
+    detail = cast(dict[str, object], caught.value.detail)
+    assert detail["changed_fields"] == ["status"]
+    assert detail["current_etag"] == strong_etag("object-1", 2)
 
 
 def test_problem_response_is_rfc9457_shaped():
@@ -30,6 +33,8 @@ def test_problem_response_is_rfc9457_shaped():
         StaleWrite(current={"x": 1}, attempted={"x": 2}, object_id="1", version=1),
         {"request": request},
     )
+    assert response is not None
+    assert isinstance(response.data, dict)
     assert response.status_code == 409
     assert response.data["request_id"] == "request-1"
     assert response.data["current"] == {"x": 1}

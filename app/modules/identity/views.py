@@ -9,7 +9,7 @@ from modules.tenancy.context import effective_role
 from .services import (
     exchange_code,
     global_sign_out,
-    link_verified_identity,
+    link_identity_with_role,
     sign_in,
     start_login,
     validate_id_token,
@@ -57,6 +57,13 @@ def callback_view(request: HttpRequest) -> Response | HttpResponseRedirect:
         return Response({"title": "Identity response unavailable"}, status=400)
     tokens = exchange_code(code, verifier)
     claims = validate_id_token(str(tokens["id_token"]), nonce)
-    identity = link_verified_identity(claims)
-    sign_in(request, identity)
+    workforce = str(claims.get("custom:identity_type", "candidate")).casefold() == "workforce"
+    identity = link_identity_with_role(claims, workforce=workforce)
+    sign_in(
+        request,
+        identity,
+        claims=claims,
+        refresh_token=str(tokens.get("refresh_token", "")) or None,
+        workforce=workforce,
+    )
     return redirect("/")

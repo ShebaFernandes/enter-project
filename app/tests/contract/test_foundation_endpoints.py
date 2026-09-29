@@ -57,12 +57,12 @@ def test_business_unit_create_is_tenant_scoped_and_idempotent(recruiter, tenant)
     client = APIClient()
     client.force_login(recruiter.identity)
     headers = {
-        "HTTP_X_TENANT_ID": str(tenant.id),
-        "HTTP_IDEMPOTENCY_KEY": "synthetic-unit-key-0001",
+        "X-Tenant-ID": str(tenant.id),
+        "Idempotency-Key": "synthetic-unit-key-0001",
     }
     path = f"/api/v1/tenants/{tenant.id}/business-units"
-    first = client.post(path, {"name": "Synthetic Product"}, format="json", **headers)
-    replay = client.post(path, {"name": "Synthetic Product"}, format="json", **headers)
+    first = client.post(path, {"name": "Synthetic Product"}, format="json", headers=headers)
+    replay = client.post(path, {"name": "Synthetic Product"}, format="json", headers=headers)
     assert first.status_code == 201
     assert replay.status_code == 201
     assert replay.json()["id"] == first.json()["id"]

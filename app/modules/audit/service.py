@@ -17,11 +17,52 @@ FORBIDDEN_KEYS = {
     "email",
     "phone",
     "notification_body",
+    "destination",
+    "authorization",
+    "credential",
+    "password",
+    "refresh_token",
+    "id_token",
 }
 
 
-def _minimize(value: dict[str, Any]) -> dict[str, Any]:
-    return {key: item for key, item in value.items() if key.lower() not in FORBIDDEN_KEYS}
+def _minimize(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _minimize(item) for key, item in value.items() if key.lower() not in FORBIDDEN_KEYS
+        }
+    if isinstance(value, list):
+        return [_minimize(item) for item in value]
+    return value
+
+
+def _canonical_event_values(
+    *,
+    actor_id,
+    tenant_id,
+    action,
+    target_type,
+    target_id,
+    purpose_code,
+    outcome,
+    metadata,
+    previous_hash,
+) -> str:
+    return json.dumps(
+        {
+            "actor_id": str(actor_id or ""),
+            "tenant_id": str(tenant_id or ""),
+            "action": action,
+            "target_type": target_type,
+            "target_id": target_id,
+            "purpose_code": purpose_code,
+            "outcome": outcome,
+            "metadata": metadata,
+            "previous_hash": previous_hash,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 @transaction.atomic
@@ -39,20 +80,16 @@ def record_event(
     previous = AuditEvent.objects.select_for_update().order_by("-occurred_at", "-id").first()
     previous_hash = previous.event_hash if previous else ""
     safe_metadata = _minimize(metadata or {})
-    canonical = json.dumps(
-        {
-            "actor_id": str(getattr(actor, "pk", "")),
-            "tenant_id": str(tenant_id or ""),
-            "action": action,
-            "target_type": target_type,
-            "target_id": target_id,
-            "purpose_code": purpose_code,
-            "outcome": outcome,
-            "metadata": safe_metadata,
-            "previous_hash": previous_hash,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
+    canonical = _canonical_event_values(
+        actor_id=getattr(actor, "pk", ""),
+        tenant_id=tenant_id,
+        action=action,
+        target_type=target_type,
+        target_id=target_id,
+        purpose_code=purpose_code,
+        outcome=outcome,
+        metadata=safe_metadata,
+        previous_hash=previous_hash,
     )
     return AuditEvent.objects.create(
         actor=actor,
@@ -72,6 +109,19 @@ def verify_chain() -> bool:
     previous_hash = ""
     for event in AuditEvent.objects.order_by("occurred_at", "id"):
         if event.previous_hash != previous_hash:
+            return False
+        canonical = _canonical_event_values(
+            actor_id=event.actor_id,
+            tenant_id=event.tenant_id,
+            action=event.action,
+            target_type=event.target_type,
+            target_id=event.target_id,
+            purpose_code=event.purpose_code,
+            outcome=event.outcome,
+            metadata=event.metadata,
+            previous_hash=event.previous_hash,
+        )
+        if hashlib.sha256(canonical.encode()).hexdigest() != event.event_hash:
             return False
         previous_hash = event.event_hash
     return True

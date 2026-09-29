@@ -6,7 +6,7 @@ import time
 from django.core.cache import cache
 from django.http import JsonResponse
 
-from .policy import LIMITS, escalation_delay, tightened
+from .policy import LIMITS, active_override, escalation_delay, tightened
 
 PATH_ACTIONS = {
     "/auth/login": "sign-in",
@@ -18,7 +18,7 @@ PATH_ACTIONS = {
 }
 
 
-def _signal(request) -> str:
+def signal_token(request) -> str:
     identity = (
         str(request.user.pk) if getattr(request.user, "is_authenticated", False) else "anonymous"
     )
@@ -32,8 +32,11 @@ def action_for_path(path: str) -> str | None:
 
 def check(request, action: str, anomaly_score: int = 0) -> tuple[bool, int, int]:
     limit = tightened(LIMITS[action], anomaly_score)
+    subject_token = signal_token(request)
+    if active_override(subject_token=subject_token, action=action):
+        return True, limit.attempts, 0
     bucket = int(time.time()) // limit.window_seconds
-    key = f"rate:{action}:{_signal(request)}:{bucket}"
+    key = f"rate:{action}:{subject_token}:{bucket}"
     try:
         count = cache.incr(key)
     except ValueError:
