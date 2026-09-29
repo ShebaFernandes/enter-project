@@ -9,6 +9,7 @@ Authorization is evaluated server-side for every request and background operatio
 | Upload/read own clean resume | Own | Conditional read | Conditional read | No automatic access | Emergency only |
 | Search discoverable candidates | No | Conditional | Conditional | No automatic access | No routine access |
 | Read candidate contact/compensation | Own | Conditional + purpose/field scope | Conditional + purpose/field scope | No automatic access | Emergency only |
+| Read employment history/informational findings | Own | Conditional + purpose/object/field scope | Conditional + exact shared context and field scope | No automatic access | Emergency only |
 | Provision or alter tenant boundary | No | No | No | No | Audited platform-onboarding function only |
 | Create/manage business unit or opening | No | Conditional | Conditional | Tenant administration policy | No |
 | Create/read recruiter-entered synthetic candidate | No | Conditional in own tenant | Conditional read if shared | Metadata only | No |
@@ -40,6 +41,11 @@ Every authorization decision evaluates:
 7. current object state, grant validity, and record version;
 8. rate/abuse decision; and
 9. emergency grant scope, approval, expiry, and re-authentication when applicable.
+
+Informational findings inherit the source employment record's visibility, consent, purpose, tenant,
+object, and field scope. Possession of a finding ID or search-result snapshot never grants access to
+the finding or its evidence. `SHORT_TENURE` is not an authorization, eligibility, ranking, status, or
+hiring-outcome input.
 
 For `MATCHING_ROLES`, only an `OPENING` search whose authoritative `criteria.context` contains exactly one tenant-owned active `opening_id` may retrieve the profile, and deterministic candidate-controlled preferences are authorization predicates evaluated before ranking. An `AD_HOC` `criteria.context` must contain no `opening_id`, may retrieve only `APPROVED_RECRUITERS` profiles with a non-empty audience explicitly authorizing the tenant, and never bypasses candidate preferences. Saved-search input and output contain no independent opening field. For `APPLIED_ROLES_ONLY`, an application submitted by the candidate and current hiring-team authorization are required. AI output never grants visibility.
 

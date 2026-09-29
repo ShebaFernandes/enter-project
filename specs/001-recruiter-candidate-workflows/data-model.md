@@ -26,6 +26,7 @@ Identity ──< TenantMembership >── Tenant ──< BusinessUnit ──< Op
     │                                               │
     └── CandidateProfile ──< ResumeAsset            ├──< ApplicationStatusEvent
               │              └──< ExtractedFact     ├──< RecruiterNote
+              ├──< EmploymentRecord ──< CandidateFinding
               ├──< ConsentRecord                    └──< Notification
               ├──< VisibilityRule
               ├──< DisclosureRequest
@@ -121,6 +122,20 @@ Encrypted optional phone/WhatsApp and other approved contact channels with verif
 
 Candidate-controlled professional link with normalized URL, display label, verification state, and ordering. Never infer protected characteristics from link content.
 
+### `employment_record`
+
+Candidate-controlled employment history. Fields: `id`, `candidate_profile_id`, company, optional
+role title, nullable start/end date values, per-date state (`CONFIRMED`, `SUGGESTED`, `AMBIGUOUS`,
+`MISSING`),
+`is_current`, employment type (`PERMANENT`, `INTERNSHIP`, `APPRENTICESHIP`,
+`FIXED_TERM_CONTRACT`, `CONSULTING`, `SEASONAL`, `OTHER_TEMPORARY`, `OTHER`, `UNKNOWN`), employment-
+type review state, provenance, extraction confidence/source spans, ordering, `version`, and
+timestamps. End date must be null for a current role. A non-current record may remain incomplete for
+candidate correction, but it is eligible as a confirmed completed record only when both dates are
+complete and confirmed and the end is on or after the start; otherwise its finding evaluation is
+`INSUFFICIENT_DATA`. Extraction suggestions never become confirmed until candidate
+acceptance/correction and never synthesize absent values or a departure reason.
+
 ### `visibility_rule`
 
 Fields: `candidate_profile_id`, mode (`APPROVED_RECRUITERS`, `MATCHING_ROLES`, `APPLIED_ROLES_ONLY`, `NOT_LOOKING`), approved-tenant scope, deterministic matching-preference snapshot, effective timestamps, superseded record, policy version, actor, and consent record. Changes are append-only; `candidate_profile` references the current rule. A check/service invariant requires a non-empty approved-tenant scope for `APPROVED_RECRUITERS` and non-empty deterministic preferences for `MATCHING_ROLES`. `MATCHING_ROLES` additionally requires an active `OPENING` search before retrieval; `APPLIED_ROLES_ONLY` requires a submitted application and current hiring-team authorization.
@@ -150,6 +165,26 @@ Fields: resume, fact type, normalized candidate value, encrypted source excerpt 
 ### `profile_evidence` and `evidence_embedding`
 
 `profile_evidence` stores a minimal, provenance-linked, candidate-approved search fact. It identifies fact type, normalized value, self-reported/inferred status, source, confidence, visibility scope, and validity dates. `evidence_embedding` stores model/version, 512-dimensional vector, content hash, and indexing state. It contains no tenant-private note.
+
+### `candidate_finding`
+
+Generic derived evaluation linked to `candidate_profile_id`, `source_record_type`, and
+`source_record_id`. Fields: `id`, code (initially `SHORT_TENURE`), severity (`INFORMATIONAL`), result
+(`FOUND`, `NOT_FOUND`, `INSUFFICIENT_DATA`, `EXCLUDED`), evidence JSON, deterministic message key,
+calculation version, source-record version, evaluated time, superseded time, and lifecycle/audit
+references. The `SHORT_TENURE` evidence contains the employment-record ID, company, confirmed start
+and end values, calculated duration (`calendar_months` plus remaining days), calculation version, and
+evaluation timestamp; it never stores or infers a reason for leaving. A unique active evaluation per
+`(candidate_profile_id, code, source_record_type, source_record_id, calculation_version)` supports
+multiple qualifying employment records without duplicates.
+
+The evaluator compares a confirmed completed record's end date to its start date plus 12 calendar
+months. `end_date < start_date + 12 calendar months` yields `FOUND` unless the explicit employment
+type is internship, apprenticeship, fixed-term contract, consulting, seasonal, or other temporary,
+which yields `EXCLUDED`. Current records yield `NOT_FOUND`; incomplete or ambiguous dates yield
+`INSUFFICIENT_DATA`. Only active `FOUND` evaluations are recruiter-visible. Findings are attached to
+an already authorized result/detail projection after eligibility, scoring, and ordering and have no
+foreign key or service write path to ranking, recommendation, application status, or hiring outcome.
 
 ## Recruiting Data
 
@@ -336,11 +371,13 @@ Consent withdrawal/profile hiding changes visibility immediately even while down
 8. Business-unit identifiers never replace or broaden tenant predicates.
 9. Matching-role authorization is deterministic and precedes ranking; AI output cannot grant eligibility.
 10. Emergency access requires a different designated Platform Security Admin approver, exact read scope, live expiry/revocation checks, and affected-Tenant-Admin notification.
+11. Employment records and findings require the same candidate visibility, purpose, object, and
+    field-scope authorization as their source profile; a finding never broadens access to evidence.
 
 ## Indexes and Partitioning
 
-- Unique: verified email HMAC; `(opening_id, candidate_profile_id)` application; active membership; event idempotency keys.
-- B-tree: tenant plus state/timestamp on openings, applications, notifications, outbox, searches, grants.
+- Unique: verified email HMAC; `(opening_id, candidate_profile_id)` application; active membership; event idempotency keys; active candidate finding by candidate/code/source/calculation version.
+- B-tree: tenant plus state/timestamp on openings, applications, notifications, outbox, searches, grants; candidate finding by profile/result/evaluated time.
 - GIN: normalized skills/criteria, profile full-text `tsvector`, approved JSONB fields.
 - GiST/trigram: normalized names/roles/companies for controlled fuzzy matching.
 - HNSW `pgvector`: approved evidence embeddings, with visibility/region/status prefilter strategy verified by query plans.
@@ -358,6 +395,7 @@ Consent withdrawal/profile hiding changes visibility immediately even while down
 | LangGraph checkpoints | 7 days after completion; maximum 30 days while awaiting human review |
 | Export files | 24 hours, then delete |
 | Candidate rights requests | Operational record through completion/support window; candidate content follows its source retention and deletion decision |
+| Employment records and candidate findings | Follow the candidate profile and source-record correction/deletion; obsolete findings are superseded immediately and erased with the source except minimized audit evidence |
 | Recruiter-entered candidate | Synthetic launch data only; delete on tenant sandbox reset or the approved short synthetic-fixture schedule |
 | Disclosure requests | Minimized operational/audit evidence under the approved application and disclosure schedule |
 | Access reviews | Approved security-governance schedule; no candidate content |

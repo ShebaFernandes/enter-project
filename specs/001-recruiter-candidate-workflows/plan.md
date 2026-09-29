@@ -86,9 +86,9 @@ Detailed decisions and rejected alternatives are in [research.md](./research.md)
 |---|---|---|
 | `identity` | Cognito/OIDC callback, session assurance, verified-email linking, sign-out | No domain authorization from IdP groups alone |
 | `tenancy` | Platform-provisioned company tenants, business units, memberships, fixed roles, object/team scope, tenant switching | Exactly one effective tenant per request; business units never become isolation boundaries |
-| `candidate` | Candidate profile, links, candidate-controlled edits, consent/visibility, resume quarantine/review, and profile lifecycle | Global profile is not tenant-owned; no resume read before clean tag; consent changes invalidate search/cache immediately |
-| `recruiting` | Business units/openings, applications, recruiter-entered synthetic candidates, sourced-candidate work records, internal status, candidate-status preview/confirm, contextual notes, contact/share, shortlist, and compare | Tenant scoped; candidate-work and application records link without merging; private notes never candidate-visible |
-| `search` | Typed criteria, strict filtering, hybrid retrieval, ranking, cited evidence | Authorize before retrieve/rank |
+| `candidate` | Candidate profile, employment history, links, candidate-controlled edits, consent/visibility, resume quarantine/review, generic derived findings, and profile lifecycle | Global profile is not tenant-owned; no resume read before clean tag; candidate corrections invalidate findings/search/cache immediately |
+| `recruiting` | Business units/openings, applications, recruiter-entered synthetic candidates, sourced-candidate work records, internal status, candidate-status preview/confirm, contextual notes, contact/share, shortlist, and compare | Tenant scoped; candidate-work and application records link without merging; private notes never candidate-visible; informational findings never cause a recruiting action |
+| `search` | Typed criteria, strict filtering, hybrid retrieval, ranking, cited evidence, and authorized informational-finding projection | Authorize before retrieve/rank; findings are projected after ranking and never enter score, eligibility, or ordering |
 | `ai` | Model gateway, prompts/schemas, embeddings, evaluations | No auth, consent, autonomous write, or consequential decision |
 | `communications` | Template rendering, channel consent, queued delivery, visible status | External send occurs after commit and is idempotent |
 | `privacy` | Self-service rights center, access/correction, withdrawal/hiding, 24-hour exports, deletion, inactivity renewal, legal holds | Immediate hiding is separate from bounded erasure; erasure covers source and derived stores |
@@ -191,7 +191,8 @@ The event contract is [contracts/events.md](./contracts/events.md).
 3. Validate the sole authoritative `criteria.context`: `OPENING` contains exactly one tenant-owned active `opening_id` and is the only context eligible to retrieve `MATCHING_ROLES`; `AD_HOC` contains no `opening_id`, retrieves only explicitly authorized `APPROVED_RECRUITERS`, and never bypasses candidate preferences. Apply `APPLIED_ROLES_ONLY` only through the submitted application and authorized hiring team.
 4. Reject duplicate/missing group or criterion IDs and cross-search group references; apply requirement and exclusion groups in SQL using their confirmed `ANY|ALL` operators, then calculate preference, text, and vector signals only inside the authorized candidate set.
 5. Rank deterministically with versioned weights. Return supporting evidence, provenance, unknowns, and exclusions; do not use protected traits/proxies.
-6. Optionally ask the in-region model to phrase an explanation from bounded evidence IDs. Validate every claim-to-evidence citation; otherwise return deterministic labels.
+6. Attach currently authorized informational findings only after eligibility, scoring, and rank are final. A versioned deterministic evaluator creates `SHORT_TENURE` from confirmed completed non-temporary employment records; it has no write path to score, rank, recommendation, status, or outcome.
+7. Optionally ask the in-region model to phrase an explanation from bounded evidence IDs. Validate every claim-to-evidence citation; otherwise return deterministic labels. Finding messages use deterministic templates rather than generated conclusions.
 
 ### Model choices and controls
 
@@ -199,6 +200,7 @@ The event contract is [contracts/events.md](./contracts/events.md).
 - Evaluate Gemma 3 12B IT in Mumbai for structured text tasks; use Titan Text Embeddings V2 at 512 dimensions. Final model promotion is evidence-based, not hardwired to a vendor name.
 - Deny geo/global inference profiles. No raw candidate prompts/outputs in CloudWatch or LangSmith. Bedrock invocation and encrypted storage stay in the India deployment boundary.
 - Model output never controls authentication, permissions, visibility, status publication, communication, ranking filters, or deletion.
+- Resume extraction may suggest employment dates and employment type with confidence and source spans, but only candidate-confirmed values enter deterministic finding evaluation. The model cannot label a candidate a job hopper, create `SHORT_TENURE`, infer a reason for leaving, or decide whether a finding applies.
 
 ### RAG and agents
 
@@ -235,7 +237,7 @@ LangSmith is a non-production evaluation aid using synthetic or irreversibly de-
 
 ### Test layers
 
-- **Unit/property**: validation, status maps, strict filters, retention dates, redaction, permissions, idempotency, version conflicts, scoring, currency/time rules.
+- **Unit/property**: validation, status maps, strict filters, retention dates, redaction, permissions, idempotency, version conflicts, scoring, currency/time rules, calendar-month duration boundaries, temporary-employment exclusions, and finding non-interference invariants.
 - **Database**: migrations, constraints, RLS under missing/wrong/correct contexts, encryption boundaries, partition and deletion behavior.
 - **Contract**: OpenAPI request/response, event schemas and compatibility, provider adapters, error/problem shapes.
 - **Integration**: Cognito, S3/GuardDuty clean-tag path, SQS duplicate delivery/DLQ, SES, Bedrock schemas/timeouts, KMS/Secrets, backup replication.
@@ -307,6 +309,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 
 - Migrate candidate portal UI; server validation and version conflicts.
 - Quarantine/scan/parse/manual-entry/review flow; no clean-tag bypass.
+- Candidate-controlled employment records with confirmed/ambiguous date state, employment type, extraction confidence/source spans, correction, and no invented values.
 - Visibility and consent grants; publish/hide; inactivity renewal and deletion ledger.
 - Rights export/correction/withdrawal/deletion with legal-hold boundary.
 
@@ -326,6 +329,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 - Manual typed criteria with stable IDs and `ANY|ALL` groups, conditional `AD_HOC`/active-opening `OPENING` contexts, deterministic SQL requirement/exclusion evaluation, structured text search, evidence/provenance, and recent searches.
 - Progressive-enhancement speech input with explicit unavailable, denied, listening, transcribing, ready, and failed states; typed search remains complete.
 - Results, filtering, and read-only authorized evidence/profile inspection matching the mockup; state-changing candidate-work, notes, status, and comparison follow in Phase 8.
+- Generic candidate findings with a deterministic `SHORT_TENURE` evaluator, correction-triggered recalculation, strict non-interference with eligibility/scoring/ranking/status, and neutral evidence-based authorized presentation.
 - One-million-profile indexing/query-plan and three-second p95 load gate.
 
 **Exit**: correct authorized deterministic search works without AI.
@@ -335,6 +339,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 - Model gateway, in-region model allowlist, embeddings, evaluation harness.
 - Search interpretation and explanation with evidence validation.
 - Resume/search LangGraph interrupts and checkpoint expiry.
+- Optional employment-date/type extraction with confidence and source spans; no model decision, “job hopper” classification, departure-reason inference, or finding creation.
 - Synthetic/de-identified LangSmith evaluation only.
 
 **Exit**: AI quality, security, privacy, fairness, lifecycle, latency/cost, and manual-fallback gates pass; disabling AI preserves core journeys.
@@ -378,6 +383,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 | OpenSearch | Sensitive-data duplication and eventual authorization/deletion consistency before demonstrated need |
 | Bedrock Knowledge Bases as core search | Cannot own strict transactional authorization/filtering and application semantics |
 | Autonomous Bedrock/LangGraph agents | Tool authority is incompatible with bounded, human-reviewed hiring assistance |
+| LLM-created short-tenure or “job hopper” conclusions | Duration and exclusions are deterministic calendar rules; model judgment would invent causality and risk consequential bias |
 | Production LangSmith SaaS traces | Candidate-data residency/disclosure risk; production needs metrics, not raw prompts |
 | Active/active multi-region writes | Complexity not justified by 99.9% SLO and four-hour RTO |
 | Custom authentication or browser JWT storage | Higher credential/token risk than managed IdP plus HttpOnly backend session |

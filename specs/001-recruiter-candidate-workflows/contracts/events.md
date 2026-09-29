@@ -31,6 +31,8 @@ Consumers reject unknown major schema versions, tolerate additive fields, re-aut
 | `resume.extraction_ready.v1` | Parser worker | Create reviewable suggestions | Never auto-publish fields |
 | `profile.published.v1` | Candidate service | Create/update authorized search projection | If indexing fails, mark `INDEX_PENDING` and retry |
 | `profile.visibility_changed.v1` | Consent service | Remove/update projections and caches | Privacy-priority queue; alarm on age |
+| `profile.employment_history_changed.v1` | Candidate profile service | Recalculate generic findings for changed employment-record IDs and invalidate affected authorized projections | Payload contains IDs/versions and changed-field names only; idempotent by profile/version; never carries company, dates, or departure reason |
+| `candidate.findings_recalculated.v1` | Deterministic finding evaluator | Refresh authorized search/detail projections and retire obsolete finding references | Eligibility, score, rank, recommendation, application status, and outcome remain unchanged; re-authorize before projection |
 | `profile.deletion_requested.v1` | Rights/lifecycle service | Orchestrate erasure across stores | Durable saga with per-store completion ledger |
 | `rights.export_requested.v1` | Rights service | Re-authorize and build complete encrypted export | Complete within 24h; partial artifact never downloadable; link expires 24h after ready |
 | `rights.deletion_confirmed.v1` | Rights service | Hide immediately and orchestrate 30-day erasure | Step-up proof required; exact active-process/legal-hold scope may be held |

@@ -4,7 +4,7 @@
 
 | Capability | AI role | Human/deterministic boundary |
 |---|---|---|
-| Resume extraction | Suggest structured facts with provenance/confidence | Candidate reviews/corrects; deterministic validation; no auto-publication |
+| Resume extraction | Suggest structured facts, including employment dates/type, with provenance, confidence, and source spans | Candidate reviews/corrects; deterministic validation; no auto-publication or invented values |
 | Search interpretation | Convert prompt into typed criteria and flag ambiguity | Recruiter reviews ambiguous criteria; strict filters execute deterministically |
 | Semantic retrieval | Embed approved evidence and query meaning | Authorization and candidate visibility filter before retrieval/ranking |
 | Match explanation | Summarize cited, authorized evidence and unknowns | Deterministic score/evidence remains source of truth; suppress unsupported prose |
@@ -20,6 +20,9 @@
 - Training/fine-tuning on candidate data without a separately approved purpose and consent basis.
 - Sending raw candidate content through geo/global cross-region inference or unapproved external tracing.
 - Treating generated content, embeddings, or model confidence as an authoritative candidate fact.
+- Deciding whether `SHORT_TENURE` applies, labeling a candidate a “job hopper,” inferring why a role
+  ended, or allowing an employment finding to change eligibility, score, rank, recommendation,
+  status, or outcome.
 
 ## Inference Contract
 
@@ -29,6 +32,9 @@
 4. Output must validate against the exact JSON schema. Invalid output gets one repair attempt; then deterministic/manual fallback.
 5. Store model ID, prompt version, input hash, output hash, latency, token counts, and result category—not raw production prompt/output—in telemetry.
 6. Cache only non-sensitive, scope-keyed results; consent/visibility changes invalidate affected cache/projections.
+7. Employment extraction returns nullable source-backed date/type suggestions only. Missing or
+   ambiguous values remain missing or ambiguous; the deterministic finding evaluator consumes only
+   candidate-confirmed records and is not exposed as a model tool.
 
 ## RAG Sequence
 

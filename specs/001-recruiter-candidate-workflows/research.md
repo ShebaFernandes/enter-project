@@ -219,6 +219,35 @@ Use WAF for coarse network/bot protection and an application limiter backed by V
 
 **Rationale**: The tenant identifier remains a stable contractual/security boundary rather than user-created application data.
 
+## Decision 16: Generic informational findings and deterministic short-tenure evaluation
+
+**Decision**: Add a generic, versioned `CandidateFinding` evaluation structure rather than a
+feature-specific table. Candidate-controlled employment records retain confirmed or ambiguous date
+state, employment type, provenance, confidence, and source spans. Versioned deterministic backend
+code evaluates only confirmed completed records and creates one informational `SHORT_TENURE` result
+per qualifying non-temporary record when `end_date < start_date + 12 calendar months`. Current roles,
+temporary engagements, and insufficient dates produce no recruiter warning. Candidate corrections
+recalculate by source-record ID and retire obsolete results. Recruiter projections attach currently
+authorized findings only after eligibility, score, and rank have been finalized.
+
+**Rationale**:
+
+- The existing `profile_evidence` structure represents candidate-approved facts used by retrieval;
+  reusing it for a warning could accidentally couple the signal to ranking.
+- A generic finding structure supports evidence, versioning, recalculation, privacy lifecycle, and
+  future informational rules without introducing a `short_tenure` table.
+- Separating extraction, deterministic evaluation, and presentation prevents model confidence or
+  generated prose from becoming a hiring decision.
+
+**Alternatives rejected**:
+
+- **Reuse `profile_evidence`**: risks treating an informational finding as a match or ranking fact.
+- **Create a short-tenure-specific table**: unnecessary schema coupling for one deterministic rule.
+- **Ask an LLM whether a candidate is a job hopper**: subjective, consequential, and likely to infer
+  missing dates or reasons for departure.
+- **Compute findings in the browser**: would make authorization, versioning, correction, audit, and
+  cross-tenant behavior inconsistent.
+
 ## Resolved Defaults
 
 | Area | Default |

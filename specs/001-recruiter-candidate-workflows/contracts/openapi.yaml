@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Recruiter and Candidate Workflow API
-  version: 1.0.0
+  version: 1.1.0
   description: >-
     Same-origin API contract for the server-rendered application. Authentication uses a secure
     HttpOnly application session; unsafe methods also require CSRF protection. All protected
@@ -1360,7 +1360,7 @@ components:
         expires_at: {type: string, format: date-time}
     CandidateProfile:
       type: object
-      required: [id, full_name, location, experience_years, skills, profile_state, visibility, version]
+      required: [id, full_name, location, experience_years, skills, employment_history, profile_state, visibility, version]
       properties:
         id: {$ref: '#/components/schemas/Id'}
         full_name: {type: string, maxLength: 200}
@@ -1370,6 +1370,9 @@ components:
         current_company: {type: [string, 'null'], maxLength: 200}
         experience_years: {type: number, minimum: 0, multipleOf: 0.01}
         skills: {type: array, minItems: 1, items: {type: string, minLength: 1}}
+        employment_history:
+          type: array
+          items: {$ref: '#/components/schemas/EmploymentRecord'}
         role_categories: {type: array, items: {type: string}}
         preferred_locations: {type: array, items: {type: string}}
         work_arrangements: {type: array, items: {type: string, enum: [FLEXIBLE, REMOTE, HYBRID, ON_SITE]}}
@@ -1401,6 +1404,9 @@ components:
         current_company: {type: [string, 'null'], maxLength: 200}
         experience_years: {type: number, minimum: 0, multipleOf: 0.01}
         skills: {type: array, minItems: 1, items: {type: string, minLength: 1}}
+        employment_history:
+          type: array
+          items: {$ref: '#/components/schemas/EmploymentRecordInput'}
         role_categories: {type: array, items: {type: string}}
         preferred_locations: {type: array, items: {type: string}}
         work_arrangements: {type: array, items: {type: string, enum: [FLEXIBLE, REMOTE, HYBRID, ON_SITE]}}
@@ -1557,9 +1563,112 @@ components:
         operator: {type: string, enum: [EQ, NE, LT, LTE, GT, GTE, IN, NOT_IN, CONTAINS, EXISTS]}
         value: {}
       additionalProperties: false
+    EmploymentRecord:
+      type: object
+      required: [id, company, start_date, end_date, start_date_state, end_date_state, is_current, employment_type, employment_type_state, provenance, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        company: {type: string, minLength: 1, maxLength: 300}
+        role_title: {type: [string, 'null'], maxLength: 300}
+        start_date: {type: [string, 'null'], format: date}
+        end_date: {type: [string, 'null'], format: date}
+        start_date_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        end_date_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        is_current: {type: boolean}
+        employment_type:
+          type: string
+          enum: [PERMANENT, INTERNSHIP, APPRENTICESHIP, FIXED_TERM_CONTRACT, CONSULTING, SEASONAL, OTHER_TEMPORARY, OTHER, UNKNOWN]
+        employment_type_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        provenance: {type: string, enum: [CANDIDATE_REPORTED, RESUME_EXTRACTED]}
+        confidence: {type: [number, 'null'], minimum: 0, maximum: 1}
+        source_spans:
+          type: array
+          items:
+            type: object
+            required: [resume_id, start_offset, end_offset]
+            properties:
+              resume_id: {$ref: '#/components/schemas/Id'}
+              page: {type: [integer, 'null'], minimum: 1}
+              start_offset: {type: integer, minimum: 0}
+              end_offset: {type: integer, minimum: 0}
+            additionalProperties: false
+        version: {type: integer, minimum: 1}
+      allOf:
+        - if:
+            properties: {is_current: {const: true}}
+            required: [is_current]
+          then:
+            properties:
+              end_date: {type: 'null'}
+        - if:
+            properties: {start_date_state: {const: CONFIRMED}}
+            required: [start_date_state]
+          then:
+            properties:
+              start_date: {type: string, format: date}
+        - if:
+            properties: {end_date_state: {const: CONFIRMED}}
+            required: [end_date_state]
+          then:
+            properties:
+              end_date: {type: string, format: date}
+      additionalProperties: false
+      description: Current roles require a null end_date. Only candidate-accepted/corrected CONFIRMED values are eligible for deterministic finding evaluation; missing values and reasons for departure are never inferred.
+    EmploymentRecordInput:
+      type: object
+      required: [company, start_date, end_date, start_date_state, end_date_state, is_current, employment_type, employment_type_state, provenance]
+      properties:
+        id:
+          anyOf: [{$ref: '#/components/schemas/Id'}, {type: 'null'}]
+          description: Existing record ID for correction; null or absent creates a server-assigned stable ID.
+        company: {type: string, minLength: 1, maxLength: 300}
+        role_title: {type: [string, 'null'], maxLength: 300}
+        start_date: {type: [string, 'null'], format: date}
+        end_date: {type: [string, 'null'], format: date}
+        start_date_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        end_date_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        is_current: {type: boolean}
+        employment_type:
+          type: string
+          enum: [PERMANENT, INTERNSHIP, APPRENTICESHIP, FIXED_TERM_CONTRACT, CONSULTING, SEASONAL, OTHER_TEMPORARY, OTHER, UNKNOWN]
+        employment_type_state: {type: string, enum: [CONFIRMED, SUGGESTED, AMBIGUOUS, MISSING]}
+        provenance: {type: string, enum: [CANDIDATE_REPORTED, RESUME_EXTRACTED]}
+        confidence: {type: [number, 'null'], minimum: 0, maximum: 1}
+        source_spans:
+          type: array
+          items:
+            type: object
+            required: [resume_id, start_offset, end_offset]
+            properties:
+              resume_id: {$ref: '#/components/schemas/Id'}
+              page: {type: [integer, 'null'], minimum: 1}
+              start_offset: {type: integer, minimum: 0}
+              end_offset: {type: integer, minimum: 0}
+            additionalProperties: false
+      allOf:
+        - if:
+            properties: {is_current: {const: true}}
+            required: [is_current]
+          then:
+            properties:
+              end_date: {type: 'null'}
+        - if:
+            properties: {start_date_state: {const: CONFIRMED}}
+            required: [start_date_state]
+          then:
+            properties:
+              start_date: {type: string, format: date}
+        - if:
+            properties: {end_date_state: {const: CONFIRMED}}
+            required: [end_date_state]
+          then:
+            properties:
+              end_date: {type: string, format: date}
+      additionalProperties: false
+      description: Missing or ambiguous values remain explicit. The service rejects confirmed completed records without valid complete dates and never accepts or derives a reason for departure.
     SearchResult:
       type: object
-      required: [candidate_id, evidence, unknowns]
+      required: [candidate_id, evidence, findings, unknowns]
       properties:
         candidate_id: {$ref: '#/components/schemas/Id'}
         summary: {type: object}
@@ -1572,6 +1681,9 @@ components:
               evidence_id: {$ref: '#/components/schemas/Id'}
               label: {type: string}
               provenance: {type: string, enum: [CANDIDATE_REPORTED, RESUME_ACCEPTED, APPLICATION]}
+        findings:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateFinding'}
         unknowns: {type: array, items: {type: string}}
         explanation: {type: [string, 'null']}
     SavedSearch:
@@ -1590,13 +1702,62 @@ components:
       description: criteria.context is the sole authoritative search context; no independent opening_id is accepted or exposed.
     CandidateDetail:
       type: object
-      required: [candidate_id, permitted_fields, evidence, unknowns]
+      required: [candidate_id, permitted_fields, evidence, findings, unknowns]
       properties:
         candidate_id: {$ref: '#/components/schemas/Id'}
         permitted_fields: {type: object}
         evidence: {type: array, items: {type: object}}
+        findings: {type: array, items: {$ref: '#/components/schemas/CandidateFinding'}}
         unknowns: {type: array, items: {type: string}}
         access_context: {type: object}
+    CandidateFinding:
+      type: object
+      required: [id, code, severity, informational_only, message, evidence, calculation_version, evaluated_at]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        code: {const: SHORT_TENURE}
+        severity: {const: INFORMATIONAL}
+        informational_only: {const: true}
+        message: {type: string, minLength: 1, maxLength: 500}
+        evidence: {$ref: '#/components/schemas/ShortTenureEvidence'}
+        calculation_version: {type: string, minLength: 1, maxLength: 100}
+        evaluated_at: {type: string, format: date-time}
+      additionalProperties: false
+      description: Returned only after current tenant/object/purpose/visibility/field authorization. It is presentation-only and never affects eligibility, score, rank, recommendation, application status, or hiring outcome.
+      example:
+        id: 018f62f4-7c42-7e8a-b810-0a65d77be410
+        code: SHORT_TENURE
+        severity: INFORMATIONAL
+        informational_only: true
+        message: Candidate left XYZ Company after approximately 8 months.
+        evidence:
+          employment_record_id: 018f62f4-7c42-7e8a-b810-0a65d77be411
+          company: XYZ Company
+          confirmed_start_date: '2025-01-01'
+          confirmed_end_date: '2025-09-01'
+          calculated_duration: {calendar_months: 8, remaining_days: 0}
+          calculation_version: short-tenure-v1
+          evaluated_at: '2026-09-29T10:00:00Z'
+        calculation_version: short-tenure-v1
+        evaluated_at: '2026-09-29T10:00:00Z'
+    ShortTenureEvidence:
+      type: object
+      required: [employment_record_id, company, confirmed_start_date, confirmed_end_date, calculated_duration, calculation_version, evaluated_at]
+      properties:
+        employment_record_id: {$ref: '#/components/schemas/Id'}
+        company: {type: string, minLength: 1, maxLength: 300}
+        confirmed_start_date: {type: string, format: date}
+        confirmed_end_date: {type: string, format: date}
+        calculated_duration:
+          type: object
+          required: [calendar_months, remaining_days]
+          properties:
+            calendar_months: {type: integer, minimum: 0, maximum: 11}
+            remaining_days: {type: integer, minimum: 0, maximum: 30}
+          additionalProperties: false
+        calculation_version: {type: string, minLength: 1, maxLength: 100}
+        evaluated_at: {type: string, format: date-time}
+      additionalProperties: false
     ComparisonRequest:
       type: object
       required: [candidate_ids, context_type, context_id]

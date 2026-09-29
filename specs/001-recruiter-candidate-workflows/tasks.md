@@ -102,20 +102,22 @@
 - [ ] T056 [P] [US1] Add export tests for full scope, 24-hour completion, authenticated delivery, 24-hour expiry, rate limiting, and auditing in `app/tests/integration/candidate/test_rights_export.py`
 - [ ] T057 [P] [US1] Add deletion tests for absent/stale/recent step-up, required consequence confirmation, immediate hiding, 30-day completion, exact versioned `ActiveProcessRetentionException` fields/lifecycle, terminating-event resolution, legal holds, irreversible analytics, and service-layer revalidation in `app/tests/integration/candidate/test_rights_deletion.py`
 - [ ] T058 [P] [US1] Add browser tests for profile editing, consent, conflicts, rights status, exports, deletion, support escalation, keyboard use, and responsive reflow in `app/tests/browser/candidate/rights-center.spec.ts`
+- [ ] T200 [P] [US1] Add employment-history validation and correction tests covering stable record IDs, complete/partial/ambiguous dates, current-role end-date rules, employment-type enums, extraction confidence/source spans, and prohibition on invented dates, duration, employer, type, or departure reason in `app/tests/unit/candidate/test_employment_history.py`
 
 ### Implementation for User Story 1
 
 - [ ] T059 [P] [US1] Create profile, skill, contact, link, visibility, consent, resume, extracted-fact, and evidence models with the exact constraints in `app/modules/candidate/models.py`
+- [ ] T201 [P] [US1] Add candidate-controlled `EmploymentRecord` with nullable date values, `CONFIRMED|SUGGESTED|AMBIGUOUS|MISSING` field states, current/completed consistency, `PERMANENT|INTERNSHIP|APPRENTICESHIP|FIXED_TERM_CONTRACT|CONSULTING|SEASONAL|OTHER_TEMPORARY|OTHER|UNKNOWN` type, provenance, confidence/source spans, versioning, and no departure-reason field in `app/modules/candidate/models.py`
 - [ ] T060 [P] [US1] Create rights request, rights export, legal hold, deletion ledger, and versioned `ActiveProcessRetentionException` with candidate/application reference, policy version, legal basis, retained scope, lifecycle state, start/review/resolution dates, terminating event, approver, and audit references in `app/modules/privacy/models.py`
 - [ ] T061 [US1] Generate profile/privacy migrations with one profile per verified identity, publication constraints, and rights indexes in `app/modules/candidate/migrations/` and `app/modules/privacy/migrations/`
-- [ ] T062 [US1] Implement profile access, correction, completeness, truthful-field validation, publication, and optimistic reconciliation in `app/modules/candidate/services.py`
+- [ ] T062 [US1] Implement profile and employment-history access, correction, completeness, truthful-field validation, publication, optimistic reconciliation, and minimized `profile.employment_history_changed.v1` emission by changed record ID/version in `app/modules/candidate/services.py`
 - [ ] T063 [US1] Implement four-mode visibility and consent policy with non-empty explicit audience for `APPROVED_RECRUITERS`, deterministic preferences for `MATCHING_ROLES`, immediate withdrawal/hiding, conditional validation, and no discoverability before valid consent in `app/modules/candidate/visibility.py`
-- [ ] T064 [US1] Implement quarantined upload, MIME/signature/size checks, malware scan gate, parsing, provenance, partial/failure states, and manual fallback in `app/modules/candidate/resume_service.py`
+- [ ] T064 [US1] Implement quarantined upload, MIME/signature/size checks, malware scan gate, parsing, provenance, partial/failure states, manual fallback, and nullable employment-date/type suggestions with confidence/source spans that never invent missing values or departure reasons in `app/modules/candidate/resume_service.py`
 - [ ] T065 [US1] Implement rights access/correction/withdrawal/hiding orchestration, visible states, expected completion, failure reason, and escalation in `app/modules/privacy/services.py`
 - [ ] T066 [US1] Implement minimized export generation, authenticated download, 24-hour SLA/expiry, cleanup, and audit in `app/modules/privacy/export_service.py` and `app/modules/privacy/workers.py`
 - [ ] T067 [US1] Implement recent subject-bound step-up plus explicit consequence confirmation, immediate hiding, versioned `ActiveProcessRetentionException` creation/review/resolution, 30-day erasure, anonymized aggregates, and deletion evidence in `app/modules/privacy/deletion_service.py`
-- [ ] T068 [US1] Implement profile, visibility, resume, and rights endpoints from the OpenAPI contract in `app/modules/candidate/views.py`, `app/modules/privacy/views.py`, and `app/config/urls.py`
-- [ ] T069 [P] [US1] Build the accessible profile editor, evidence review, completion summary, consent, and visibility controls in `app/frontend/candidate/profile.ts` and `app/frontend/styles/candidate-profile.css`
+- [ ] T068 [US1] Implement profile, employment-history, visibility, resume, and rights endpoints from the OpenAPI contract in `app/modules/candidate/views.py`, `app/modules/privacy/views.py`, and `app/config/urls.py`
+- [ ] T069 [P] [US1] Build the accessible profile and employment-history editor, evidence review, date/type ambiguity correction, completion summary, consent, and visibility controls in `app/frontend/candidate/profile.ts` and `app/frontend/styles/candidate-profile.css`
 - [ ] T070 [P] [US1] Build resume idle/reading/success/partial/failure UI with manual-entry recovery in `app/frontend/candidate/resume.ts` and `app/frontend/templates/candidate/profile.html`
 - [ ] T071 [US1] Build the verified rights center with request history, export expiry, deletion confirmation, holds, failures, and escalation in `app/frontend/candidate/rights-center.ts` and `app/frontend/templates/candidate/rights-center.html`
 - [ ] T072 [US1] Add 320px-through-desktop reflow, 200% zoom, focus, error summaries, live regions, and reduced motion in `app/frontend/styles/forms.css` and `app/frontend/styles/responsive.css`
@@ -141,17 +143,22 @@
 - [ ] T079 [P] [US2] Add ranking tests for requirement/preference/exclusion groups, `ANY|ALL` semantics, duplicate/missing/cross-search group references, stable IDs, unknowns, stable ties, and protected/proxy exclusion in `app/tests/unit/search/test_ranking.py`
 - [ ] T080 [P] [US2] Add browser tests for side-panel states, empty/loading/error/results/filter/detail states, persistence, keyboard use, and responsive cards in `app/tests/browser/recruiter/search.spec.ts`
 - [ ] T081 [P] [US2] Add speech tests for unsupported, denied, listening, transcribing, ready, failed, editable transcript, and no-auto-submit states in `app/tests/browser/recruiter/speech-search.spec.ts`
+- [ ] T202 [P] [US2] Add deterministic `SHORT_TENURE` tests proving an 8-month completed permanent role produces one informational finding, a 12-month role/current 8-month role/missing or ambiguous dates/internship/fixed-term role produce no warning, multiple qualifying roles produce separate findings, correction removes obsolete findings, and findings leave eligibility, score, rank, recommendation, application status, and outcome unchanged in `app/tests/unit/search/test_candidate_findings.py`
+- [ ] T203 [P] [US2] Add contract, authorization, and presentation tests proving cross-tenant or unauthorized finding access is denied and authorized APIs/UI expose only neutral `SHORT_TENURE` messages plus employment-record ID, company, confirmed dates, calculated duration, calculation version, and evaluation time without a departure reason in `app/tests/contract/test_candidate_findings_api.py` and `app/tests/browser/recruiter/candidate-findings.spec.ts`
 
 ### Implementation for User Story 2
 
 - [ ] T082 [P] [US2] Create search definition whose authoritative `criteria.context` is `AD_HOC` without `opening_id` or `OPENING` with exactly one `opening_id`, plus optional server-derived read-only opening index, stable criteria-group/criterion entities with `ANY|ALL`, result snapshot, evidence, and recent-search models with seven-day expiry and six-ad-hoc-search cap in `app/modules/search/models.py`
+- [ ] T204 [P] [US2] Add generic versioned `CandidateFinding` storage with `FOUND|NOT_FOUND|INSUFFICIENT_DATA|EXCLUDED`, source-record identity/version, informational severity, evidence, calculation version/time, supersession, audit references, and unique active source/code/version evaluation in `app/modules/candidate/models.py` and `app/modules/candidate/migrations/`
+- [ ] T205 [US2] Implement versioned deterministic calendar-month `SHORT_TENURE` evaluation, temporary/current-role exclusions, insufficient-data marking, per-record findings, correction-triggered recalculation/retirement, minimized events, and a structural prohibition on writes to eligibility, score, rank, recommendation, status, or outcome in `app/modules/candidate/finding_evaluators.py` and `app/modules/candidate/finding_events.py`
 - [ ] T083 [US2] Generate constraints requiring any derived opening foreign key to be null for `AD_HOC` and equal `criteria.context.opening_id` for `OPENING`, plus active-reference support, group/criterion uniqueness and composite references, indexes, tenant uniqueness, and retention migrations in `app/modules/search/migrations/`
 - [ ] T084 [US2] Implement work-identity eligibility, global navigation/session projection, sign-out, and protected-route history controls in `app/modules/identity/recruiter_access.py` and `app/frontend/shared/navigation.ts`
 - [ ] T085 [US2] Implement service-layer validation of the sole authoritative `criteria.context` before ranking: exactly one active tenant-owned opening plus preferences for `MATCHING_ROLES`, no `opening_id` property and explicit audience for `AD_HOC`, derived-field equality, and submitted-application team authorization for Applied roles only in `app/modules/search/eligibility.py`
 - [ ] T086 [US2] Implement requirement/preference/exclusion group evaluation with exact `ANY|ALL` semantics, group-reference validation, explainable scoring, stable ordering, unknown disclosure, and protected-field denial in `app/modules/search/engine.py`
-- [ ] T087 [US2] Implement tenant-safe context-aware search, pagination, filters, candidate detail projection, and recent-search endpoints with OpenAPI-aligned conditional validation in `app/modules/search/views.py`
+- [ ] T087 [US2] Implement tenant-safe context-aware search, pagination, filters, candidate detail projection, authorized post-ranking informational-finding projection, and recent-search endpoints with OpenAPI-aligned conditional validation in `app/modules/search/views.py`
 - [ ] T088 [US2] Add query indexes, full-text/vector preparation, query timeouts, and safe degradation in `app/modules/search/query.py`
-- [ ] T089 [P] [US2] Build recruiter entry, signed-in navigation, prompt, side panel, cards, filters, evidence, and detail dialog in `app/frontend/recruiter/search.ts` and `app/frontend/templates/recruiter/search.html`
+- [ ] T089 [P] [US2] Build recruiter entry, signed-in navigation, prompt, side panel, cards, filters, evidence, neutral informational findings, and detail dialog in `app/frontend/recruiter/search.ts` and `app/frontend/templates/recruiter/search.html`
+- [ ] T206 [US2] Add the OpenAPI `CandidateFinding`/`ShortTenureEvidence` projection and deterministic neutral message presenter after current visibility, purpose, tenant, object, and field-scope authorization in `app/modules/search/projections.py` and `app/frontend/recruiter/candidate-findings.ts`
 - [ ] T090 [P] [US2] Implement progressive Web Speech integration with typed fallback and all declared states in `app/frontend/recruiter/speech-search.ts`
 - [ ] T091 [P] [US2] Implement 320px keyboard-safe recruiter search layouts in `app/frontend/styles/recruiter-search.css`
 - [ ] T092 [US2] Add refresh persistence and unsaved-navigation protection for prompt, criteria, filters, and selection in `app/frontend/shared/persistence.ts`
@@ -363,7 +370,7 @@
 1. **Setup** starts immediately.
 2. **Foundation** follows Setup and delivers the tenant/business-unit/opening shell before search or applications.
 3. **US1** follows Foundation and is the synthetic-data MVP.
-4. **US2** follows Foundation plus the opening shell; production Matching roles also requires US1 visibility.
+4. **US2** follows Foundation plus the opening shell; production Matching roles and candidate findings also require US1 visibility and T201 employment records.
 5. **US3** follows US2 search execution.
 6. **US6** follows US1 and the opening shell and creates application behavior before applicant-management integration.
 7. **US4** follows US2 and US6 so sourced records can link to implemented applications without merging.
@@ -420,5 +427,6 @@ Complete **Setup + Foundation + US1** and demonstrate with synthetic data only. 
 
 - Preserve `enter_recruiter_recruiter_candidate_ux.html` as a read-only baseline.
 - Keep eligibility, authorization, status publication, disclosures, and employment decisions deterministic and human-controlled.
+- Keep `SHORT_TENURE` informational and post-ranking; it must never alter eligibility, visibility, score, rank, recommendation, application status, hiring outcome, or trigger an automated action.
 - Do not accept real candidate data until privacy, legal, accessibility, security, incident, access-review, backup/replay, recovery, and production-readiness gates pass.
 - Retain failing-then-passing evidence for tests and manual evidence for constitution-required reviews.

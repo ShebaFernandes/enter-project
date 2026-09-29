@@ -8,6 +8,8 @@
 
 **Approved**: 2026-09-29
 
+**Approved Amendment**: 2026-09-29 — Informational short-tenure employment finding
+
 **Input**: User description: "Use enter_recruiter_recruiter_candidate_ux.html as the existing
 visual and functional mockup. Create a feature specification describing its recruiter and
 candidate workflows, user requirements, interactions, states, validation, accessibility
@@ -190,6 +192,32 @@ why each person matched.
 10. **Given** a search intended to discover `MATCHING_ROLES` profiles, **When** it executes, **Then**
     its context is `OPENING`, it references an active opening, and deterministic candidate
     preferences are satisfied before any ranking occurs.
+11. **Given** a confirmed completed permanent employment record lasting eight calendar months,
+    **When** an authorized recruiter receives the candidate projection, **Then** it contains one
+    informational `SHORT_TENURE` finding with the confirmed evidence and a neutral message.
+12. **Given** a confirmed completed role lasting exactly 12 calendar months, **When** findings are
+    evaluated, **Then** no `SHORT_TENURE` finding is produced.
+13. **Given** a confirmed current role whose elapsed duration is eight months, **When** findings are
+    evaluated, **Then** no `SHORT_TENURE` finding is produced solely because of its current duration.
+14. **Given** missing, partial, or ambiguous start or end dates, **When** the employment record is
+    evaluated, **Then** the evaluation is `INSUFFICIENT_DATA` and no warning is presented.
+15. **Given** a role explicitly identified as an internship, apprenticeship, fixed-term contract,
+    consulting engagement, seasonal role, or other temporary engagement, **When** it is evaluated,
+    **Then** it is excluded and no `SHORT_TENURE` finding is produced.
+16. **Given** multiple confirmed completed permanent roles shorter than 12 calendar months, **When**
+    findings are evaluated, **Then** each qualifying employment record produces a separate finding.
+17. **Given** a candidate corrects a qualifying employment record so that its confirmed duration is
+    at least 12 calendar months, **When** the correction is saved, **Then** findings are recalculated
+    and the obsolete finding is removed from every authorized projection.
+18. **Given** a candidate has a `SHORT_TENURE` finding, **When** search, matching, recommendation,
+    application-status, or hiring-outcome logic executes, **Then** eligibility, score, rank,
+    recommendation, status, and outcome are identical to execution without the finding.
+19. **Given** an unauthorized, over-scoped, or cross-tenant actor, **When** they request employment
+    findings, **Then** access is denied without exposing the candidate, employment record, or finding.
+20. **Given** an authorized recruiter views a `SHORT_TENURE` finding, **When** the result card or
+    detail view renders it, **Then** the response includes the employment-record ID, company,
+    confirmed dates, calculated duration, calculation version, evaluation time, and a neutral
+    evidence-based message without inventing or implying a reason for departure.
 
 ---
 
@@ -378,6 +406,8 @@ saved search with its criteria and result context.
   criteria for the same attribute.
 - Matching-any and matching-all modes produce the same count, zero results, or a large difference.
 - Candidate data needed for a filter or comparison is unknown, stale, or self-reported.
+- Employment dates are missing, partial, ambiguous, corrected after evaluation, or describe a
+  current or explicitly temporary engagement; these states never create a short-tenure warning.
 - A selected comparison candidate disappears because of a status filter, visibility change, or
   updated search criteria.
 - A recruiter attempts to access a protected route after sign-out or from a stale saved link.
@@ -657,6 +687,29 @@ saved search with its criteria and result context.
   personnel under audited procedure, MAY provision, merge, split, suspend, reactivate, or close a
   tenant. Business units MUST remain tenant-owned organizational contexts and MUST NOT weaken or
   create a new data-isolation boundary.
+- **FR-063**: A candidate MUST be able to review and correct separate employment-history records
+  containing a stable record ID, company, role title where supplied, start and end values with
+  confirmation/provenance state, current-role state, and employment type. Resume or LLM extraction
+  MAY suggest dates and employment type only with confidence and source spans; it MUST NOT invent a
+  missing date, duration, employer, employment type, or reason for leaving, and only candidate-
+  accepted or corrected values may become confirmed profile facts.
+- **FR-064**: Deterministic backend code MUST evaluate each confirmed completed employment record.
+  A non-temporary role whose confirmed end date is earlier than the start date plus 12 calendar
+  months MUST produce a separate informational finding with internal code `SHORT_TENURE`. Current
+  roles MUST NOT qualify solely because their elapsed duration is under 12 months. Internships,
+  apprenticeships, fixed-term contracts, consulting engagements, seasonal roles, and other
+  explicitly temporary engagements MUST be excluded. Missing, partial, or ambiguous dates MUST set
+  the evaluation to `INSUFFICIENT_DATA` and MUST NOT produce a recruiter warning. Candidate
+  corrections MUST trigger idempotent recalculation and removal or replacement of obsolete findings.
+- **FR-065**: A `SHORT_TENURE` finding MUST be informational only and MUST NOT change candidate
+  eligibility, visibility, match score, rank, recommendation, application status, hiring status, or
+  outcome; it MUST NOT automatically reject, hide, filter, disqualify, shortlist, or contact a
+  candidate. Each presented finding MUST include its employment-record ID, company, confirmed start
+  and end values, calculated duration, calculation version, evaluation timestamp, and a neutral
+  evidence-based message such as “Candidate left XYZ Company after approximately 8 months.” The
+  system MUST NOT store or present “job hopper” as a conclusion or infer why the employment ended.
+  Findings and their evidence MUST obey current candidate visibility, consent, purpose, tenant,
+  object, field-scope, audit, correction, retention, export, and deletion controls.
 ### Interaction and State Requirements
 
 - **ISR-001**: Global navigation MUST show the current area and signed-in identity, and protected
@@ -719,6 +772,11 @@ saved search with its criteria and result context.
   a valid `CandidateFacingStatus` suggestion or null. Status publication MUST reject values outside
   `CandidateFacingStatus`, and a null suggestion MUST NOT be published unless the recruiter supplies
   and explicitly confirms a valid candidate-facing value.
+- **VR-016**: Employment finding evaluation MUST require confirmed complete start and end dates,
+  require end on or after start, classify missing/partial/ambiguous dates as `INSUFFICIENT_DATA`,
+  compare the confirmed end date with the start date plus exactly 12 calendar months, and use a
+  versioned deterministic calculation. An ongoing role or explicitly temporary employment type
+  MUST never yield `SHORT_TENURE`.
 
 ### Accessibility and Responsive Requirements
 
@@ -795,8 +853,9 @@ saved search with its criteria and result context.
 - **Candidate Profile**: The single candidate-controlled identity associated with one verified
   email, including role and company, location, experience, skills, professional links,
   availability, compensation preferences, work preferences, visibility, meaningful-work narrative,
-  provenance, verification state, freshness, last qualifying activity, retention-expiry date, and
-  any recorded retention exception. It can relate to multiple applications.
+  candidate-controlled employment-history records, provenance, verification state, freshness, last
+  qualifying activity, retention-expiry date, and any recorded retention exception. It can relate
+  to multiple applications.
 - **Resume**: A candidate-provided document with filename, supported type, processing state,
   extracted fields, confidence/provenance, and candidate corrections; it remains separate from the
   published profile.
@@ -810,7 +869,12 @@ saved search with its criteria and result context.
   each criterion has a stable ID and references exactly one group. The only authoritative opening
   reference is `criteria.context.opening_id`; saved-search APIs contain no independent opening field.
 - **Search Result**: A candidate's position for a specific search, relevance outcome, supporting
-  reasons, limiting reasons, unknowns, and evidence provenance.
+  reasons, limiting reasons, unknowns, evidence provenance, and any separately presented authorized
+  informational findings that do not participate in eligibility, score, rank, or recommendation.
+- **Candidate Finding**: A generic, derived, versioned evaluation tied to a candidate and source
+  record. `SHORT_TENURE` is informational only; qualifying records produce separate findings, while
+  excluded or insufficient-data evaluations produce no recruiter warning. Evidence identifies only
+  confirmed source values and never includes an inferred reason for departure.
 - **Recruiting Status**: A recruiter's workflow state for a candidate within a search or opening,
   including update time and authorized updater.
 - **Candidate Work Record**: A tenant-owned recruiting context for a sourced candidate, created on
@@ -1003,6 +1067,12 @@ saved search with its criteria and result context.
   units and openings only within their active tenant; business units never bypass tenant isolation;
   and 100% of recruiter or tenant-user attempts to create or alter a tenant boundary are denied and
   audited without revealing another tenant's existence or data.
+- **SC-037**: Short-tenure tests demonstrate that 100% of confirmed completed non-temporary roles
+  shorter than 12 calendar months create separate informational findings; roles of at least 12
+  months, current roles, temporary engagements, and insufficient-date records create no warning;
+  corrections remove obsolete findings; unauthorized and cross-tenant access is denied; evidence
+  contains only confirmed source values; and findings cause zero change to eligibility, score,
+  rank, recommendation, application status, hiring status, or outcome.
 
 ## Assumptions
 
