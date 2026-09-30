@@ -16,7 +16,16 @@ type SearchResponse = {
   next_cursor: string | null;
   items: SearchItem[];
 };
+type InterpretationResponse = {
+  original_prompt: string;
+  criteria: Record<string, unknown>;
+  requires_review: boolean;
+  ambiguities: string[];
+  estimated_count: number;
+};
 const root = document.querySelector<HTMLElement>("[data-recruiter-search]");
+const REVIEW_KEY = "enter.criteria-review.v1";
+const RESULT_KEY = "enter.confirmed-search.v1";
 
 function csrfToken() {
   return (
@@ -25,10 +34,11 @@ function csrfToken() {
   );
 }
 function criterionRow() {
-  const id = crypto.randomUUID();
+  const groupId = crypto.randomUUID();
   const row = document.createElement("fieldset");
-  row.dataset.criterionId = id;
-  row.innerHTML = `<legend>Criterion</legend><label>Purpose <select name="purpose"><option>REQUIREMENT</option><option>PREFERENCE</option><option>EXCLUSION</option></select></label><label>Match <select name="group_operator"><option>ALL</option><option>ANY</option></select></label><label>Field <select name="field"><option value="skill">Skill</option><option value="experience_years">Experience</option><option value="location">Location</option><option value="work_arrangement">Work arrangement</option><option value="availability_date">Availability</option><option value="role_category">Role category</option></select></label><label>Operator <select name="operator"><option>CONTAINS</option><option>EQ</option><option>GTE</option><option>LTE</option></select></label><label>Value <input name="value" required></label><button type="button">Remove</button>`;
+  row.dataset.groupId = groupId;
+  row.dataset.criterionId = crypto.randomUUID();
+  row.innerHTML = `<legend>Criterion</legend><label>Purpose <select name="purpose"><option>REQUIREMENT</option><option>PREFERENCE</option><option>EXCLUSION</option></select></label><label>Match <select name="group_operator"><option>ALL</option><option>ANY</option></select></label><label>Field <select name="field"><option value="skill">Skill</option><option value="experience_years">Experience</option><option value="location">Location</option><option value="work_arrangement">Work arrangement</option><option value="availability_date">Availability</option><option value="role_category">Role category</option></select></label><label>Operator <select name="operator"><option>CONTAINS</option><option>EQ</option><option>GTE</option><option>LTE</option></select></label><label>Value <input name="value"></label><button type="button">Remove</button>`;
   row.querySelector("button")?.addEventListener("click", () => row.remove());
   return row;
 }
@@ -38,7 +48,7 @@ function readCriteria(container: HTMLElement) {
       row.querySelector<HTMLSelectElement | HTMLInputElement>(`[name=${name}]`)!
         .value;
     const group = {
-      id: row.dataset.criterionId!,
+      id: row.dataset.groupId!,
       purpose: value("purpose"),
       operator: value("group_operator"),
       label: value("field"),
@@ -46,7 +56,7 @@ function readCriteria(container: HTMLElement) {
     return {
       group,
       criterion: {
-        id: crypto.randomUUID(),
+        id: row.dataset.criterionId!,
         group_id: group.id,
         field: value("field"),
         operator: value("operator"),
@@ -144,7 +154,7 @@ if (root) {
           "<p>Search could not be completed. Your typed query and criteria remain available.</p>";
       status.textContent = "Search failed safely.";
       more.hidden = true;
-      return;
+      return null;
     }
     const data = (await response.json()) as SearchResponse;
     if (!append) results.innerHTML = "";
@@ -157,6 +167,7 @@ if (root) {
     more.hidden = nextCursor === null;
     status.textContent = `${data.items.length} result(s) loaded.`;
     results.focus();
+    return data;
   }
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -168,6 +179,48 @@ if (root) {
       status.textContent = "Choose an active opening before searching.";
       return;
     }
+    const prompt = (
+      form.elements.namedItem("prompt") as HTMLTextAreaElement
+    ).value.trim();
+    const populatedEntries = entries.filter(
+      (entry) => String(entry.criterion.value).trim().length > 0,
+    );
+    if (!populatedEntries.length) {
+      status.textContent = "Interpreting the hiring need…";
+      const contextPayload =
+        context.value === "OPENING"
+          ? { type: "OPENING", opening_id: openingId }
+          : { type: "AD_HOC" };
+      const response = await fetch(
+        `/api/v1/tenants/${searchRoot.dataset.tenantId}/searches/interpret`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+            "X-Tenant-ID": searchRoot.dataset.tenantId!,
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ prompt, context: contextPayload }),
+        },
+      );
+      if (!response.ok) {
+        status.textContent =
+          "Interpretation is unavailable. Add manual criteria to continue.";
+        return;
+      }
+      const interpretation = (await response.json()) as InterpretationResponse;
+      if (interpretation.requires_review) {
+        sessionStorage.setItem(REVIEW_KEY, JSON.stringify(interpretation));
+        window.location.assign(
+          `/tenants/${searchRoot.dataset.tenantId}/recruiter/search/criteria-review/`,
+        );
+        return;
+      }
+      lastPayload = interpretation.criteria;
+      await runSearch(lastPayload);
+      return;
+    }
     lastPayload = {
       context:
         context.value === "OPENING"
@@ -176,8 +229,8 @@ if (root) {
               opening_id: openingId,
             }
           : { type: "AD_HOC" },
-      groups: entries.map((v) => v.group),
-      criteria: entries.map((v) => v.criterion),
+      groups: populatedEntries.map((v) => v.group),
+      criteria: populatedEntries.map((v) => v.criterion),
       limit: 25,
     };
     await runSearch(lastPayload);
@@ -201,4 +254,14 @@ if (root) {
         );
     }),
   );
+  const confirmed = sessionStorage.getItem(RESULT_KEY);
+  if (confirmed) {
+    sessionStorage.removeItem(RESULT_KEY);
+    const data = JSON.parse(confirmed) as SearchResponse;
+    results.innerHTML = "";
+    data.items.forEach((item) => results.append(card(item, data.search_id)));
+    nextCursor = data.next_cursor;
+    more.hidden = nextCursor === null;
+    status.textContent = `${data.items.length} confirmed result(s) loaded.`;
+  }
 }

@@ -1,0 +1,23 @@
+{% extends "base.html" %} {% block content %}
+<main
+  class="criteria-review-shell"
+  data-criteria-review
+  data-tenant-id="{{ tenant_id }}"
+>
+  <a class="skip-link" href="#criteria-groups">Skip to criteria</a>
+  <p class="eyebrow">Recruiter workspace</p>
+  <h1>Review search criteria</h1>
+  <section aria-labelledby="original-prompt-heading">
+    <h2 id="original-prompt-heading">Original prompt</h2>
+    <p data-original-prompt>Your original prompt will appear here.</p>
+  </section>
+  <p><strong data-estimated-count>0</strong> estimated candidates in scope</p>
+  <p data-review-status role="status" aria-live="polite"></p>
+  <form data-review-form>
+    {% csrf_token %}
+    <div id="criteria-groups" data-groups></div>
+    <button type="button" data-add-group>Add group</button>
+    <button type="submit">Run confirmed search</button>
+  </form>
+</main>
+{% endblock %}

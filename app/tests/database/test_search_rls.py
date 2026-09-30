@@ -6,6 +6,7 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from modules.candidate.models import CandidateFinding, ConsentRecord, VisibilityRule
+from modules.operations.models import WorkflowRun
 from modules.search.models import SearchDefinition
 from modules.tenancy.models import Tenant
 
@@ -22,6 +23,7 @@ def test_search_and_finding_tables_have_forced_rls():
         "search_criterion",
         "search_searchresultsnapshot",
         "candidate_candidatefinding",
+        "operations_workflowrun",
     }
     with connection.cursor() as cursor:
         cursor.execute(
@@ -54,6 +56,26 @@ def test_postgres_search_and_finding_rls_deny_cross_tenant(identity, tenant, pro
         actor=identity,
         context_type="AD_HOC",
         criteria_context={"type": "AD_HOC"},
+    )
+    own_workflow = WorkflowRun.objects.create(
+        workflow_type="SEARCH_INTERPRETATION",
+        actor=identity,
+        tenant=tenant,
+        status=WorkflowRun.Status.AWAITING_REVIEW,
+        current_step="RECRUITER_REVIEW",
+        input_hash="a" * 64,
+        prompt_version="search-intent.v1",
+        checkpoint_ciphertext=b"synthetic-encrypted-checkpoint",
+    )
+    WorkflowRun.objects.create(
+        workflow_type="SEARCH_INTERPRETATION",
+        actor=identity,
+        tenant=other,
+        status=WorkflowRun.Status.AWAITING_REVIEW,
+        current_step="RECRUITER_REVIEW",
+        input_hash="b" * 64,
+        prompt_version="search-intent.v1",
+        checkpoint_ciphertext=b"synthetic-encrypted-checkpoint",
     )
     profile = profile_factory(published=True)
     consent = ConsentRecord.objects.create(
@@ -94,6 +116,7 @@ def test_postgres_search_and_finding_rls_deny_cross_tenant(identity, tenant, pro
             cursor.execute(f"GRANT USAGE ON SCHEMA public TO {quoted}")
             cursor.execute(
                 f"GRANT SELECT ON search_searchdefinition, candidate_candidatefinding, "
+                f"operations_workflowrun, "
                 f"candidate_candidateprofile, candidate_consentrecord TO {quoted}"
             )
         with transaction.atomic(), connection.cursor() as cursor:
@@ -102,6 +125,8 @@ def test_postgres_search_and_finding_rls_deny_cross_tenant(identity, tenant, pro
             cursor.execute("SELECT set_config('app.search_context_type', 'AD_HOC', true)")
             cursor.execute("SELECT id FROM search_searchdefinition")
             assert [row[0] for row in cursor.fetchall()] == [own_search.id]
+            cursor.execute("SELECT id FROM operations_workflowrun")
+            assert [row[0] for row in cursor.fetchall()] == [own_workflow.id]
             cursor.execute("SELECT id FROM candidate_candidatefinding")
             assert [row[0] for row in cursor.fetchall()] == [finding.id]
             cursor.execute("SELECT set_config('app.tenant_id', %s, true)", [str(other.id)])

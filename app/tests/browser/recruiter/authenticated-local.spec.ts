@@ -10,6 +10,19 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
   await expect(page.getByText("Signed in as recruiter")).toBeVisible();
   await page
     .getByLabel("Describe the candidate you need")
+    .fill("Maybe an engineer");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page).toHaveURL(/criteria-review/);
+  await expect(page.getByText("Maybe an engineer")).toBeVisible();
+  await expect(page.getByText(/estimated candidates in scope/)).toBeVisible();
+  await page.getByLabel("Match within group").selectOption("ANY");
+  await page.getByRole("button", { name: "Run confirmed search" }).click();
+  await expect(page).toHaveURL(/recruiter\/search\/$/);
+  await expect(page.locator(".search-status")).toContainText(
+    "confirmed result",
+  );
+  await page
+    .getByLabel("Describe the candidate you need")
     .fill("Python engineer in Bengaluru");
   await page.getByLabel("Value").fill("Python");
   await page.getByRole("button", { name: "Search", exact: true }).click();

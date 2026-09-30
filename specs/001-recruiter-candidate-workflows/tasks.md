@@ -177,20 +177,20 @@
 
 ### Tests for User Story 3
 
-- [ ] T095 [P] [US3] Add structured-criteria tests for stable group/criterion IDs, required group references, `ANY|ALL`, supported fields, ambiguity, exclusions, protected data, malicious text, and deterministic estimated counts in `app/tests/unit/ai/test_intent_extraction.py`
-- [ ] T096 [P] [US3] Add contract tests proving ambiguous prompts route to review, every criterion references one submitted group, invalid/duplicate references fail, and recruiter edits override model output without changing stable IDs in `app/tests/contract/test_criteria_review_api.py`
-- [ ] T097 [P] [US3] Add browser tests for group and criterion add/edit/remove, stable IDs, group membership, `ANY|ALL`, estimated impact, original prompt, keyboard use, errors, and reflow in `app/tests/browser/recruiter/criteria-review.spec.ts`
-- [ ] T098 [P] [US3] Add golden-set, injection, timeout, invalid-output, and no-model fallback evaluations in `app/tests/ai/test_search_intent_eval.py`
+- [x] T095 [P] [US3] Add structured-criteria tests for stable group/criterion IDs, required group references, `ANY|ALL`, supported fields, ambiguity, exclusions, protected data, malicious text, and deterministic estimated counts in `app/tests/unit/ai/test_intent_extraction.py`
+- [x] T096 [P] [US3] Add contract tests proving ambiguous prompts route to review, every criterion references one submitted group, invalid/duplicate references fail, and recruiter edits override model output without changing stable IDs in `app/tests/contract/test_criteria_review_api.py`
+- [x] T097 [P] [US3] Add browser tests for group and criterion add/edit/remove, stable IDs, group membership, `ANY|ALL`, estimated impact, original prompt, keyboard use, errors, and reflow in `app/tests/browser/recruiter/criteria-review.spec.ts`
+- [x] T098 [P] [US3] Add golden-set, injection, timeout, invalid-output, and no-model fallback evaluations in `app/tests/ai/test_search_intent_eval.py`
 
 ### Implementation for User Story 3
 
-- [ ] T099 [US3] Implement versioned intent schemas with stable criteria-group/criterion IDs, `ANY|ALL`, required group references, ambiguity thresholds, validation, and protected-attribute rejection in `app/modules/ai/intent_schema.py`
-- [ ] T100 [US3] Implement the bounded Bedrock adapter with regional endpoint, timeout, constrained output, and redacted telemetry in `app/modules/ai/bedrock.py`
-- [ ] T101 [US3] Implement LangGraph only for parse-validate-clarify with minimized checkpoints and deterministic fallback in `app/modules/ai/search_graph.py`
-- [ ] T102 [US3] Implement deterministic estimated-count and criteria preview/update/execute endpoints that preserve IDs and reject missing/duplicate/cross-search group references in `app/modules/search/criteria_views.py`
-- [ ] T103 [P] [US3] Build criteria review with original prompt, stable groups and criteria, group membership, `ANY|ALL` controls, exclusions, estimated impact, and confirmation in `app/frontend/recruiter/criteria-review.ts` and `app/frontend/templates/recruiter/criteria-review.html`
-- [ ] T104 [US3] Configure synthetic/de-identified LangSmith development/staging tracing and production-off default in `app/modules/ai/observability.py`
-- [ ] T105 [US3] Run and record ambiguity, estimated-impact, and AI-boundary evidence in `docs/evidence/us3-criteria-review.md`
+- [x] T099 [US3] Implement versioned intent schemas with stable criteria-group/criterion IDs, `ANY|ALL`, required group references, ambiguity thresholds, validation, and protected-attribute rejection in `app/modules/ai/intent_schema.py`
+- [x] T100 [US3] Implement the bounded Bedrock adapter with regional endpoint, timeout, constrained output, and redacted telemetry in `app/modules/ai/bedrock.py`
+- [x] T101 [US3] Implement LangGraph only for parse-validate-clarify with minimized checkpoints and deterministic fallback in `app/modules/ai/search_graph.py`
+- [x] T102 [US3] Implement deterministic estimated-count and criteria preview/update/execute endpoints that preserve IDs and reject missing/duplicate/cross-search group references in `app/modules/search/criteria_views.py`
+- [x] T103 [P] [US3] Build criteria review with original prompt, stable groups and criteria, group membership, `ANY|ALL` controls, exclusions, estimated impact, and confirmation in `app/frontend/recruiter/criteria-review.ts` and `app/frontend/templates/recruiter/criteria-review.html`
+- [x] T104 [US3] Configure synthetic/de-identified LangSmith development/staging tracing and production-off default in `app/modules/ai/observability.py`
+- [x] T105 [US3] Run and record ambiguity, estimated-impact, and AI-boundary evidence in `docs/evidence/us3-criteria-review.md`
 
 **Checkpoint**: US3 keeps model output advisory and makes every operative criterion and expected impact visible.
 

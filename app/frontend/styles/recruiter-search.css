@@ -27,6 +27,32 @@
   grid-template-columns: repeat(5, minmax(7rem, 1fr));
   gap: 0.75rem;
 }
+
+.criteria-review-shell {
+  inline-size: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+}
+
+.criteria-group,
+.criterion-row {
+  min-inline-size: 0;
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border, #c7c7c7);
+}
+
+.criteria-group label,
+.criterion-row label {
+  display: grid;
+  gap: 0.25rem;
+  margin-block: 0.5rem;
+}
+
+.stable-id {
+  overflow-wrap: anywhere;
+  color: var(--muted, #4b5563);
+  font-size: 0.875rem;
+}
 .candidate-card {
   border: 1px solid #cbd5e1;
   margin-block: 1rem;

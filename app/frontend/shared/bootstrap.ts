@@ -8,6 +8,7 @@ import "../candidate/resume";
 import "../candidate/rights-center";
 import "../styles/recruiter-search.css";
 import "../recruiter/search";
+import "../recruiter/criteria-review";
 import "../recruiter/speech-search";
 import "../recruiter/candidate-findings";
 import "./navigation";
