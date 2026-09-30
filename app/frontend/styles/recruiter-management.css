@@ -1,0 +1,40 @@
+.recruiter-management {
+  max-width: 78rem;
+  margin: auto;
+  padding: 1.5rem;
+}
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.management-grid section {
+  margin: 0;
+}
+.management-grid textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+.management-grid form > button {
+  margin-top: 0.75rem;
+}
+.conflict-panel {
+  border: 2px solid #b45309;
+  background: #fffbeb;
+  margin-block: 1rem;
+  padding: 1rem;
+}
+[data-disclosure-preview],
+[data-status-preview] {
+  border-inline-start: 0.3rem solid #164e63;
+  padding: 0.75rem;
+  margin-block: 0.75rem;
+}
+@media (max-width: 48rem) {
+  .recruiter-management {
+    padding: 0.75rem;
+  }
+  .management-grid {
+    grid-template-columns: 1fr;
+  }
+}

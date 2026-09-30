@@ -1,0 +1,175 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="recruiter-management"
+  data-candidate-management
+  data-tenant-id="{{ tenant_id }}"
+  data-candidate-id="{{ candidate_id }}"
+>
+  <a class="skip-link" href="#candidate-actions">Skip to candidate actions</a>
+  <header>
+    <p class="eyebrow">Recruiter workspace</p>
+    <h1>Candidate details</h1>
+    <a href="{% url 'recruiter-search-page' tenant_id=tenant_id %}"
+      >Back to search</a
+    >
+  </header>
+  {% csrf_token %}
+  <p class="status" role="status" aria-live="polite" data-page-status>
+    Loading current authorized candidate context…
+  </p>
+  <section aria-labelledby="candidate-overview-heading">
+    <h2 id="candidate-overview-heading">Authorized overview</h2>
+    <p data-candidate-summary>No candidate data loaded.</p>
+  </section>
+  <aside
+    class="conflict-panel"
+    data-conflict
+    tabindex="-1"
+    role="alert"
+    hidden
+  ></aside>
+  <div id="candidate-actions" class="management-grid">
+    <section aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Private recruiter notes</h2>
+      <p>
+        Notes remain in this recruiting context and are never shown to the
+        candidate.
+      </p>
+      <ul data-notes>
+        <li>No saved notes.</li>
+      </ul>
+      <form data-note-form data-dirty="false">
+        <label for="note-body">New private note</label>
+        <textarea
+          id="note-body"
+          name="body"
+          maxlength="5000"
+          required
+        ></textarea>
+        <button type="submit">Save private note</button>
+      </form>
+    </section>
+    <section aria-labelledby="workflow-heading">
+      <h2 id="workflow-heading">Internal workflow</h2>
+      <form data-work-form data-dirty="false">
+        <label for="internal-status">Internal status</label>
+        <select id="internal-status" name="internal_status">
+          <option value="SOURCED">Sourced</option>
+          <option value="SHORTLISTED">Shortlisted</option>
+          <option value="CONTACTED">Contacted</option>
+          <option value="SCREENING">Screening</option>
+          <option value="INTERVIEWING">Interviewing</option>
+          <option value="OFFERED">Offered</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="NOT_RELEVANT">Not relevant</option>
+          <option value="HIRED">Hired</option>
+        </select>
+        <label
+          ><input type="checkbox" name="shortlisted" /> Add to shortlist</label
+        >
+        <label for="structured-reason">Reason when required</label>
+        <input
+          id="structured-reason"
+          name="structured_reason"
+          maxlength="200"
+        />
+        <button type="submit">Save internal workflow</button>
+      </form>
+    </section>
+    <section aria-labelledby="publication-heading">
+      <h2 id="publication-heading">Candidate-facing status</h2>
+      <p>
+        Previewing does not publish or notify. Confirmation is always required.
+      </p>
+      <form data-publication-form>
+        <label for="publication-internal-status"
+          >Internal status to preview</label
+        >
+        <select
+          id="publication-internal-status"
+          name="publication_internal_status"
+        >
+          <option value="SHORTLISTED">Shortlisted</option>
+          <option value="CONTACTED">Contacted</option>
+          <option value="SCREENING">Screening</option>
+          <option value="INTERVIEWING">Interviewing</option>
+          <option value="OFFERED">Offered</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="SOURCED">Sourced (no suggestion)</option>
+          <option value="NOT_RELEVANT">Not relevant (no suggestion)</option>
+          <option value="HIRED">Hired (no suggestion)</option>
+        </select>
+        <button type="submit">Preview candidate-facing status</button>
+        <div data-status-preview role="status" aria-live="polite" hidden></div>
+        <label for="candidate-status">Candidate-facing status to publish</label>
+        <select id="candidate-status" name="candidate_status">
+          <option value="APPLIED">Applied</option>
+          <option value="PROFILE_VIEWED">Profile viewed</option>
+          <option value="SHORTLISTED">Shortlisted</option>
+          <option value="RECRUITER_INTERESTED">Recruiter interested</option>
+          <option value="INTERVIEW_REQUESTED">Interview requested</option>
+          <option value="OFFER_MADE">Offer made</option>
+          <option value="NOT_SELECTED">Not selected</option>
+          <option value="WITHDRAWN">Withdrawn</option>
+        </select>
+        <button type="button" data-publish-status hidden>
+          Confirm and publish status
+        </button>
+      </form>
+    </section>
+    <section aria-labelledby="disclosure-heading">
+      <h2 id="disclosure-heading">Contact or share</h2>
+      <form data-disclosure-form>
+        <label for="disclosure-purpose">Purpose</label>
+        <select id="disclosure-purpose" name="purpose">
+          <option value="HIRING_TEAM_SHARE">Share with hiring team</option>
+          <option value="CANDIDATE_CONTACT">Contact candidate</option>
+        </select>
+        <label for="destination-type">Destination type</label>
+        <select id="destination-type" name="destination_type">
+          <option value="HIRING_TEAM">Hiring team</option>
+          <option value="CANDIDATE_EMAIL">Candidate email</option>
+          <option value="CANDIDATE_WHATSAPP">Candidate WhatsApp</option>
+        </select>
+        <label for="destination-identifier">Destination identifier</label>
+        <input
+          id="destination-identifier"
+          name="destination_identifier"
+          required
+        />
+        <label for="destination-label">Destination label</label>
+        <input id="destination-label" name="destination_label" />
+        <fieldset>
+          <legend>Requested fields</legend>
+          <label
+            ><input type="checkbox" name="fields" value="name" checked />
+            Name</label
+          >
+          <label
+            ><input type="checkbox" name="fields" value="skills" />
+            Skills</label
+          >
+          <label
+            ><input type="checkbox" name="fields" value="employment_history" />
+            Employment history</label
+          >
+          <label
+            ><input type="checkbox" name="fields" value="resume" />
+            Resume</label
+          >
+          <label
+            ><input type="checkbox" name="fields" value="contact_email" />
+            Contact email</label
+          >
+        </fieldset>
+        <button type="submit">Preview minimum disclosure</button>
+      </form>
+      <div data-disclosure-preview tabindex="-1" hidden></div>
+      <button type="button" data-confirm-disclosure hidden>
+        Confirm disclosure
+      </button>
+      <p data-disclosure-status role="status" aria-live="polite"></p>
+    </section>
+  </div>
+</div>
+{% endblock %}

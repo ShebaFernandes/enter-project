@@ -235,29 +235,29 @@
 
 ### Tests for User Story 4
 
-- [ ] T121 [P] [US4] Add candidate-work tests for first view/note/shortlist/status creation, contextual reuse, optional opening, and later application linking without merge in `app/tests/integration/recruiting/test_candidate_work_record.py`
-- [ ] T122 [P] [US4] Add status tests proving `/status-preview` accepts only `InternalRecruitingStatus` and returns a nullable `CandidateFacingStatus`, unmapped states return null, publication accepts only the eight-value `CandidateFacingStatus`, null suggestions cannot publish without an explicitly selected valid value, and recruiter confirmation, notification gating, and audit remain mandatory in `app/tests/contract/test_candidate_statuses.py`
-- [ ] T123 [P] [US4] Add note tests for exactly one owner, role access, tenant isolation, stale reconciliation, refresh persistence, and audit redaction in `app/tests/security/test_recruiter_notes.py`
-- [ ] T124 [P] [US4] Add Not relevant tests for structured reason/note requirement, cancellation restoring prior state, and contextual isolation in `app/tests/integration/recruiting/test_not_relevant.py`
-- [ ] T125 [P] [US4] Add contact/share tests for destination preview, minimum fields, current consent, cross-tenant denial, dual audit history, idempotency, and provider failure in `app/tests/security/test_candidate_disclosures.py`
-- [ ] T126 [P] [US4] Add browser tests for detail, notes, shortlist, status preview, conflict reconciliation, disclosure preview/confirmation, keyboard use, persistence, and mobile layout in `app/tests/browser/recruiter/candidate-management.spec.ts`
+- [x] T121 [P] [US4] Add candidate-work tests for first view/note/shortlist/status creation, contextual reuse, optional opening, and later application linking without merge in `app/tests/integration/recruiting/test_candidate_work_record.py`
+- [x] T122 [P] [US4] Add status tests proving `/status-preview` accepts only `InternalRecruitingStatus` and returns a nullable `CandidateFacingStatus`, unmapped states return null, publication accepts only the eight-value `CandidateFacingStatus`, null suggestions cannot publish without an explicitly selected valid value, and recruiter confirmation, notification gating, and audit remain mandatory in `app/tests/contract/test_candidate_statuses.py`
+- [x] T123 [P] [US4] Add note tests for exactly one owner, role access, tenant isolation, stale reconciliation, refresh persistence, and audit redaction in `app/tests/security/test_recruiter_notes.py`
+- [x] T124 [P] [US4] Add Not relevant tests for structured reason/note requirement, cancellation restoring prior state, and contextual isolation in `app/tests/integration/recruiting/test_not_relevant.py`
+- [x] T125 [P] [US4] Add contact/share tests for destination preview, minimum fields, current consent, cross-tenant denial, dual audit history, idempotency, and provider failure in `app/tests/security/test_candidate_disclosures.py`
+- [x] T126 [P] [US4] Add browser tests for detail, notes, shortlist, status preview, conflict reconciliation, disclosure preview/confirmation, keyboard use, persistence, and mobile layout in `app/tests/browser/recruiter/candidate-management.spec.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T127 [P] [US4] Create candidate-work, note, shortlist, status-event, and disclosure-request models with exact uniqueness and ownership constraints in `app/modules/recruiting/work_models.py`
-- [ ] T128 [US4] Generate candidate-work, note-owner XOR, shortlist, status-event, application-link, and disclosure migrations in `app/modules/recruiting/migrations/`
-- [ ] T129 [US4] Implement idempotent create-or-reuse candidate-work behavior for first authorized view, note, shortlist, or status mutation in `app/modules/recruiting/candidate_work.py`
-- [ ] T130 [US4] Implement application/candidate-work notes with object authorization, encryption, conflicts, persistence, and independent histories in `app/modules/recruiting/notes.py`
-- [ ] T131 [US4] Implement internal states/reasons, Not relevant cancellation, canonical eight-status mapping including Offered-to-`OFFER_MADE`, and null suggestions for Sourced, Not relevant, Hired, or unknown states in `app/modules/recruiting/statuses.py`
-- [ ] T132 [US4] Implement `InternalRecruitingStatus` preview-to-nullable-`CandidateFacingStatus` mapping and publication restricted to an explicitly selected valid eight-value `CandidateFacingStatus`, including null-suggestion rejection without selection, explicit confirmation, idempotent notification enqueue, and candidate-safe delivery-state projection in `app/modules/recruiting/status_service.py`
-- [ ] T133 [US4] Implement disclosure preview/confirmation with execution-time consent/object reauthorization, minimum fields, visible state, and dual audit history in `app/modules/recruiting/disclosures.py`
-- [ ] T134 [US4] Implement candidate detail, candidate-work, notes, shortlist, internal-status, status publication, and disclosure endpoints from OpenAPI in `app/modules/recruiting/views.py`
-- [ ] T135 [P] [US4] Build candidate detail, notes, shortlist, reasons, internal status, and status preview UI in `app/frontend/recruiter/candidate-detail.ts` and `app/frontend/templates/recruiter/candidate-detail.html`
-- [ ] T136 [P] [US4] Build destination/purpose/minimum-field disclosure preview, confirmation, pending, success, unavailable, and failure UI in `app/frontend/recruiter/disclosure.ts`
-- [ ] T137 [US4] Implement stored-versus-attempted conflict reconciliation in `app/frontend/shared/conflict-resolution.ts`
-- [ ] T138 [US4] Apply refresh persistence and unsaved-navigation warnings to notes, reasons, filters, shortlist selection, and status edits in `app/frontend/shared/persistence.ts`
-- [ ] T139 [US4] Add audit events for views, notes, shortlists, status, reasons, conflicts, disclosures, and notification overrides in `app/modules/recruiting/audit.py`
-- [ ] T140 [US4] Run and record sourced/applicant separation, status, Not relevant, persistence, and disclosure evidence in `docs/evidence/us4-candidate-management.md`
+- [x] T127 [P] [US4] Create candidate-work, note, shortlist, status-event, and disclosure-request models with exact uniqueness and ownership constraints in `app/modules/recruiting/work_models.py`
+- [x] T128 [US4] Generate candidate-work, note-owner XOR, shortlist, status-event, application-link, and disclosure migrations in `app/modules/recruiting/migrations/`
+- [x] T129 [US4] Implement idempotent create-or-reuse candidate-work behavior for first authorized view, note, shortlist, or status mutation in `app/modules/recruiting/candidate_work.py`
+- [x] T130 [US4] Implement application/candidate-work notes with object authorization, encryption, conflicts, persistence, and independent histories in `app/modules/recruiting/notes.py`
+- [x] T131 [US4] Implement internal states/reasons, Not relevant cancellation, canonical eight-status mapping including Offered-to-`OFFER_MADE`, and null suggestions for Sourced, Not relevant, Hired, or unknown states in `app/modules/recruiting/statuses.py`
+- [x] T132 [US4] Implement `InternalRecruitingStatus` preview-to-nullable-`CandidateFacingStatus` mapping and publication restricted to an explicitly selected valid eight-value `CandidateFacingStatus`, including null-suggestion rejection without selection, explicit confirmation, idempotent notification enqueue, and candidate-safe delivery-state projection in `app/modules/recruiting/status_service.py`
+- [x] T133 [US4] Implement disclosure preview/confirmation with execution-time consent/object reauthorization, minimum fields, visible state, and dual audit history in `app/modules/recruiting/disclosures.py`
+- [x] T134 [US4] Implement candidate detail, candidate-work, notes, shortlist, internal-status, status publication, and disclosure endpoints from OpenAPI in `app/modules/recruiting/views.py`
+- [x] T135 [P] [US4] Build candidate detail, notes, shortlist, reasons, internal status, and status preview UI in `app/frontend/recruiter/candidate-detail.ts` and `app/frontend/templates/recruiter/candidate-detail.html`
+- [x] T136 [P] [US4] Build destination/purpose/minimum-field disclosure preview, confirmation, pending, success, unavailable, and failure UI in `app/frontend/recruiter/disclosure.ts`
+- [x] T137 [US4] Implement stored-versus-attempted conflict reconciliation in `app/frontend/shared/conflict-resolution.ts`
+- [x] T138 [US4] Apply refresh persistence and unsaved-navigation warnings to notes, reasons, filters, shortlist selection, and status edits in `app/frontend/shared/persistence.ts`
+- [x] T139 [US4] Add audit events for views, notes, shortlists, status, reasons, conflicts, disclosures, and notification overrides in `app/modules/recruiting/audit.py`
+- [x] T140 [US4] Run and record sourced/applicant separation, status, Not relevant, persistence, and disclosure evidence in `docs/evidence/us4-candidate-management.md`
 
 **Checkpoint**: US4 safely manages both contexts and completes the contact/share workflow without leaking candidate data.
 

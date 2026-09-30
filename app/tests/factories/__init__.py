@@ -18,9 +18,13 @@ from modules.operations.crypto import encrypt
 from modules.recruiting.models import (
     Application,
     CandidateFacingStatus,
+    CandidateWorkRecord,
+    DisclosureRequest,
     Opening,
     RecruiterEnteredCandidate,
+    RecruiterNote,
 )
+from modules.search.models import SearchDefinition
 from modules.tenancy.models import AccessGrant, BusinessUnit, Tenant, TenantMembership
 
 
@@ -165,6 +169,65 @@ class RecruiterEnteredCandidateFactory(factory.django.DjangoModelFactory):
     class Params:
         long_content = factory.Trait(display_name="S" * 200, skills=["X" * 200])
         stale = factory.Trait(version=2)
+
+
+class SearchDefinitionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SearchDefinition
+
+    tenant = factory.SubFactory(TenantFactory)
+    actor = factory.SubFactory(IdentityFactory)
+    context_type = SearchDefinition.ContextType.AD_HOC
+    criteria_context = {"type": "AD_HOC"}
+
+
+class CandidateWorkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CandidateWorkRecord
+
+    originating_search = factory.SubFactory(SearchDefinitionFactory)
+    tenant = factory.SelfAttribute("originating_search.tenant")
+    candidate_profile = factory.SubFactory("tests.factories.CandidateProfileFactory")
+    created_by = factory.SelfAttribute("originating_search.actor")
+    updated_by = factory.SelfAttribute("originating_search.actor")
+
+    class Params:
+        on_shortlist = factory.Trait(internal_status="SHORTLISTED", shortlisted=True)
+        not_relevant = factory.Trait(
+            internal_status="NOT_RELEVANT", structured_reasons=["SYNTHETIC_REASON"]
+        )
+        stale = factory.Trait(version=2)
+
+
+class RecruiterNoteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RecruiterNote
+
+    candidate_work = factory.SubFactory(CandidateWorkFactory)
+    tenant = factory.SelfAttribute("candidate_work.tenant")
+    application = None
+    author = factory.SelfAttribute("candidate_work.created_by")
+    body_ciphertext = factory.LazyFunction(lambda: encrypt("Synthetic private note"))
+
+
+class DisclosureRequestFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DisclosureRequest
+
+    application = factory.SubFactory(ApplicationFactory)
+    candidate_work = None
+    tenant = factory.SelfAttribute("application.tenant")
+    candidate_profile_id = factory.SelfAttribute("application.candidate_profile_id")
+    purpose = "HIRING_TEAM_SHARE"
+    destination_type = "HIRING_TEAM"
+    destination_identifier_ciphertext = factory.LazyFunction(lambda: encrypt("synthetic-team"))
+    destination_preview = "Synthetic team"
+    requested_fields = ["name"]
+    permitted_fields = ["name"]
+    consent_record_id = factory.SelfAttribute("application.consent_context_id")
+    preview_hash = "a" * 64
+    expires_at = factory.LazyFunction(lambda: timezone.now() + timedelta(minutes=10))
+    idempotency_key = factory.Sequence(lambda n: f"synthetic-disclosure-{n}")
 
 
 class AccessGrantFactory(factory.django.DjangoModelFactory):

@@ -10,7 +10,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from modules.operations.concurrency import strong_etag
 from modules.operations.crypto import decrypt
+from modules.recruiting.models import Application
 from modules.tenancy.models import TenantMembership
 
 from .audit import audit_result_view, audit_search, audit_search_denial
@@ -312,6 +314,15 @@ def candidate_detail(request, tenant_id, candidate_id):
             outcome="DENIED",
         )
         raise PermissionDenied("Candidate unavailable")
+    from modules.recruiting.candidate_work import create_or_reuse_candidate_work
+
+    candidate_work, _ = create_or_reuse_candidate_work(
+        membership=membership,
+        candidate_id=profile.id,
+        originating_search_id=snapshot.search_id,
+        opening_id=snapshot.search.derived_opening_id,
+        trigger="VIEW",
+    )
     matched = evaluate_candidate(
         _candidate_values(profile),
         validate_criteria(
@@ -326,6 +337,13 @@ def candidate_detail(request, tenant_id, candidate_id):
         outcome="ALLOWED",
     )
     result = _result(profile, matched, membership)
+    application = None
+    if snapshot.search.derived_opening_id:
+        application = Application.objects.filter(
+            tenant_id=tenant_id,
+            opening_id=snapshot.search.derived_opening_id,
+            candidate_profile_id=profile.id,
+        ).first()
     return Response(
         {
             "candidate_id": result["candidate_id"],
@@ -334,5 +352,22 @@ def candidate_detail(request, tenant_id, candidate_id):
             "findings": result["findings"],
             "unknowns": result["unknowns"],
             "access_context": snapshot.search.criteria_context,
+            "candidate_work": {
+                "id": str(candidate_work.id),
+                "version": candidate_work.version,
+                "internal_status": candidate_work.internal_status,
+                "shortlisted": candidate_work.shortlisted,
+            },
+            "application_context": (
+                {
+                    "id": str(application.id),
+                    "version": application.version,
+                    "etag": strong_etag(application.id, application.version),
+                    "internal_status": application.internal_status,
+                    "candidate_status": application.candidate_status,
+                }
+                if application is not None
+                else None
+            ),
         }
     )

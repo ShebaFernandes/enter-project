@@ -20,18 +20,9 @@ from .application_models import (
     ApplicationStatusEvent,
     ApplicationStatusPreview,
     CandidateFacingStatus,
-    InternalRecruitingStatus,
 )
 from .models import Opening
-
-STATUS_SUGGESTIONS: dict[str, str] = {
-    InternalRecruitingStatus.SHORTLISTED: CandidateFacingStatus.SHORTLISTED,
-    InternalRecruitingStatus.CONTACTED: CandidateFacingStatus.RECRUITER_INTERESTED,
-    InternalRecruitingStatus.SCREENING: CandidateFacingStatus.RECRUITER_INTERESTED,
-    InternalRecruitingStatus.INTERVIEWING: CandidateFacingStatus.INTERVIEW_REQUESTED,
-    InternalRecruitingStatus.OFFERED: CandidateFacingStatus.OFFER_MADE,
-    InternalRecruitingStatus.REJECTED: CandidateFacingStatus.NOT_SELECTED,
-}
+from .statuses import candidate_status_suggestion
 
 
 def public_opening(opening_id) -> Opening:
@@ -103,6 +94,9 @@ def submit_application(*, identity, values: dict[str, object], request_key: str)
     )
     application.full_clean()
     application.save()
+    from .candidate_work import link_application_candidate_work
+
+    link_application_candidate_work(application)
     ApplicationStatusEvent.objects.create(
         tenant=opening.tenant,
         application=application,
@@ -267,7 +261,7 @@ def preview_candidate_status(
         current={"candidate_status": application.candidate_status, "version": application.version},
         attempted={"internal_status": internal_status},
     )
-    suggestion = STATUS_SUGGESTIONS.get(internal_status)
+    suggestion = candidate_status_suggestion(internal_status)
     application.suggested_candidate_status = suggestion
     application.version += 1
     application.save(update_fields=("suggested_candidate_status", "version", "updated_at"))

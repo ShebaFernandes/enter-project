@@ -45,6 +45,13 @@ ROLE_ACTIONS: dict[str, frozenset[str]] = {
             "application.read",
             "application.status.write",
             "application.status.publish",
+            "candidate_work.read",
+            "candidate_work.write",
+            "recruiter_note.read",
+            "recruiter_note.write",
+            "shortlist.write",
+            "candidate.disclosure.preview",
+            "candidate.disclosure.confirm",
         }
     ),
     TenantMembership.Role.HIRING_MANAGER: frozenset(
@@ -57,6 +64,13 @@ ROLE_ACTIONS: dict[str, frozenset[str]] = {
             "application.read",
             "application.status.write",
             "application.status.publish",
+            "candidate_work.read",
+            "candidate_work.write",
+            "recruiter_note.read",
+            "recruiter_note.write",
+            "shortlist.write",
+            "candidate.disclosure.preview",
+            "candidate.disclosure.confirm",
         }
     ),
     TenantMembership.Role.TENANT_ADMIN: frozenset(

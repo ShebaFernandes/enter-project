@@ -89,6 +89,13 @@ from .application_models import (  # noqa: E402,F401 - Django model discovery/re
     CandidateFacingStatus,
     InternalRecruitingStatus,
 )
+from .work_models import (  # noqa: E402,F401 - Django model discovery/re-export
+    CandidateWorkRecord,
+    DisclosureRequest,
+    RecruiterNote,
+    RecruitingStatusEvent,
+    ShortlistEntry,
+)
 
 
 class RecruiterEnteredCandidate(models.Model):

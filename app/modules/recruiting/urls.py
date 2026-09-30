@@ -14,6 +14,15 @@ from .opening_views import (
     OpeningDetailView,
     RecruiterEnteredCandidateCollectionView,
 )
+from .views import (
+    ApplicationInternalStatusView,
+    ApplicationNoteCollectionView,
+    CandidateWorkCollectionView,
+    CandidateWorkDetailView,
+    CandidateWorkNoteCollectionView,
+    DisclosureConfirmView,
+    DisclosurePreviewView,
+)
 
 urlpatterns = [
     path("public/openings/<uuid:opening_id>", PublicOpeningView.as_view()),
@@ -37,6 +46,34 @@ urlpatterns = [
     path(
         "tenants/<uuid:tenant_id>/applications/<uuid:application_id>/status-publish",
         ApplicationStatusPublishView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/applications/<uuid:context_id>/notes",
+        ApplicationNoteCollectionView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/applications/<uuid:application_id>/internal-status",
+        ApplicationInternalStatusView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/candidate-work",
+        CandidateWorkCollectionView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/candidate-work/<uuid:candidate_work_id>",
+        CandidateWorkDetailView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/candidate-work/<uuid:context_id>/notes",
+        CandidateWorkNoteCollectionView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/candidates/<uuid:candidate_id>/disclosures/preview",
+        DisclosurePreviewView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/candidates/<uuid:candidate_id>/disclosures",
+        DisclosureConfirmView.as_view(),
     ),
     path(
         "tenants/<uuid:tenant_id>/openings",

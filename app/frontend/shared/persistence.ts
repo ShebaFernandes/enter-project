@@ -23,6 +23,21 @@ export function loadDraft<T>(key: string): T | null {
 export function clearDraft(key: string): void {
   sessionStorage.removeItem(key);
 }
+
+/**
+ * Private notes and recruiting reasons are deliberately never written to browser storage.
+ * Successful saves survive refresh through the authorized API; unsaved values receive a
+ * navigation warning and remain in the form after recoverable request failures.
+ */
+export function warnOnUnsaved(forms: HTMLFormElement[]): () => void {
+  const listener = (event: BeforeUnloadEvent) => {
+    if (forms.some((form) => form.dataset.dirty === "true")) {
+      event.preventDefault();
+    }
+  };
+  window.addEventListener("beforeunload", listener);
+  return () => window.removeEventListener("beforeunload", listener);
+}
 const persisted = document.querySelector<HTMLFormElement>("[data-search-form]");
 if (persisted) {
   const key = "recruiter-search-draft-v1";

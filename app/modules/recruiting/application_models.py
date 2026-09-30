@@ -47,7 +47,14 @@ class Application(models.Model):
         "recruiting.Opening", on_delete=models.PROTECT, related_name="applications"
     )
     candidate_profile_id = models.UUIDField()
-    candidate_work_record_id = models.UUIDField(null=True, blank=True)
+    candidate_work_record = models.ForeignKey(
+        "recruiting.CandidateWorkRecord",
+        db_column="candidate_work_record_id",
+        on_delete=models.SET_NULL,
+        related_name="linked_applications",
+        null=True,
+        blank=True,
+    )
     resume = models.ForeignKey(
         "candidate.ResumeAsset",
         on_delete=models.PROTECT,

@@ -91,7 +91,7 @@ async function openDetail(candidateId: string, searchId: string) {
     "[data-candidate-dialog]",
   )!;
   root.querySelector<HTMLElement>("[data-detail]")!.innerHTML =
-    `<p>${escapeText(String(data.permitted_fields.name ?? "Candidate"))}</p>${data.findings.map(findingMarkup).join("")}`;
+    `<p>${escapeText(String(data.permitted_fields.name ?? "Candidate"))}</p>${data.findings.map(findingMarkup).join("")}<p><a href="/tenants/${encodeURIComponent(root.dataset.tenantId!)}/recruiter/candidates/${encodeURIComponent(candidateId)}/?search_id=${encodeURIComponent(searchId)}">Manage this candidate</a></p>`;
   window.dispatchEvent(
     new CustomEvent("recruiter-search-selection", { detail: candidateId }),
   );
