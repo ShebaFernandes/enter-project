@@ -8,6 +8,7 @@ urlpatterns = [
     path("health/", health, name="health"),
     path("", include("modules.candidate.page_urls")),
     path("", include("modules.privacy.page_urls")),
+    path("", include("modules.recruiting.page_urls")),
     path("api/v1/", include("modules.identity.urls")),
     path("api/v1/", include("modules.tenancy.urls")),
     path("api/v1/", include("modules.recruiting.urls")),

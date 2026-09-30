@@ -31,6 +31,10 @@ def action_for_path(path: str, method: str) -> str | None:
     action = next((action for fragment, action in PATH_ACTIONS.items() if fragment in path), None)
     if action == "upload" and method != "POST":
         return None
+    if action == "application" and not (
+        method == "POST" and path.rstrip("/") == "/api/v1/candidate/applications"
+    ):
+        return None
     return action
 
 

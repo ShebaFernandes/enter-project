@@ -1,8 +1,16 @@
 import pytest
+from django.core.cache import cache
 from django.utils import timezone
 
 from modules.identity.models import Identity
 from modules.tenancy.models import Tenant, TenantMembership
+
+
+@pytest.fixture(autouse=True)
+def isolate_rate_limit_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture

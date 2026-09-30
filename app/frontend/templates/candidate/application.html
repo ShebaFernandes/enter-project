@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block content %}
+<section
+  class="candidate-application-shell"
+  data-application-page
+  data-opening-id="{{ opening_id }}"
+  data-resume-id="{{ resume_id|default:'' }}"
+  data-consent-id="{{ consent_id|default:'' }}"
+>
+  {% csrf_token %} {% if request.user.is_authenticated %}<button
+    type="button"
+    data-sign-out
+  >
+    Sign out</button
+  >{% endif %}
+  <a href="#application-form">Skip to application</a>
+  <p class="eyebrow">Open role</p>
+  <h1 data-opening-title>Loading role…</h1>
+  <dl class="role-essentials" data-role-essentials aria-live="polite"></dl>
+  <section aria-labelledby="process-title">
+    <h2 id="process-title">What happens next</h2>
+    <p>
+      Your application is stored separately for this role. You control
+      withdrawal and update channels, and no automated hiring decision is made.
+    </p>
+  </section>
+  <form id="application-form" data-application-form novalidate>
+    <h2>Quick application</h2>
+    <div class="form-errors" data-form-errors role="alert" hidden></div>
+    <label for="application-name">Full name</label>
+    <input
+      id="application-name"
+      name="full_name"
+      autocomplete="name"
+      required
+    />
+    <label for="application-email">Verified email</label>
+    <input
+      id="application-email"
+      name="email"
+      type="email"
+      autocomplete="email"
+      required
+    />
+    <label for="application-answer"
+      >Why are you interested? <span>(optional)</span></label
+    >
+    <textarea id="application-answer" name="motivation" rows="4"></textarea>
+    <div class="resume-confirmation" data-resume-confirmation>
+      <h3>Resume</h3>
+      {% if resume_id %}
+      <p>Your current security-scanned resume will be attached to this role.</p>
+      {% else %}
+      <p>
+        Add and complete security scanning for a resume in your candidate
+        profile before applying.
+      </p>
+      {% endif %}
+    </div>
+    <fieldset>
+      <legend>Status update channels</legend>
+      <label><input name="email_updates" type="checkbox" /> Email</label>
+      <label><input name="whatsapp_updates" type="checkbox" /> WhatsApp</label>
+    </fieldset>
+    <label class="consent-check"
+      ><input name="consent" type="checkbox" required /> I consent to use of my
+      profile and clean resume for this application.</label
+    >
+    <button type="submit">Apply</button>
+    <p
+      class="application-status"
+      data-application-status
+      role="status"
+      aria-live="polite"
+    ></p>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+.candidate-application-shell,
+.candidate-progress-shell {
+  width: min(100% - 2rem, 52rem);
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
+}
+
+.role-essentials,
+.application-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.role-essentials {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.role-essentials div,
+.application-card {
+  border: 1px solid #ccd5e0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.candidate-application-shell form,
+.application-card form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.candidate-application-shell input,
+.candidate-application-shell textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+}
+
+.consent-check,
+.candidate-application-shell fieldset label,
+.application-card fieldset label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.consent-check input,
+.candidate-application-shell fieldset input,
+.application-card fieldset input {
+  width: auto;
+  min-height: auto;
+}
+
+@media (max-width: 30rem) {
+  .candidate-application-shell,
+  .candidate-progress-shell {
+    width: min(100% - 1rem, 52rem);
+  }
+}

@@ -204,24 +204,24 @@
 
 ### Tests for User Story 6
 
-- [ ] T106 [P] [US6] Add public-opening/application API tests for one profile/multiple applications, unique role application, consent/timestamps, candidate-confirmed `WITHDRAWN`, idempotency, validation, and rate limits in `app/tests/contract/test_application_api.py`
-- [ ] T107 [P] [US6] Add status tests proving initial `APPLIED`, only the approved eight public values, application-scoped `WITHDRAWN`, nullable unmapped suggestions, per-application isolation, explicit recruiter publication, and no internal leakage in `app/tests/integration/candidate/test_application_status.py`
-- [ ] T108 [P] [US6] Add browser tests for public role essentials, validation, duplicate submission, eight-status progress, channel preferences, candidate-safe `PENDING|SENT|FAILED|CANCELLED` notification states, keyboard use, and reflow in `app/tests/browser/candidate/application.spec.ts`
-- [ ] T109 [P] [US6] Add failure tests for closed roles, data/auth outages, notification outage, stale edits, safe retry, refresh persistence, and unsaved warnings in `app/tests/integration/candidate/test_application_failures.py`
+- [X] T106 [P] [US6] Add public-opening/application API tests for one profile/multiple applications, unique role application, consent/timestamps, candidate-confirmed `WITHDRAWN`, idempotency, validation, and rate limits in `app/tests/contract/test_application_api.py`
+- [X] T107 [P] [US6] Add status tests proving initial `APPLIED`, only the approved eight public values, application-scoped `WITHDRAWN`, nullable unmapped suggestions, per-application isolation, explicit recruiter publication, and no internal leakage in `app/tests/integration/candidate/test_application_status.py`
+- [X] T108 [P] [US6] Add browser tests for public role essentials, validation, duplicate submission, eight-status progress, channel preferences, candidate-safe `PENDING|SENT|FAILED|CANCELLED` notification states, keyboard use, and reflow in `app/tests/browser/candidate/application.spec.ts`
+- [X] T109 [P] [US6] Add failure tests for closed roles, data/auth outages, notification outage, stale edits, safe retry, refresh persistence, and unsaved warnings in `app/tests/integration/candidate/test_application_failures.py`
 
 ### Implementation for User Story 6
 
-- [ ] T110 [US6] Extend application storage for answers, consent context, immutable submission time, the approved eight-status enum, nullable `suggested_candidate_status`, channel preferences, and candidate-work link without history overwrite in `app/modules/recruiting/application_models.py`
-- [ ] T111 [US6] Generate application-answer, consent, preference, and status-history migrations in `app/modules/recruiting/migrations/`
-- [ ] T112 [US6] Implement public opening read, application submit, and candidate-confirmed application withdrawal with profile reuse, open-state validation, uniqueness, idempotency, initial `APPLIED`, and application-scoped `WITHDRAWN` events in `app/modules/recruiting/applications.py`
-- [ ] T113 [US6] Implement candidate-owned application listing/status history using exactly `APPLIED|PROFILE_VIEWED|SHORTLISTED|RECRUITER_INTERESTED|INTERVIEW_REQUESTED|OFFER_MADE|NOT_SELECTED|WITHDRAWN` in `app/modules/recruiting/candidate_progress.py`
-- [ ] T114 [US6] Implement public role, application, candidate-confirmed withdrawal, progress, and per-application notification-preference endpoints from OpenAPI in `app/modules/recruiting/candidate_views.py`
-- [ ] T115 [US6] Implement consent-aware email/WhatsApp status notifications with internal-to-candidate delivery-state projection, no `SENDING` exposure, and retry-safe links in `app/modules/communications/application_notifications.py`
-- [ ] T116 [P] [US6] Build accessible public role details and quick application with validation and duplicate-safe submission in `app/frontend/candidate/application.ts` and `app/frontend/templates/candidate/application.html`
-- [ ] T117 [P] [US6] Build the application list, eight-status timeline, channel preferences, and `PENDING|SENT|FAILED|CANCELLED` delivery display in `app/frontend/candidate/progress.ts` and `app/frontend/templates/candidate/progress.html`
-- [ ] T118 [US6] Add responsive layouts, one-second feedback, refresh persistence, and unsaved-navigation protection in `app/frontend/styles/candidate-applications.css` and `app/frontend/shared/persistence.ts`
-- [ ] T119 [US6] Add application, consent, status, and notification audit events without answer/contact values in `app/modules/recruiting/application_audit.py`
-- [ ] T120 [US6] Run and record multi-role, status-vocabulary, persistence, and failure evidence in `docs/evidence/us6-application-progress.md`
+- [X] T110 [US6] Extend application storage for answers, consent context, immutable submission time, the approved eight-status enum, nullable `suggested_candidate_status`, channel preferences, and candidate-work link without history overwrite in `app/modules/recruiting/application_models.py`
+- [X] T111 [US6] Generate application-answer, consent, preference, and status-history migrations in `app/modules/recruiting/migrations/`
+- [X] T112 [US6] Implement public opening read, application submit, and candidate-confirmed application withdrawal with profile reuse, open-state validation, uniqueness, idempotency, initial `APPLIED`, and application-scoped `WITHDRAWN` events in `app/modules/recruiting/applications.py`
+- [X] T113 [US6] Implement candidate-owned application listing/status history using exactly `APPLIED|PROFILE_VIEWED|SHORTLISTED|RECRUITER_INTERESTED|INTERVIEW_REQUESTED|OFFER_MADE|NOT_SELECTED|WITHDRAWN` in `app/modules/recruiting/candidate_progress.py`
+- [X] T114 [US6] Implement public role, application, candidate-confirmed withdrawal, progress, and per-application notification-preference endpoints from OpenAPI in `app/modules/recruiting/candidate_views.py`
+- [X] T115 [US6] Implement consent-aware email/WhatsApp status notifications with internal-to-candidate delivery-state projection, no `SENDING` exposure, and retry-safe links in `app/modules/communications/application_notifications.py`
+- [X] T116 [P] [US6] Build accessible public role details and quick application with validation and duplicate-safe submission in `app/frontend/candidate/application.ts` and `app/frontend/templates/candidate/application.html`
+- [X] T117 [P] [US6] Build the application list, eight-status timeline, channel preferences, and `PENDING|SENT|FAILED|CANCELLED` delivery display in `app/frontend/candidate/progress.ts` and `app/frontend/templates/candidate/progress.html`
+- [X] T118 [US6] Add responsive layouts, one-second feedback, refresh persistence, and unsaved-navigation protection in `app/frontend/styles/candidate-applications.css` and `app/frontend/shared/persistence.ts`
+- [X] T119 [US6] Add application, consent, status, and notification audit events without answer/contact values in `app/modules/recruiting/application_audit.py`
+- [X] T120 [US6] Run and record multi-role, status-vocabulary, persistence, and failure evidence in `docs/evidence/us6-application-progress.md`
 
 **Checkpoint**: US6 provides independent per-role applications before US4 links and manages applicant records.
 

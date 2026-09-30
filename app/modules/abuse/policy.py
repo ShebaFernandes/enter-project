@@ -19,7 +19,7 @@ LIMITS = {
     "sign-in": Limit(10, 300),
     "otp": Limit(5, 600),
     "upload": Limit(20, 3600),
-    "application": Limit(10, 3600),
+    "application": Limit(20, 86400),
     "search": Limit(120, 60),
     "export": Limit(3, 86400),
 }

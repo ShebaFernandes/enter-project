@@ -287,7 +287,7 @@ if (reviewRoot) {
       }
       sessionStorage.setItem(RESULT_KEY, JSON.stringify(await response.json()));
       sessionStorage.removeItem(REVIEW_KEY);
-      window.location.assign(`/tenants/${tenantId}/recruiter/search/`);
+      window.location.replace(`/tenants/${tenantId}/recruiter/search/`);
     });
   render();
 }

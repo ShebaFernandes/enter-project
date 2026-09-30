@@ -212,6 +212,9 @@ if (root) {
       const interpretation = (await response.json()) as InterpretationResponse;
       if (interpretation.requires_review) {
         sessionStorage.setItem(REVIEW_KEY, JSON.stringify(interpretation));
+        window.dispatchEvent(
+          new Event("recruiter-search-intentional-navigation"),
+        );
         window.location.assign(
           `/tenants/${searchRoot.dataset.tenantId}/recruiter/search/criteria-review/`,
         );

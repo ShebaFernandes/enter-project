@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -18,6 +19,7 @@ from modules.candidate.models import (
     CandidateSkill,
     ConsentRecord,
     EmploymentRecord,
+    ResumeAsset,
     VisibilityRule,
 )
 from modules.operations.crypto import encrypt
@@ -30,6 +32,7 @@ from .services import link_identity_with_role
 TOKEN_TTL_SECONDS = 600
 RECRUITER_SUBJECT = "local-synthetic-recruiter"
 CANDIDATE_SUBJECT = "local-synthetic-candidate"
+BASE_OPENING_ID = uuid.UUID("00000000-0000-4000-8000-000000000106")
 
 
 @dataclass(frozen=True)
@@ -38,6 +41,13 @@ class LocalRecruiterBootstrap:
     tenant_id: str
     recruiter_id: str
     candidate_id: str
+
+
+@dataclass(frozen=True)
+class LocalCandidateBootstrap:
+    token: str
+    candidate_id: str
+    opening_id: str
 
 
 def _require_local_test() -> None:
@@ -102,11 +112,12 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
             name="Synthetic Engineering",
             defaults={"created_by": recruiter, "status": BusinessUnit.Status.ACTIVE},
         )
-        Opening.objects.update_or_create(
-            tenant=tenant,
-            business_unit=unit,
-            title="Software Engineer",
+        opening, _ = Opening.objects.update_or_create(
+            id=BASE_OPENING_ID,
             defaults={
+                "tenant": tenant,
+                "business_unit": unit,
+                "title": "Software Engineer",
                 "location": {"normalized": "bengaluru", "display": "Bengaluru"},
                 "work_mode": Opening.WorkMode.REMOTE,
                 "employment_type": "PERMANENT",
@@ -188,6 +199,36 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
             },
         )
         evaluate_employment_record(employment)
+        resume = ResumeAsset.objects.filter(profile=profile, is_current=True).first()
+        if resume is None:
+            resume = ResumeAsset.objects.create(
+                profile=profile,
+                quarantine_key=f"quarantine/local-synthetic/{profile.id}",
+                clean_key=f"clean/local-synthetic/{profile.id}",
+                original_filename_ciphertext=encrypt("synthetic-resume.pdf"),
+                declared_mime="application/pdf",
+                detected_mime="application/pdf",
+                size_bytes=1024,
+                sha256="a" * 64,
+                scan_status=ResumeAsset.ScanStatus.CLEAN,
+                parse_status=ResumeAsset.ParseStatus.READY,
+            )
+        ConsentRecord.objects.update_or_create(
+            profile=profile,
+            source_request_id=f"local-application-{opening.id}",
+            defaults={
+                "purpose": "APPLICATION_SUBMISSION",
+                "field_scope": ["application", "resume", "notifications"],
+                "audience_scope": {
+                    "tenant_id": str(tenant.id),
+                    "opening_id": str(opening.id),
+                },
+                "notice_version": "application-v1",
+                "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
+                "expires_at": timezone.now() + timedelta(days=365),
+                "withdrawn_at": None,
+            },
+        )
     return recruiter, tenant, profile
 
 
@@ -234,6 +275,83 @@ def consume_local_recruiter_bootstrap(token: str) -> tuple[Identity, TenantMembe
     return identity, membership
 
 
+def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
+    recruiter, tenant, profile = seed_local_recruiter_verification()
+    with _rls_context(tenant_id=tenant.id):
+        unit = BusinessUnit.objects.filter(tenant=tenant, status=BusinessUnit.Status.ACTIVE).first()
+        if unit is None:
+            raise PermissionDenied("Synthetic session unavailable")
+        opening = Opening.objects.create(
+            tenant=tenant,
+            business_unit=unit,
+            title="Software Engineer",
+            location={"normalized": "bengaluru", "display": "Bengaluru"},
+            work_mode=Opening.WorkMode.REMOTE,
+            employment_type="PERMANENT",
+            state=Opening.State.OPEN,
+            created_by=recruiter,
+        )
+    with _rls_context(identity_id=profile.identity_id):
+        ConsentRecord.objects.create(
+            profile=profile,
+            purpose="APPLICATION_SUBMISSION",
+            field_scope=["application", "resume", "notifications"],
+            audience_scope={
+                "tenant_id": str(tenant.id),
+                "opening_id": str(opening.id),
+            },
+            notice_version="application-v1",
+            affirmative_action="LOCAL_SYNTHETIC_FIXTURE",
+            source_request_id=f"local-application-{opening.id}",
+            expires_at=timezone.now() + timedelta(days=365),
+        )
+    token = secrets.token_urlsafe(32)
+    cache.set(
+        _candidate_token_key(token),
+        {
+            "candidate_id": str(profile.identity_id),
+            "opening_id": str(opening.id),
+            "tenant_id": str(tenant.id),
+        },
+        timeout=TOKEN_TTL_SECONDS,
+    )
+    return LocalCandidateBootstrap(token, str(profile.identity_id), str(opening.id))
+
+
+def consume_local_candidate_bootstrap(token: str) -> tuple[Identity, Opening]:
+    _require_local_test()
+    if len(token) < 32:
+        raise PermissionDenied("Synthetic session unavailable")
+    key = _candidate_token_key(token)
+    payload = cache.get(key)
+    if not isinstance(payload, dict) or cache.delete(key) != 1:
+        raise PermissionDenied("Synthetic session unavailable")
+    candidate_id = payload.get("candidate_id")
+    opening_id = payload.get("opening_id")
+    tenant_id = payload.get("tenant_id")
+    if (
+        not isinstance(candidate_id, str)
+        or not isinstance(opening_id, str)
+        or not isinstance(tenant_id, str)
+    ):
+        raise PermissionDenied("Synthetic session unavailable")
+    identity = Identity.objects.filter(
+        pk=candidate_id,
+        cognito_subject=CANDIDATE_SUBJECT,
+        status=Identity.Status.ACTIVE,
+    ).first()
+    with _rls_context(tenant_id=tenant_id):
+        opening = Opening.objects.filter(pk=opening_id, state=Opening.State.OPEN).first()
+    if identity is None or opening is None:
+        raise PermissionDenied("Synthetic session unavailable")
+    return identity, opening
+
+
 def _token_key(token: str) -> str:
     digest = hashlib.sha256(token.encode()).hexdigest()
     return f"local-synthetic-recruiter-bootstrap:{digest}"
+
+
+def _candidate_token_key(token: str) -> str:
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    return f"local-synthetic-candidate-bootstrap:{digest}"

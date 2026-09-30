@@ -115,7 +115,18 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
 
     opening = factory.SubFactory(OpeningFactory)
     tenant = factory.SelfAttribute("opening.tenant")
-    candidate_profile_id = factory.LazyFunction(uuid.uuid4)
+    candidate_profile_id = factory.LazyFunction(lambda: CandidateProfileFactory().id)
+    consent_context_id = factory.LazyAttribute(
+        lambda obj: ConsentRecordFactory(
+            profile_id=obj.candidate_profile_id,
+            purpose="APPLICATION_SUBMISSION",
+            field_scope=["application", "resume", "notifications"],
+            audience_scope={
+                "opening_id": str(obj.opening.id),
+                "tenant_id": str(obj.tenant.id),
+            },
+        ).id
+    )
     state = Application.State.DRAFT
 
     class Params:

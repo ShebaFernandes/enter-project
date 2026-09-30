@@ -34,6 +34,9 @@ from tests.factories import AccessGrantFactory
                 "candidate.field.read",
                 "recruiter_candidate.create",
                 "recruiter_candidate.read",
+                "application.read",
+                "application.status.write",
+                "application.status.publish",
             },
         ),
         (
@@ -44,6 +47,9 @@ from tests.factories import AccessGrantFactory
                 "candidate.read",
                 "candidate.field.read",
                 "recruiter_candidate.read",
+                "application.read",
+                "application.status.write",
+                "application.status.publish",
             },
         ),
         (

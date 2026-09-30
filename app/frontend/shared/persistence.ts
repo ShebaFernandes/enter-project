@@ -6,9 +6,27 @@ type Draft = {
   filter: string;
   selection: string;
 };
+
+export function saveDraft<T>(key: string, value: T): void {
+  sessionStorage.setItem(key, JSON.stringify(value));
+}
+
+export function loadDraft<T>(key: string): T | null {
+  try {
+    return JSON.parse(sessionStorage.getItem(key) ?? "null") as T | null;
+  } catch {
+    sessionStorage.removeItem(key);
+    return null;
+  }
+}
+
+export function clearDraft(key: string): void {
+  sessionStorage.removeItem(key);
+}
 const persisted = document.querySelector<HTMLFormElement>("[data-search-form]");
 if (persisted) {
   const key = "recruiter-search-draft-v1";
+  let intentionalNavigation = false;
   const root = persisted.closest<HTMLElement>("[data-recruiter-search]")!;
   const fields = ["purpose", "group_operator", "field", "operator", "value"];
   const read = (): Draft => ({
@@ -90,8 +108,14 @@ if (persisted) {
     root.dataset.selectedCandidate = event.detail;
     save();
   }) as EventListener);
+  window.addEventListener("recruiter-search-intentional-navigation", () => {
+    intentionalNavigation = true;
+  });
   window.addEventListener("beforeunload", (event) => {
-    if (read().prompt.trim() || read().criteria.some((item) => item.value))
+    if (
+      !intentionalNavigation &&
+      (read().prompt.trim() || read().criteria.some((item) => item.value))
+    )
       event.preventDefault();
   });
 }

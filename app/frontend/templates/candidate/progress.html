@@ -1,0 +1,41 @@
+{% extends "base.html" %} {% block content %}
+<section class="candidate-progress-shell" data-progress-page>
+  {% csrf_token %}
+  <header>
+    <p class="eyebrow">Candidate area</p>
+    <h1>Your applications</h1>
+    <p>
+      Each role keeps its own answers, consent, progress and update preferences.
+    </p>
+    <button type="button" data-sign-out>Sign out</button>
+  </header>
+  <p data-progress-status role="status" aria-live="polite">
+    Loading applications…
+  </p>
+  <div data-application-list class="application-list"></div>
+  <template id="application-card-template">
+    <article class="application-card">
+      <h2 data-role-title></h2>
+      <p>
+        <strong data-current-status></strong> <time data-status-time></time>
+      </p>
+      <ol
+        class="status-timeline"
+        data-status-history
+        aria-label="Published application progress"
+      ></ol>
+      <form data-preferences-form>
+        <fieldset>
+          <legend>Update channels</legend>
+          <label><input name="email" type="checkbox" /> Email</label>
+          <label><input name="whatsapp" type="checkbox" /> WhatsApp</label>
+        </fieldset>
+        <button type="submit">Save channels</button>
+      </form>
+      <ul data-deliveries aria-label="Notification delivery"></ul>
+      <button type="button" data-withdraw>Withdraw this application</button>
+      <p data-card-status role="status" aria-live="polite"></p>
+    </article>
+  </template>
+</section>
+{% endblock %}
