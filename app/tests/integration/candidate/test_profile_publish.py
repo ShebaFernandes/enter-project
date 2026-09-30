@@ -9,17 +9,17 @@ from modules.candidate.services import publish_profile
 from modules.operations.concurrency import strong_etag
 from modules.operations.models import OutboxEvent
 from tests.factories import (
-    CandidateProfileFactory,
     ConsentRecordFactory,
     ResumeAssetFactory,
     VisibilityRuleFactory,
+    make_candidate_profile,
 )
 
 pytestmark = pytest.mark.django_db
 
 
 def test_publish_requires_resume_skills_visibility_and_consent():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     with pytest.raises(ValidationError):
         publish_profile(
             identity=profile.identity, if_match=strong_etag(profile.id, profile.version)
@@ -27,7 +27,7 @@ def test_publish_requires_resume_skills_visibility_and_consent():
 
 
 def test_complete_profile_publishes_and_sets_12_month_consent_expiry():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     CandidateSkill.objects.create(profile=profile, normalized_name="python", display_name="Python")
     ResumeAssetFactory(profile=profile, clean=True)
     consent = ConsentRecordFactory(profile=profile)
@@ -42,6 +42,7 @@ def test_complete_profile_publishes_and_sets_12_month_consent_expiry():
         identity=profile.identity, if_match=strong_etag(profile.id, profile.version)
     )
     assert published.profile_state == CandidateProfile.State.PUBLISHED
+    assert published.consent_expires_at is not None
     assert (
         timedelta(days=364) < published.consent_expires_at - timezone.now() <= timedelta(days=365)
     )

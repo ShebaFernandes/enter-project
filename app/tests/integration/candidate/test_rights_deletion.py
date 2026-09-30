@@ -20,10 +20,10 @@ from modules.privacy.models import (
 )
 from modules.privacy.services import create_rights_request
 from tests.factories import (
-    ApplicationFactory,
-    CandidateProfileFactory,
-    EmploymentRecordFactory,
-    IdentityFactory,
+    make_application,
+    make_candidate_profile,
+    make_employment_record,
+    make_identity,
 )
 
 pytestmark = pytest.mark.django_db
@@ -51,7 +51,7 @@ def step_up(identity):
 
 
 def test_deletion_requires_step_up_and_confirmation():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     with pytest.raises(ValidationError):
         create_rights_request(
             identity=profile.identity,
@@ -61,8 +61,8 @@ def test_deletion_requires_step_up_and_confirmation():
 
 
 def test_confirmed_deletion_hides_immediately_and_completes_with_ledger():
-    profile = CandidateProfileFactory(profile_state=CandidateProfile.State.PUBLISHED)
-    EmploymentRecordFactory(profile=profile)
+    profile = make_candidate_profile(profile_state=CandidateProfile.State.PUBLISHED)
+    make_employment_record(profile=profile)
     evidence = step_up(profile.identity)
     request = create_rights_request(
         identity=profile.identity,
@@ -80,13 +80,14 @@ def test_confirmed_deletion_hides_immediately_and_completes_with_ledger():
     assert not EmploymentRecord.objects.filter(profile=profile).exists()
     assert request.state == DataRightsRequest.State.COMPLETED
     ledger = DeletionLedger.objects.get()
-    assert ledger.subject_token and str(profile.identity_id).encode() not in ledger.subject_token
+    assert ledger.subject_token
+    assert str(profile.identity_id).encode() not in bytes(ledger.subject_token)
     assert ledger.evidence_hash and ledger.replay_status == "PENDING"
 
 
 def test_active_process_exception_has_exact_versioned_fields_and_holds_only_scope():
-    profile = CandidateProfileFactory()
-    application = ApplicationFactory(candidate_profile_id=profile.id, active=True)
+    profile = make_candidate_profile()
+    application = make_application(candidate_profile_id=profile.id, active=True)
     exception = create_active_process_exception(
         profile=profile,
         application=application,
@@ -95,7 +96,7 @@ def test_active_process_exception_has_exact_versioned_fields_and_holds_only_scop
         retained_data_scope=["application.answers"],
         review_date=timezone.now() + timedelta(days=30),
         terminating_event="APPLICATION_CLOSED",
-        approved_by=IdentityFactory(),
+        approved_by=make_identity(),
         audit_references=[str(profile.id)],
     )
     assert exception.version == 1 and exception.lifecycle_state == "ACTIVE"
@@ -105,32 +106,32 @@ def test_active_process_exception_has_exact_versioned_fields_and_holds_only_scop
 
 
 def test_exception_application_must_reference_same_candidate():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     with pytest.raises(ValidationError):
         create_active_process_exception(
             profile=profile,
-            application=ApplicationFactory(),
+            application=make_application(),
             policy_version="retention-v1",
             legal_basis="Active process",
             retained_data_scope=["application"],
             review_date=timezone.now() + timedelta(days=30),
             terminating_event="APPLICATION_CLOSED",
-            approved_by=IdentityFactory(),
+            approved_by=make_identity(),
             audit_references=[str(profile.id)],
         )
 
 
 def test_terminating_event_resolution_resumes_held_deletion():
-    profile = CandidateProfileFactory(profile_state=CandidateProfile.State.PUBLISHED)
+    profile = make_candidate_profile(profile_state=CandidateProfile.State.PUBLISHED)
     exception = create_active_process_exception(
         profile=profile,
-        application=ApplicationFactory(candidate_profile_id=profile.id, active=True),
+        application=make_application(candidate_profile_id=profile.id, active=True),
         policy_version="retention-v1",
         legal_basis="Active hiring process",
         retained_data_scope=["application.answers"],
         review_date=timezone.now() + timedelta(days=30),
         terminating_event="APPLICATION_CLOSED",
-        approved_by=IdentityFactory(),
+        approved_by=make_identity(),
         audit_references=[str(profile.id)],
     )
     request = create_rights_request(
@@ -148,7 +149,7 @@ def test_terminating_event_resolution_resumes_held_deletion():
 
 
 def test_active_legal_hold_prevents_erasure_but_keeps_profile_hidden():
-    profile = CandidateProfileFactory(profile_state=CandidateProfile.State.PUBLISHED)
+    profile = make_candidate_profile(profile_state=CandidateProfile.State.PUBLISHED)
     evidence = step_up(profile.identity)
     request = create_rights_request(
         identity=profile.identity,
@@ -160,7 +161,7 @@ def test_active_legal_hold_prevents_erasure_but_keeps_profile_hidden():
         profile=profile,
         scope=["employment_history"],
         authority_reference="SYNTHETIC-HOLD-001",
-        approver=IdentityFactory(),
+        approver=make_identity(),
         encrypted_rationale=encrypt("Synthetic litigation hold"),
         starts_at=timezone.now(),
         review_at=timezone.now() + timedelta(days=30),

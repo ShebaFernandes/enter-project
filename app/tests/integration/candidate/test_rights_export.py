@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from typing import cast
 
 import pytest
 from django.core.cache import cache
@@ -13,27 +14,30 @@ from modules.candidate.models import CandidateSkill
 from modules.privacy.export_service import download_export, expire_exports, generate_export
 from modules.privacy.models import RightsExport
 from modules.privacy.services import create_rights_request
-from tests.factories import CandidateCapabilityFactory, CandidateProfileFactory, IdentityFactory
+from tests.factories import CandidateCapabilityFactory, make_candidate_profile, make_identity
 
 pytestmark = pytest.mark.django_db
 
 
 def test_export_contains_full_candidate_scope_and_expires_after_24_hours():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     CandidateSkill.objects.create(profile=profile, normalized_name="python", display_name="Python")
     request = create_rights_request(
         identity=profile.identity, profile=profile, values={"request_type": "EXPORT"}
     )
     export = generate_export(request.export.id)
     assert export.state == RightsExport.State.READY
+    assert export.expires_at is not None
+    assert export.ready_at is not None
     assert export.expires_at - export.ready_at == timedelta(hours=24)
-    payload = download_export(identity=profile.identity, request=request)
-    assert payload["profile"]["skills"] == ["Python"]
+    payload = cast(dict[str, object], download_export(identity=profile.identity, request=request))
+    profile_payload = cast(dict[str, object], payload["profile"])
+    assert profile_payload["skills"] == ["Python"]
     assert export.object_key.startswith("rights-exports/")
 
 
 def test_export_download_is_owner_only_and_partial_artifact_is_never_available():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     request = create_rights_request(
         identity=profile.identity, profile=profile, values={"request_type": "EXPORT"}
     )
@@ -41,11 +45,11 @@ def test_export_download_is_owner_only_and_partial_artifact_is_never_available()
         download_export(identity=profile.identity, request=request)
     generate_export(request.export.id)
     with pytest.raises(PermissionDenied):
-        download_export(identity=IdentityFactory(), request=request)
+        download_export(identity=make_identity(), request=request)
 
 
 def test_expired_export_is_erased_and_unavailable():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     request = create_rights_request(
         identity=profile.identity, profile=profile, values={"request_type": "EXPORT"}
     )
@@ -58,7 +62,7 @@ def test_expired_export_is_erased_and_unavailable():
 
 
 def test_export_deadline_is_within_24_hours():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     request = create_rights_request(
         identity=profile.identity, profile=profile, values={"request_type": "EXPORT"}
     )
@@ -75,7 +79,7 @@ def test_export_deadline_is_within_24_hours():
 )
 def test_export_download_is_rate_limited_and_audited():
     cache.clear()
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     CandidateCapabilityFactory(identity=profile.identity, assigned_by=profile.identity)
     request = create_rights_request(
         identity=profile.identity, profile=profile, values={"request_type": "EXPORT"}

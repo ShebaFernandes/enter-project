@@ -4,13 +4,13 @@ from modules.audit.models import AuditEvent
 from modules.candidate.services import update_profile
 from modules.operations.concurrency import strong_etag
 from modules.privacy.services import create_rights_request
-from tests.factories import CandidateProfileFactory
+from tests.factories import make_candidate_profile
 
 pytestmark = [pytest.mark.django_db, pytest.mark.security]
 
 
 def test_candidate_profile_and_rights_audit_are_value_minimized():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     update_profile(
         identity=profile.identity,
         if_match=strong_etag(profile.id, profile.version),

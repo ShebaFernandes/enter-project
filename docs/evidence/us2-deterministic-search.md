@@ -27,20 +27,21 @@ Verified 2026-09-30 with synthetic data only.
 ## Browser and speech evidence
 
 - Playwright covered prompt/criteria persistence, loading, empty, safe error, results, filters, candidate details, keyboard focus, 320px layout, sign-out/history protection, and neutral finding evidence.
+- An authenticated local/test-only browser run exchanged a one-time synthetic bootstrap token for a normal `WORKFORCE_MFA` session, exercised live PostgreSQL-backed search and candidate details, displayed authorized `SHORT_TENURE` evidence, and verified sign-out plus Back-button protection.
 - Web Speech covered unsupported fallback, listening, transcribing, ready, editable transcript, stopping, and no automatic submission. Typed search remained available on every path.
 - Axe found no violations in the recruiter search error-state fixture.
 
 ## Commands and results
 
 ```text
-PostgreSQL full suite: 164 passed, 1 skipped (tamper fixture intentionally prevented by immutable trigger)
-SQLite portability suite: 157 passed, 8 PostgreSQL-only skipped
-Recruiter Playwright suite: 7 passed
-Full Playwright suite: 19 passed
+PostgreSQL full suite: 166 passed, 1 skipped (tamper fixture intentionally prevented by immutable trigger)
+SQLite portability suite: 159 passed, 8 PostgreSQL-only skipped
+Recruiter Playwright suite: 8 passed
+Full Playwright suite with authenticated local recruiter: 20 passed
 Ruff: passed
 TypeScript, ESLint, Prettier: passed
 Vite production build: passed
 Django system check: passed
 Migration drift check: passed
-Focused Phase 4 mypy: passed
+Repository-wide mypy: passed (153 source files)
 ```

@@ -9,9 +9,9 @@ from modules.candidate.models import CandidateProfile, VisibilityRule
 from modules.candidate.visibility import replace_visibility, withdraw_consent
 from modules.operations.concurrency import strong_etag
 from tests.factories import (
-    CandidateProfileFactory,
     ConsentRecordFactory,
-    IdentityFactory,
+    make_candidate_profile,
+    make_identity,
 )
 
 pytestmark = [pytest.mark.django_db, pytest.mark.security]
@@ -40,9 +40,9 @@ def test_matching_roles_requires_deterministic_preferences():
 
 def test_all_four_visibility_modes_and_immediate_hiding():
     for mode in VisibilityRule.Mode.values:
-        profile = CandidateProfileFactory(profile_state=CandidateProfile.State.PUBLISHED)
+        profile = make_candidate_profile(profile_state=CandidateProfile.State.PUBLISHED)
         consent = ConsentRecordFactory(profile=profile)
-        values = {"mode": mode}
+        values: dict[str, object] = {"mode": mode}
         if mode == "APPROVED_RECRUITERS":
             values["approved_tenant_ids"] = [str(uuid.uuid4())]
         if mode == "MATCHING_ROLES":
@@ -55,7 +55,7 @@ def test_all_four_visibility_modes_and_immediate_hiding():
 
 
 def test_consent_must_be_current_and_owned():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     other = ConsentRecordFactory()
     with pytest.raises(PermissionDenied):
         apply(profile, other, mode="NOT_LOOKING")
@@ -67,7 +67,7 @@ def test_consent_must_be_current_and_owned():
 
 
 def test_withdrawal_hides_profile_and_supersedes_visibility():
-    profile = CandidateProfileFactory(profile_state=CandidateProfile.State.PUBLISHED)
+    profile = make_candidate_profile(profile_state=CandidateProfile.State.PUBLISHED)
     consent = ConsentRecordFactory(profile=profile)
     rule = apply(
         profile, consent, mode="MATCHING_ROLES", matching_preferences={"roles": ["Engineer"]}
@@ -81,11 +81,11 @@ def test_withdrawal_hides_profile_and_supersedes_visibility():
 
 
 def test_cross_candidate_cannot_change_visibility():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     consent = ConsentRecordFactory(profile=profile)
     with pytest.raises(CandidateProfile.DoesNotExist):
         replace_visibility(
-            identity=IdentityFactory(),
+            identity=make_identity(),
             profile=profile,
             if_match=strong_etag(profile.id, profile.version),
             values={"mode": "NOT_LOOKING", "consent_record_id": consent.id},

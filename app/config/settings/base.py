@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 ENV = Environment.load()
 SECRET_KEY = ENV.secret_key
 DEBUG = False
+LOCAL_SYNTHETIC_AUTH_ENABLED = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = list(ENV.csrf_trusted_origins)
 INSTALLED_APPS = [

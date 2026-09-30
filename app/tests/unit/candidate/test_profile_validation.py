@@ -6,13 +6,13 @@ from django.db import IntegrityError
 
 from modules.candidate.models import CandidateProfile
 from modules.candidate.serializers import CandidateProfilePatchSerializer
-from tests.factories import CandidateProfileFactory
+from tests.factories import make_candidate_profile
 
 pytestmark = pytest.mark.django_db
 
 
 def test_profile_accepts_zero_and_fractional_experience_but_rejects_negative():
-    profile = CandidateProfileFactory(experience_years=Decimal("0.25"))
+    profile = make_candidate_profile(experience_years=Decimal("0.25"))
     profile.full_clean()
     profile.experience_years = Decimal("-0.01")
     with pytest.raises(ValidationError):
@@ -49,6 +49,6 @@ def test_optional_fields_safe_links_and_narrative_limit():
 
 
 def test_profile_identity_is_unique():
-    profile = CandidateProfileFactory()
+    profile = make_candidate_profile()
     with pytest.raises(IntegrityError):
         CandidateProfile.objects.create(identity=profile.identity)

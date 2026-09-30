@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from typing import cast
 
 import factory
 from django.utils import timezone
@@ -288,3 +289,22 @@ class ResumeAssetFactory(factory.django.DjangoModelFactory):
             parse_status=ResumeAsset.ParseStatus.READY,
             clean_key=factory.Sequence(lambda n: f"clean/synthetic/{n}"),
         )
+
+
+# factory-boy exposes declarative factory classes rather than a generic model-return
+# signature. Keep that third-party typing boundary in one place so tests receive the
+# concrete Django model types that factory-boy creates at runtime.
+def make_identity(**kwargs: object) -> Identity:
+    return cast(Identity, IdentityFactory(**kwargs))
+
+
+def make_candidate_profile(**kwargs: object) -> CandidateProfile:
+    return cast(CandidateProfile, CandidateProfileFactory(**kwargs))
+
+
+def make_application(**kwargs: object) -> Application:
+    return cast(Application, ApplicationFactory(**kwargs))
+
+
+def make_employment_record(**kwargs: object) -> EmploymentRecord:
+    return cast(EmploymentRecord, EmploymentRecordFactory(**kwargs))

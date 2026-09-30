@@ -18,13 +18,10 @@ type SearchResponse = {
 };
 const root = document.querySelector<HTMLElement>("[data-recruiter-search]");
 
-function cookie(name: string) {
+function csrfToken() {
   return (
-    document.cookie
-      .split(";")
-      .map((v) => v.trim())
-      .find((v) => v.startsWith(`${name}=`))
-      ?.split("=")[1] ?? ""
+    document.querySelector<HTMLInputElement>("[name=csrfmiddlewaretoken]")
+      ?.value ?? ""
   );
 }
 function criterionRow() {
@@ -134,7 +131,7 @@ if (root) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": cookie("__Host-enter_csrf"),
+          "X-CSRFToken": csrfToken(),
           "X-Tenant-ID": searchRoot.dataset.tenantId!,
         },
         credentials: "same-origin",

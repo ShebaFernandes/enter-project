@@ -9,16 +9,16 @@ from rest_framework.test import APIClient
 from modules.candidate.models import CandidateProfile
 from modules.identity.models import SessionCredential, StepUpEvidence
 from modules.operations.concurrency import strong_etag
-from tests.factories import CandidateCapabilityFactory, CandidateProfileFactory, IdentityFactory
+from tests.factories import CandidateCapabilityFactory, make_candidate_profile, make_identity
 
 pytestmark = [pytest.mark.django_db, pytest.mark.contract]
 
 
 @pytest.fixture
 def candidate_api():
-    identity = IdentityFactory()
+    identity = make_identity()
     CandidateCapabilityFactory(identity=identity, assigned_by=identity)
-    profile = CandidateProfileFactory(identity=identity)
+    profile = make_candidate_profile(identity=identity)
     client = APIClient()
     client.force_authenticate(identity)
     return client, identity, profile
@@ -142,7 +142,7 @@ def test_rights_correction_is_validated_and_applied_immediately(candidate_api):
 
 def test_non_candidate_and_other_candidate_cannot_access_profile(candidate_api):
     client, _identity, _profile = candidate_api
-    outsider = IdentityFactory()
+    outsider = make_identity()
     client.force_authenticate(outsider)
     assert client.get("/api/v1/candidate/profile").status_code == 404
 
