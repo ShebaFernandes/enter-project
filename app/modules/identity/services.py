@@ -134,6 +134,12 @@ def assurance_from_claims(claims: dict[str, object], *, workforce: bool) -> str:
 
 def link_identity_with_role(claims: dict[str, object], *, workforce: bool) -> Identity:
     assurance_from_claims(claims, workforce=workforce)
+    if workforce:
+        # Workforce entry is deliberately narrower than candidate identity linking:
+        # verified personal-mail identities cannot enter a recruiter workspace.
+        from .recruiter_access import validate_work_email
+
+        validate_work_email(str(claims.get("email", "")))
     identity = link_verified_identity(claims)
     if not workforce:
         IdentityCapability.objects.get_or_create(

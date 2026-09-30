@@ -1,0 +1,81 @@
+.recruiter-shell {
+  max-width: 76rem;
+  margin: auto;
+  padding: 1rem;
+}
+.recruiter-header,
+.prompt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.search-form {
+  display: grid;
+  gap: 1rem;
+}
+.prompt-row textarea {
+  flex: 1;
+  min-height: 6rem;
+}
+.criteria-panel {
+  border: 1px solid #94a3b8;
+  padding: 1rem;
+}
+.criteria-panel fieldset {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(7rem, 1fr));
+  gap: 0.75rem;
+}
+.candidate-card {
+  border: 1px solid #cbd5e1;
+  margin-block: 1rem;
+  padding: 1rem;
+}
+.finding {
+  border-left: 4px solid #2563eb;
+  background: #eff6ff;
+  padding: 0.75rem;
+}
+.skip-link {
+  position: absolute;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+  position: static;
+}
+dialog {
+  max-width: 42rem;
+  width: calc(100% - 2rem);
+}
+button,
+select,
+input,
+textarea {
+  min-height: 2.75rem;
+}
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+dialog:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+@media (max-width: 48rem) {
+  .recruiter-header,
+  .prompt-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .prompt-row > * {
+    width: 100%;
+  }
+  .criteria-panel fieldset {
+    grid-template-columns: 1fr;
+  }
+  .candidate-card {
+    overflow-wrap: anywhere;
+  }
+}

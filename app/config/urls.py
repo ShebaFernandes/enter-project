@@ -14,6 +14,8 @@ urlpatterns = [
     path("api/v1/", include("modules.candidate.urls")),
     path("api/v1/", include("modules.privacy.urls")),
     path("api/v1/", include("modules.abuse.urls")),
+    path("api/v1/", include("modules.search.urls")),
+    path("", include("modules.search.page_urls")),
 ]
 
 if settings.DEBUG:

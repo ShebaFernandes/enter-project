@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "modules.communications",
     "modules.audit",
     "modules.abuse",
+    "modules.search",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

@@ -1,0 +1,82 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="recruiter-shell"
+  data-recruiter-search
+  data-tenant-id="{{ tenant_id }}"
+>
+  <header class="recruiter-header">
+    <a class="skip-link" href="#search-results">Skip to results</a>
+    <div>
+      <p class="eyebrow">Recruiter workspace</p>
+      <h1>Find candidates</h1>
+      <p>Signed in as {{ role|lower }}</p>
+    </div>
+    <button type="button" data-sign-out>Sign out</button>
+  </header>
+  <form class="search-form" data-search-form>
+    <label for="search-prompt">Describe the candidate you need</label>
+    <div class="prompt-row">
+      <textarea
+        id="search-prompt"
+        name="prompt"
+        maxlength="4000"
+        required
+      ></textarea
+      ><button type="button" data-speech aria-pressed="false">Use speech</button
+      ><button type="submit">Search</button>
+    </div>
+    <p data-speech-status role="status" aria-live="polite">
+      Typed search is ready.
+    </p>
+    <label
+      >Search context
+      <select name="context">
+        <option value="AD_HOC">Ad-hoc search</option>
+        <option value="OPENING">Active opening</option>
+      </select></label
+    >
+    <label data-opening-row hidden
+      >Active opening ID
+      <input name="opening_id" inputmode="text" autocomplete="off"
+    /></label>
+    <button
+      type="button"
+      aria-expanded="true"
+      aria-controls="criteria-panel"
+      data-toggle-criteria
+    >
+      Search criteria
+    </button>
+    <aside id="criteria-panel" class="criteria-panel" data-criteria-panel>
+      <h2>Deterministic criteria</h2>
+      <p>
+        Requirements determine eligibility. Preferences only affect ordering.
+      </p>
+      <div data-criteria-list></div>
+      <button type="button" data-add-criterion>Add criterion</button>
+    </aside>
+  </form>
+  <div class="search-status" role="status" aria-live="polite"></div>
+  <nav aria-label="Result filters">
+    <button type="button" data-filter="all" aria-pressed="true">
+      All results</button
+    ><button type="button" data-filter="with-findings" aria-pressed="false">
+      With informational findings
+    </button>
+  </nav>
+  <section aria-labelledby="recent-searches-heading">
+    <h2 id="recent-searches-heading">Recent searches</h2>
+    <p>Your six most recent ad-hoc searches remain available for seven days.</p>
+  </section>
+  <section id="search-results" tabindex="-1" aria-labelledby="results-heading">
+    <h2 id="results-heading">Results</h2>
+    <div data-results><p>Run a search to see authorized candidates.</p></div>
+    <button type="button" data-more hidden>Load more</button>
+  </section>
+  <dialog data-candidate-dialog aria-labelledby="candidate-title">
+    <h2 id="candidate-title">Candidate details</h2>
+    <div data-detail></div>
+    <button type="button" data-close-detail>Close</button>
+  </dialog>
+</div>
+{% endblock %}

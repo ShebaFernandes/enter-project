@@ -195,6 +195,48 @@ class EmploymentRecord(models.Model):
             raise ValidationError(errors)
 
 
+class CandidateFinding(models.Model):
+    class Result(models.TextChoices):
+        FOUND = "FOUND"
+        NOT_FOUND = "NOT_FOUND"
+        INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+        EXCLUDED = "EXCLUDED"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, related_name="findings")
+    code = models.CharField(max_length=80)
+    severity = models.CharField(max_length=30, default="INFORMATIONAL")
+    result = models.CharField(max_length=30, choices=Result)
+    source_record_type = models.CharField(max_length=80)
+    source_record_id = models.UUIDField()
+    source_record_version = models.PositiveBigIntegerField()
+    evidence = models.JSONField(default=dict)
+    message_key = models.CharField(max_length=120)
+    calculation_version = models.CharField(max_length=100)
+    evaluated_at = models.DateTimeField()
+    superseded_at = models.DateTimeField(null=True, blank=True)
+    audit_references = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "profile",
+                    "code",
+                    "source_record_type",
+                    "source_record_id",
+                    "calculation_version",
+                ),
+                condition=Q(superseded_at__isnull=True),
+                name="uniq_active_candidate_finding_evaluation",
+            ),
+            models.CheckConstraint(
+                condition=Q(severity="INFORMATIONAL"), name="candidate_finding_informational_only"
+            ),
+        ]
+        indexes = [models.Index(fields=("profile", "code", "result", "superseded_at"))]
+
+
 class ConsentRecord(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey(CandidateProfile, on_delete=models.CASCADE, related_name="consents")
