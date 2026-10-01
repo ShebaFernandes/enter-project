@@ -32,6 +32,16 @@ def digest(value):
     return hashlib.sha256(value.encode()).hexdigest()
 
 
+def criteria_identity(value):
+    """Compare stable-ID criteria independent of database retrieval order."""
+    normalized = SearchCriteriaInput.model_validate(value).model_dump(
+        mode="json", exclude_none=True
+    )
+    for field in ("groups", "criteria"):
+        normalized[field] = sorted(normalized[field], key=lambda item: item["id"])
+    return canonical_hash(normalized)
+
+
 def authority(request, tenant_id):
     try:
         credential = current_session_credential(request)
@@ -231,11 +241,7 @@ def create(request, tenant_id, kind, *, internal_body=None, expires_at=None):
         previous, previous_payload, _ = restore(
             request, tenant_id, "criteria-review", body["criteria_token"], lock=True
         )
-        if canonical_hash(previous_payload["criteria"]) != canonical_hash(
-            SearchCriteriaInput.model_validate(_criteria(search)).model_dump(
-                mode="json", exclude_none=True
-            )
-        ):
+        if criteria_identity(previous_payload["criteria"]) != criteria_identity(_criteria(search)):
             raise Http404
         previous.state = "COMPLETED"
         previous.version += 1
@@ -355,6 +361,7 @@ def metadata(item, payload, membership):
         output.update(search_id=str(item.search_id), result_context_version=item.resource_version)
         if item.kind == "search-results":
             output["page"] = payload["page"]
+            output["criteria"] = _criteria(item.search)
         if item.kind == "comparison-selection":
             output.update(
                 candidate_ids=payload["candidate_ids"],

@@ -1,5 +1,11 @@
 # Authorization Contract
 
+FM6 direct-results clarification: Search is explicit execution intent only after the
+server interpretation validates. `requires_review=true` or invalid/unsafe interpretation
+blocks normal execution and requires inline clarification, not automatic criteria approval.
+Applied criteria returned in SEARCH_RESULTS metadata inherit all current actor/session/
+tenant/source/purpose checks. Editing reuses CRITERIA_REVIEW; no client-only authorization.
+
 ## FM4 typed handoff authority
 
 Results page continuation applies the identical session/source/target checks and

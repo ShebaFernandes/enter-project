@@ -406,9 +406,24 @@ has not started and the FM1–FM14 umbrella remains unchecked.
 
 ### FM6: Results and candidate detail
 
-- [ ] FM6-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM5-03.
-- [ ] FM6-02 Implement results and candidate detail within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM6-01.
-- [ ] FM6-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM6-02.
+Approved direct-results amendment: FM6-01 includes positive direct Search → Results,
+negative inline clarification/no-execution, applied-criteria chips and in-results edits.
+FM6-02 reconciles home/legacy transport and existing tests, restores committed flags off,
+and exposes authorized source criteria through existing SEARCH_RESULTS metadata. FM6-03
+requires full regression and both renderer modes. No mandatory standalone review remains
+in the normal journey; retain internal fallback coverage. No FM7 scope is added.
+
+- [X] FM6-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM5-03.
+- [X] FM6-02 Implement results and candidate detail within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM6-01.
+- [X] FM6-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain all production flags default-off under the approved rollout decision. Dependency: FM6-02.
+
+FM6 evidence: [results and direct-search verification](../../docs/evidence/frontend-migration/fm6.md).
+350 PostgreSQL tests pass (one existing skip; 351 collected), all 79 browser tests pass
+with authenticated gates enabled, repository-wide typing and all quality/build gates pass.
+Search input → Search → Results is normal; uncertain interpretation stays inline and
+results owns applied-criteria adjustments. Standalone candidate management remains legacy
+under the shared FM7 route gate. All committed flags and the umbrella checklist remain off.
+FM7 is cleared but not started.
 
 ### FM7: Recruiter management and disclosure UI
 

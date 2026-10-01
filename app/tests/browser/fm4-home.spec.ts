@@ -75,6 +75,97 @@ test("FM4 validation interpreting and degraded states are announced", async ({
     "Python",
   );
 });
+test("FM4 search goes directly from the home composer to results", async ({
+  page,
+}) => {
+  let reviewRequests = 0;
+  await page.route("**/searches/interpret", (route) =>
+    route.fulfill({
+      json: {
+        requires_review: false,
+        ai_status: "USED",
+        ambiguities: [],
+        workflow_id: "00000000-0000-4000-8000-000000000002",
+        criteria: {
+          context: { type: "AD_HOC" },
+          groups: [
+            {
+              id: "00000000-0000-4000-8000-000000000003",
+              purpose: "REQUIREMENT",
+              operator: "ALL",
+            },
+          ],
+          criteria: [
+            {
+              id: "00000000-0000-4000-8000-000000000004",
+              group_id: "00000000-0000-4000-8000-000000000003",
+              field: "skill",
+              operator: "CONTAINS",
+              value: "Python",
+            },
+          ],
+          limit: 25,
+        },
+      },
+    }),
+  );
+  await page.route("**/searches", (route) =>
+    route.fulfill({
+      json: { search_id: "00000000-0000-4000-8000-000000000005" },
+    }),
+  );
+  await page.route("**/search-handoffs/criteria-review", (route) => {
+    reviewRequests++;
+    return route.fulfill({ status: 500, json: {} });
+  });
+  await page.route("**/search-handoffs/search-results", (route) =>
+    route.fulfill({
+      status: 201,
+      json: { token: "a".repeat(43) },
+    }),
+  );
+  await page.route("**/recruiter/search/?view=results", (route) =>
+    route.fulfill({ body: "Results" }),
+  );
+  await page.goto(fixture);
+  await page.getByLabel("Describe the candidate you need").fill("Python");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page).toHaveURL(/search\/\?view=results#handoff=/);
+  expect(reviewRequests).toBe(0);
+});
+test("FM6 ambiguity unsafe invalid and unvalidated interpretations stay inline without execution", async ({
+  page,
+}) => {
+  let executions = 0;
+  await page.route("**/searches", (route) => {
+    executions++;
+    return route.fulfill({ status: 500, json: {} });
+  });
+  for (const response of [
+    { requires_review: true, ai_status: "USED", ambiguities: ["Clarify"] },
+    { requires_review: false, ai_status: "INVALID_OUTPUT", ambiguities: [] },
+    { requires_review: false, ai_status: "UNAVAILABLE", ambiguities: [] },
+    {
+      requires_review: false,
+      ai_status: "USED",
+      ambiguities: ["Protected attributes rejected"],
+    },
+    {},
+  ]) {
+    await page.goto("about:blank");
+    await page.route("**/searches/interpret", (route) =>
+      route.fulfill({ json: { ...response, criteria: {} } }),
+    );
+    await page.goto(fixture);
+    await page
+      .getByLabel("Describe the candidate you need")
+      .fill("Uncertain input");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(page.getByRole("alert")).toContainText("Clarify");
+    await expect(page).toHaveURL(fixture);
+  }
+  expect(executions).toBe(0);
+});
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "SpeechRecognition", {
@@ -91,6 +182,48 @@ test.beforeEach(async ({ page }) => {
   );
   for (const endpoint of ["openings", "recent-searches", "saved-searches"])
     await page.route(`**/${endpoint}`, (route) => route.fulfill({ json: [] }));
+});
+test("FM6 uncertain execution is not automatically or manually resubmitted", async ({
+  page,
+}) => {
+  let executions = 0;
+  await page.route("**/searches/interpret", (route) =>
+    route.fulfill({
+      json: {
+        requires_review: false,
+        ai_status: "USED",
+        ambiguities: [],
+        criteria: {
+          context: { type: "AD_HOC" },
+          groups: [{ id: "group", purpose: "REQUIREMENT", operator: "ALL" }],
+          criteria: [
+            {
+              id: "criterion",
+              group_id: "group",
+              field: "skill",
+              operator: "CONTAINS",
+              value: "Python",
+            },
+          ],
+          limit: 25,
+        },
+      },
+    }),
+  );
+  await page.route("**/searches", (route) => {
+    executions++;
+    return route.fulfill({ status: 503, json: {} });
+  });
+  await page.goto(fixture);
+  await page
+    .getByLabel("Describe the candidate you need")
+    .fill("Python Bengaluru");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("outcome is uncertain");
+  await expect(
+    page.getByRole("button", { name: "Search", exact: true }),
+  ).toBeDisabled();
+  expect(executions).toBe(1);
 });
 test("FM4 home sidebar keyboard speech fallback and visual states", async ({
   page,

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { openInternalReview } from "./internal-review";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
@@ -145,6 +146,8 @@ test("FM1 authenticated page and immutable mockup baseline capture", async ({
     await reviewPage
       .getByRole("button", { name: "Search", exact: true })
       .click();
+    await expect(reviewPage.locator(".search-status")).toContainText("Clarify");
+    await openInternalReview(reviewPage);
     await expect(reviewPage).toHaveURL(/criteria-review/);
     await expect(
       reviewPage.getByText(/estimated candidates in scope/),

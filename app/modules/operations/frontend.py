@@ -9,6 +9,7 @@ from .frontend_assets import react_assets
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
     "platform-chooser": {"manifest": "react", "template": "public/react_chooser.html"},
     "recruiter-search-page": {"manifest": "react", "template": "recruiter/react_search.html"},
+    "recruiter-results-page": {"manifest": "react", "template": "recruiter/react_results.html"},
     "criteria-review-page": {
         "manifest": "react",
         "template": "recruiter/react_criteria_review.html",
@@ -26,9 +27,11 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
     match = request.resolver_match
     route = match.url_name if match else None
     flags = getattr(settings, "FRONTEND_REACT_ROUTES", {})
-    approved = VERIFIED_REACT_ROUTES.get(route or "")
     if route == "recruiter-search-page" and request.GET.get("view") == "results":
-        return result
+        route = "recruiter-results-page"
+    # The candidate route also owns FM7 management/disclosure. It deliberately
+    # remains unregistered until that entire shared route passes its gate.
+    approved = VERIFIED_REACT_ROUTES.get(route or "")
     if approved and isinstance(flags, dict) and flags.get(route) is True:
         if approved.get("manifest") == "react":
             assets = react_assets(settings.BASE_DIR / "static" / "dist" / "react")

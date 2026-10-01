@@ -4,6 +4,18 @@ Approved 2026-10-01. This document is part of plan.md and tasks.md. Implementati
 
 ## Architecture and authority
 
+### Approved FM6 journey clarification
+
+Search input → Search → authorized Results is the normal journey. Search explicitly
+authorizes execution of server-validated criteria. `requires_review=true`, ambiguity,
+unsafe/protected-attribute input, invalid output or unavailable validation blocks execution
+and produces inline clarification on home, not navigation to standalone review.
+Results display applied criteria and embed the existing editor for explicit adjustments.
+CRITERIA_REVIEW remains an encrypted internal editing mechanism. SEARCH_RESULTS metadata
+additionally returns its source's structured criteria under existing binding/scope checks.
+Earlier pre-results review wording is superseded for the standard entry journey; fallback
+coverage and security boundaries remain. All committed React rollout flags are off.
+
 React + TypeScript + Tailwind become the production user-facing frontend. Django/DRF remain authoritative for URLs, session and authentication, CSRF, authorization, validation, business logic, auditing and database writes. Retain the Vite manifest pipeline and Django-rendered escaped bootstrap (json_script or equivalent), secure HttpOnly cookies, same-origin credentials, existing local authenticated bootstrap flows and private no-store responses. React consumes existing API contracts and error/ETag/idempotency semantics. UI controls are not authorization checks. No new AI, scoring, models or backend rewrite is part of this migration.
 
 Each server-selected page uses exactly one DOM owner. Legacy entry points must never initialize inside a React-owned subtree; React must not mount over an active legacy renderer. Shared API helpers may be reused after review, imperative renderers may not. Protected prompts, criteria, candidate IDs/results, notes, contacts and comparison selections must not be put in localStorage, sessionStorage or IndexedDB. Use ephemeral memory for active UI state and authorized backend recent/saved records for restoration. Across full navigations, re-request authorized data using existing scoped route context; lost unsaved selection is explicitly announced. Clear memory on sign-out/tenant switch. No mock frontend data; synthetic fixtures are confined to tests.
@@ -118,7 +130,9 @@ API paths below have /api/v1 prefix unless explicitly supplied. Legacy sources a
 - Exact routes: /tenants/{tenant_id}/recruiter/search/; /tenants/{tenant_id}/recruiter/candidates/{candidate_id}/.
 - Mockup mapping: #results; generated #profile and profile overlay.
 - Component boundaries: ResultsToolbar, ResultCard, CandidateDetail, Evidence, EmploymentTimeline, Finding.
-- API dependencies: Existing searches POST; candidate detail GET with search_id; existing CandidateWork access used by detail. No other new operations permitted.
+- API dependencies: Existing searches POST; candidate detail GET with search_id; existing CandidateWork access used by detail; encrypted search-results metadata/display/page, comparison-selection and criteria-review handoffs. Search-results metadata includes authorized applied criteria. No additional operations.
+- Normal entry: Search executes validated interpretation directly; uncertain interpretation remains inline on home. Results shows applied criteria and embeds the existing CriteriaReview editor in a dialog for explicit revised execution. Standalone review is internal/default-off.
+- Shared-route gate: CandidateDetail is available as the results overlay; the candidate page retains its complete legacy management/disclosure UI until FM7. The results flag is independent and default-off; no candidate route is registered early.
 - States and regression focus: Unknown and unavailable distinct; no protected client persistence; revoke/visibility changes hide data.
 - Accessibility, screenshot tests, functional/security tests, fallback, cutover and rollback: all common gates above apply to this phase's routes. Foundation phases cannot independently enable page cutover; FM14 verifies every route and both renderers.
 

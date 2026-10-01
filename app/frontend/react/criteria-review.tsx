@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import type { PageProps } from "./mount";
 import {
   Alert,
@@ -29,7 +29,7 @@ type Criterion = {
   operator: string;
   value: string | number | boolean | string[];
 };
-type Criteria = {
+export type Criteria = {
   context: Record<string, string>;
   groups: Group[];
   criteria: Criterion[];
@@ -373,9 +373,24 @@ function GroupEditor({
   );
 }
 
-export function CriteriaReview({ bootstrap, request }: PageProps) {
+function ReviewFrame({
+  embedded,
+  ...props
+}: ComponentProps<typeof AppShell> & { embedded: boolean }) {
+  return embedded ? (
+    <section aria-label="Adjust search criteria">{props.children}</section>
+  ) : (
+    <AppShell {...props} />
+  );
+}
+
+export function CriteriaReview({
+  bootstrap,
+  request,
+  embeddedToken,
+}: PageProps & { embeddedToken?: string }) {
   const tenant = bootstrap.tenantId ?? "";
-  const [token] = useState(handoffToken);
+  const [token] = useState(() => embeddedToken ?? handoffToken());
   const endpoint = `/api/v1/tenants/${tenant}/search-handoffs/criteria-review`;
   const [review, setReview] = useState<Review | null>(null);
   const [draft, setDraft] = useState<Criteria | null>(null);
@@ -586,14 +601,19 @@ export function CriteriaReview({ bootstrap, request }: PageProps) {
         }
       }}
     >
-      <AppShell
+      <ReviewFrame
+        embedded={Boolean(embeddedToken)}
         title="We read your search as"
         navigation={
           <a href={`/tenants/${tenant}/recruiter/search/`}>Return to search</a>
         }
       >
         <div className="review-shell">
-          <p className="review-step">SEARCH / REVIEW / RESULTS</p>
+          <p className="review-step">
+            {embeddedToken
+              ? "RESULTS / ADJUST CRITERIA"
+              : "SEARCH / REVIEW / RESULTS"}
+          </p>
           <p className="ui-help">
             Structured criteria restored securely. The original prompt is not
             retained here.
@@ -746,7 +766,7 @@ export function CriteriaReview({ bootstrap, request }: PageProps) {
             </form>
           )}
         </div>
-      </AppShell>
+      </ReviewFrame>
     </div>
   );
 }

@@ -1,5 +1,16 @@
 # Implementation Plan: Integrated Recruiter and Candidate Workflows
 
+## FM6 approved direct-results amendment
+
+The standard journey is Search input → Search → Results. Search is explicit execution
+intent, not permission to ignore an unsafe/ambiguous/unvalidated interpretation. Such
+responses remain on home with inline clarification. The existing standalone review is
+default-off internal fallback. Results expose readable applied criteria and embed its
+editor using encrypted CRITERIA_REVIEW state; adjustments execute only explicitly.
+SEARCH_RESULTS metadata may return source criteria after existing restore authorization.
+No model/migration, new AI behavior or authorization weakening is required. Earlier
+mandatory pre-results review language applies only to retained internal fallback tests.
+
 ## FM4 transitional security clarification — 2026-10-01
 
 FM4 completion uses existing source models, with no additional migration. Search

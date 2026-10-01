@@ -1,0 +1,82 @@
+.enter-ui .results-toolbar,
+.enter-ui .result-card {
+  background: var(--fm-color-raised);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-roomy);
+  display: grid;
+  gap: var(--fm-spacing-panel);
+  min-width: 0;
+  box-shadow: var(--fm-shadow-card);
+}
+.enter-ui .results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fm-spacing-section);
+}
+.enter-ui .search-results-page .ui-container {
+  max-width: var(--fm-container-public);
+}
+.enter-ui .result-card {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.3fr);
+}
+.enter-ui .result-card > * {
+  grid-column: 1;
+}
+.enter-ui .result-card > .result-card-actions {
+  grid-column: 2;
+  grid-row: 1 / span 8;
+  align-content: start;
+  justify-content: start;
+  border-left: 1px solid var(--fm-color-hairline);
+  padding-left: var(--fm-spacing-panel);
+}
+.enter-ui .result-card-heading,
+.enter-ui .result-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fm-spacing-field);
+}
+.enter-ui .result-card h3 {
+  font-family: var(--fm-font-display);
+  font-size: 1.35rem;
+  margin: 0;
+}
+.enter-ui .result-finding {
+  padding: var(--fm-spacing-field);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  display: grid;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .detail-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-panel);
+}
+.enter-ui .detail-fields dt {
+  font-weight: 600;
+}
+.enter-ui .detail-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 860px) {
+  .enter-ui .results-grid,
+  .enter-ui .detail-fields,
+  .enter-ui .result-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enter-ui .result-card > .result-card-actions {
+    grid-column: 1;
+    grid-row: auto;
+    border-left: 0;
+    padding-left: 0;
+  }
+  .enter-ui .results-toolbar,
+  .enter-ui .result-card {
+    padding: var(--fm-spacing-field);
+  }
+}

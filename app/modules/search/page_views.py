@@ -30,7 +30,7 @@ def recruiter_search_page(request, tenant_id):
             "role": membership.role,
             "page_bootstrap": {
                 "version": 1,
-                "page": "search-home",
+                "page": "search-results" if request.GET.get("view") == "results" else "search-home",
                 "requiresSession": True,
                 "tenantId": str(membership.tenant_id),
             },

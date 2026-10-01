@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { localBootstrap } from "../local-bootstrap";
+import { openInternalReview } from "../internal-review";
 
 test("authenticated local recruiter searches, views evidence, and signs out safely", async ({
   page,
@@ -14,6 +15,8 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
     .getByLabel("Describe the candidate you need")
     .fill("Maybe an engineer");
   await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.locator(".search-status")).toContainText("Clarify");
+  await openInternalReview(page);
   await expect(page).toHaveURL(/criteria-review/);
   await expect(page.getByRole("status")).toContainText("Criteria restored");
   await expect(page.getByText(/estimated candidates in scope/)).toBeVisible();

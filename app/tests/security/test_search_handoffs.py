@@ -196,7 +196,11 @@ def test_results_restoration_is_metadata_only_and_closes_review(handoff):
             "search_id",
             "result_context_version",
             "page",
+            "criteria",
         }
+        assert restored.json()["criteria"] == body["criteria"]
+        assert "prompt" not in restored.json()
+        assert "no-store" in restored["Cache-Control"]
     assert SearchDefinition.objects.count() == before
     for wrong_token in [created["token"], token]:
         assert (
@@ -205,6 +209,22 @@ def test_results_restoration_is_metadata_only_and_closes_review(handoff):
             ).status_code
             == 404
         )
+
+
+def test_criteria_identity_preserves_values_and_ids_but_ignores_retrieval_order(handoff):
+    from copy import deepcopy
+
+    from modules.search.handoffs import criteria_identity
+
+    _, _, _, _, body = handoff
+    original = deepcopy(body["criteria"])
+    reordered = deepcopy(original)
+    reordered["criteria"].reverse()
+    reordered["groups"].reverse()
+    assert criteria_identity(original) == criteria_identity(reordered)
+    changed = deepcopy(original)
+    changed["criteria"][0]["value"] = "Different requirement"
+    assert criteria_identity(original) != criteria_identity(changed)
 
 
 def test_revise_requires_etag_and_revoke_is_final(handoff):

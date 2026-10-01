@@ -29,6 +29,7 @@ type InterpretationResponse = {
   original_prompt: string;
   criteria: Record<string, unknown>;
   requires_review: boolean;
+  ai_status: string;
   ambiguities: string[];
   estimated_count: number;
 };
@@ -294,18 +295,14 @@ if (root) {
         return;
       }
       const interpretation = (await response.json()) as InterpretationResponse;
-      if (interpretation.requires_review) {
-        try {
-          const transport = workflowTransport(searchRoot.dataset.tenantId!);
-          const token = await transport.create("criteria-review", {
-            workflow_id: interpretation.workflow_id,
-            criteria: interpretation.criteria,
-          });
-          transport.navigate("criteria-review", token);
-        } catch {
-          status.textContent =
-            "Secure review is unavailable. Your typed query remains here.";
-        }
+      if (
+        interpretation.requires_review !== false ||
+        !["USED", "NOT_NEEDED"].includes(interpretation.ai_status) ||
+        !Array.isArray(interpretation.ambiguities) ||
+        interpretation.ambiguities.length
+      ) {
+        status.textContent =
+          "Clarify your query or enter manual criteria. No search ran because interpretation could not be safely validated.";
         return;
       }
       lastPayload = interpretation.criteria;

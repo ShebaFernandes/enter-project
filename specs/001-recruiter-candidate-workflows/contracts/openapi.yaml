@@ -1678,6 +1678,7 @@ components:
       items: {$ref: '#/components/schemas/Id'}
     HandoffState:
       type: object
+      description: Search-results metadata includes applied source criteria under current bound restore authorization. Criteria-review remains the internal encrypted adjustment mechanism; the standard journey does not navigate to standalone review.
       additionalProperties: false
       required: [schema_version, kind, version, etag]
       properties:
@@ -1906,7 +1907,9 @@ components:
       properties:
         original_prompt: {type: string}
         criteria: {$ref: '#/components/schemas/SearchCriteria'}
-        requires_review: {type: boolean}
+        requires_review:
+          type: boolean
+          description: Blocks standard execution and requires safe inline clarification on search home; never silently approve or force standalone review navigation.
         ambiguities: {type: array, items: {type: string}}
         ai_status: {type: string, enum: [USED, NOT_NEEDED, UNAVAILABLE, INVALID_OUTPUT]}
     SearchCriteria:

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { localBootstrap } from "../local-bootstrap";
+import { openInternalReview } from "../internal-review";
 import AxeBuilder from "@axe-core/playwright";
 
 test("authenticated legacy review results comparison refresh and return keep protected state out of storage", async ({
@@ -48,8 +49,7 @@ test("authenticated legacy review results comparison refresh and return keep pro
     });
     await page.setViewportSize({ width: 1280, height: 720 });
   }
-  await page.getByLabel("Describe the candidate you need").fill("Python");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await openInternalReview(page);
   await expect(page).toHaveURL(/criteria-review\/#handoff=/);
   await expect(page.getByRole("status")).toContainText("Criteria restored");
   await page.reload();
@@ -96,8 +96,10 @@ test("authenticated legacy review results comparison refresh and return keep pro
     await page
       .getByRole("button", { name: "Recent search 1", exact: true })
       .click();
-    await expect(page).toHaveURL(/criteria-review\/#handoff=/);
-    await expect(page.getByRole("status")).toContainText("Criteria restored");
+    await expect(page).toHaveURL(/view=results#handoff=/);
+    await expect(
+      page.getByLabel("Compare Synthetic Search Candidate"),
+    ).toBeVisible();
     await page.goto(home);
   }
   await page.getByRole("button", { name: "Sign out" }).click();

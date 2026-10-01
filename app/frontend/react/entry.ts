@@ -6,6 +6,8 @@ import { SearchHome } from "./search-home";
 import "./search-home.css";
 import { CriteriaReview } from "./criteria-review";
 import "./criteria-review.css";
+import { SearchResults } from "./search-results";
+import "./search-results.css";
 import { mountPage } from "./mount";
 export * from "./foundation";
 
@@ -14,6 +16,7 @@ if (document.querySelector("[data-react-page]")) {
     chooser: PlatformChooser,
     "search-home": SearchHome,
     "criteria-review": CriteriaReview,
+    "search-results": SearchResults,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

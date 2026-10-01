@@ -176,7 +176,8 @@ why each person matched.
    **Then** the system interprets the criteria and presents ranked results without unnecessary
    confirmation.
 4. **Given** an ambiguous or incomplete prompt, **When** search is requested, **Then** the system
-   presents its interpretation for review before running the search.
+   stays on search home with a safe inline clarification; it does not execute or navigate to a
+   standalone review page. Unsafe, protected-attribute and unvalidated interpretations also block execution.
 5. **Given** speech input is available and permitted, **When** the recruiter dictates a search,
    **Then** the transcript appears as editable search text and is not submitted until the recruiter
    explicitly searches.
@@ -223,21 +224,22 @@ why each person matched.
 
 ### User Story 3 - Recruiter Reviews Search Intent (Priority: P1)
 
-A recruiter reviews how a search was interpreted, sees the expected impact of strictness choices,
-and adds, edits, or removes criteria before committing to a search.
+A recruiter sees applied criteria on results, opens an in-results adjustment editor, sees the
+expected impact of strictness choices, and explicitly runs revised criteria. Standalone review
+is a default-off internal fallback, not a prerequisite in the normal journey.
 
 **Why this priority**: Reviewable criteria reduce hidden assumptions and let recruiters correct a
 search before candidates are included or excluded.
 
-**Independent Test**: Use an incomplete or ambiguous prompt, modify every supported criterion type,
-switch between matching any and all alternatives, and run the revised search. Results must reflect
-the final visible criteria.
+**Independent Test**: Execute a validated clear query directly from search home, open applied-criteria
+adjustments in results, modify every supported criterion type, switch ANY/ALL, and run the revised
+search. Uncertain interpretation stays inline on search home without execution.
 
 **Acceptance Scenarios**:
 
-1. **Given** interpreted criteria, **When** the review opens, **Then** the original prompt, result
-   limit, estimated in-scope count, all detected criteria, and their strict or preferential role
-   are visible.
+1. **Given** authorized results, **When** criteria adjustments open, **Then** the result limit,
+   estimated in-scope count, all applied criteria, and their strict or preferential role are
+   visible. The original prompt is not transported through results handoffs.
 2. **Given** a criterion, **When** the recruiter edits or removes it, **Then** the visible
    interpretation and expected candidate count update before search execution.
 3. **Given** a new requirement, preference, or exclusion, **When** the recruiter adds it, **Then**
@@ -455,14 +457,18 @@ saved search with its criteria and result context.
   an `ANY` or `ALL` operator, and every criterion MUST have its own stable ID and reference exactly
   one existing group; unsupported concepts MUST remain visible as unrecognized rather than being
   silently ignored.
-- **FR-007**: The system MUST send clear prompts directly to results and MUST route ambiguous or
-  materially incomplete prompts through a review state.
+- **FR-007**: Clicking Search is the recruiter's explicit instruction to execute validated
+  deterministic criteria and proceed directly to authorized results. Ambiguous, invalid, unsafe,
+  protected-attribute-bearing or unvalidated interpretation MUST instead show inline clarification
+  on the search page without execution. The normal journey MUST NOT require a standalone review page.
 - **FR-008**: During criteria review, recruiters MUST be able to add, edit, and remove requirements,
   preferences, exclusions, criteria groups, and group membership and choose `ANY` or `ALL` for each
   group without changing an existing group's stable ID.
-- **FR-009**: Criteria review MUST show the original prompt, every active group and stable ID, each
-  criterion's group and purpose, requested result limit, and the estimated impact of each group's
-  `ANY` versus `ALL` operator before search.
+- **FR-009**: Results MUST show applied deterministic criteria as readable grouped chips/filters
+  and allow explicit adjustments in the results experience, preserving stable IDs, purpose,
+  ANY/ALL and result limit. Raw prompts need not be retained. Estimates and explicit execution
+  of adjustments reuse the authorized encrypted workflow. Standalone review may remain an
+  internal default-off fallback, never a mandatory pre-results step.
 - **FR-010**: Search execution MUST reject duplicate group or criterion IDs and criteria that
   reference a missing group, apply every visible group with its confirmed `ANY` or `ALL` semantics,
   use preference groups only to influence ordering, apply exclusion groups deterministically, cap

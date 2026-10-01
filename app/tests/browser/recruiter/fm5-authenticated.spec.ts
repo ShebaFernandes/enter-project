@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { localBootstrap } from "../local-bootstrap";
+import { openInternalReview } from "../internal-review";
 
 test("FM5 authenticated React review restores edits and confirms into legacy results", async ({
   page,
@@ -8,8 +9,7 @@ test("FM5 authenticated React review restores edits and confirms into legacy res
   const bootstrap = localBootstrap("LOCAL_FM5_BOOTSTRAP_URL");
   test.skip(!bootstrap, "Requires FM5 flag-on synthetic verification server");
   await page.goto(bootstrap!);
-  await page.getByLabel("Describe the candidate you need").fill("Python");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await openInternalReview(page);
   await expect(page).toHaveURL(/criteria-review\/#handoff=/);
   await expect(page.locator("body")).toHaveAttribute(
     "data-frontend-renderer",

@@ -21,6 +21,9 @@ export function SearchHome({ bootstrap, request }: PageProps) {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
+  const completedSearch = useRef<string | null>(null);
+  const executionRetry = useRef(crypto.randomUUID());
   const [speechStatus, setSpeechStatus] = useState("Typed search is ready.");
   const [speechAvailable, setSpeechAvailable] = useState(false);
   const [listening, setListening] = useState(false);
@@ -103,7 +106,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
   }, []);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (busy) return;
+    if (busy || uncertain) return;
     if (!prompt.trim()) {
       setError("Describe the role before searching.");
       composer.current?.focus();
@@ -112,7 +115,19 @@ export function SearchHome({ bootstrap, request }: PageProps) {
     setBusy(true);
     setError("");
     setStatus("Interpreting the hiring need…");
+    let executing = false;
     try {
+      if (completedSearch.current) {
+        transport.navigate(
+          "search-results",
+          await transport.create(
+            "search-results",
+            { search_id: completedSearch.current },
+            executionRetry.current,
+          ),
+        );
+        return;
+      }
       const response = await request(`${base}/searches/interpret`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,37 +145,67 @@ export function SearchHome({ bootstrap, request }: PageProps) {
             : "Interpretation is unavailable. Your typed query remains here.",
         );
       const intent = (await response.json()) as {
+        criteria: { groups?: unknown[]; criteria?: unknown[] };
         requires_review: boolean;
-        workflow_id: string;
-        criteria: object;
+        ai_status: string;
+        ambiguities: string[];
       };
-      if (intent.requires_review) {
-        const token = await transport.create("criteria-review", {
-          workflow_id: intent.workflow_id,
-          criteria: intent.criteria,
-        });
-        transport.navigate("criteria-review", token);
-      } else {
-        const result = await request(`${base}/searches`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(intent.criteria),
-        });
-        if (!result.ok)
-          throw new Error(
-            "Search is unavailable. Your typed query remains here.",
-          );
-        const data = (await result.json()) as { search_id: string };
-        transport.navigate(
-          "search-results",
-          await transport.create("search-results", {
-            search_id: data.search_id,
-          }),
+      if (
+        intent.requires_review !== false ||
+        !["USED", "NOT_NEEDED"].includes(intent.ai_status) ||
+        !Array.isArray(intent.ambiguities) ||
+        intent.ambiguities.length ||
+        !intent.criteria ||
+        typeof intent.criteria !== "object" ||
+        !Array.isArray(intent.criteria.groups) ||
+        !Array.isArray(intent.criteria.criteria) ||
+        !intent.criteria.criteria.length
+      ) {
+        throw new Error(
+          "Clarify your query before searching. Interpretation is ambiguous, unsafe or could not be validated. No search ran; edit the query and try again.",
         );
       }
+      setStatus("Searching authorized candidates…");
+      executing = true;
+      const result = await request(`${base}/searches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(intent.criteria),
+      });
+      if (!result.ok) {
+        if (result.status < 500) executing = false;
+        throw new Error(
+          "Search is unavailable. Your typed query remains here.",
+        );
+      }
+      const data = (await result.json()) as { search_id: string };
+      if (
+        typeof data.search_id !== "string" ||
+        !/^[a-f0-9-]{36}$/i.test(data.search_id)
+      )
+        throw new Error("Search outcome unavailable");
+      completedSearch.current = data.search_id;
+      executing = false;
+      transport.navigate(
+        "search-results",
+        await transport.create(
+          "search-results",
+          {
+            search_id: data.search_id,
+          },
+          executionRetry.current,
+        ),
+      );
     } catch (failure) {
+      if (executing) setUncertain(true);
       setError(
-        failure instanceof Error ? failure.message : "Search is unavailable.",
+        executing
+          ? "The search outcome is uncertain. It will not be retried automatically. Reload to start a new search."
+          : completedSearch.current
+            ? "Search completed, but results could not open. Choose Search to retry opening results without executing again."
+            : failure instanceof Error
+              ? failure.message
+              : "Search is unavailable.",
       );
       setStatus("");
       setBusy(false);
@@ -177,8 +222,8 @@ export function SearchHome({ bootstrap, request }: PageProps) {
       if (!response.ok)
         throw new Error("Search expired or is no longer available.");
       transport.navigate(
-        "criteria-review",
-        await transport.create("criteria-review", { search_id: searchId }),
+        "search-results",
+        await transport.create("search-results", { search_id: searchId }),
       );
     } catch {
       setError("Search expired or is no longer available. Start a new search.");
@@ -291,7 +336,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
             >
               Use speech
             </Button>
-            <Button type="submit" busy={busy} disabled={busy}>
+            <Button type="submit" busy={busy} disabled={busy || uncertain}>
               Search
             </Button>
           </div>

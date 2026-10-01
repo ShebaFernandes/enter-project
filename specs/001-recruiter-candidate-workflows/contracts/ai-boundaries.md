@@ -1,5 +1,11 @@
 # AI and RAG Boundary Contract
 
+FM6 UI clarification: validated unambiguous interpretation proceeds to results on the
+recruiter's Search instruction. Ambiguous, unsafe, invalid or unavailable interpretation
+does not execute; show inline clarification on home. `requires_review` remains a blocking
+uncertainty signal, not a requirement to navigate to the standalone review page. Protected
+attributes and prompt injection remain rejected. No model or scoring behavior changes.
+
 ## Permitted Uses
 
 | Capability | AI role | Human/deterministic boundary |
