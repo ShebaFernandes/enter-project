@@ -7,6 +7,10 @@ from .frontend_assets import react_assets
 
 # Later slices register assets/template only after acceptance. WIP is excluded.
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
+    "recruiter-candidate-management-page": {
+        "manifest": "react",
+        "template": "recruiter/react_candidate_management.html",
+    },
     "platform-chooser": {"manifest": "react", "template": "public/react_chooser.html"},
     "recruiter-search-page": {"manifest": "react", "template": "recruiter/react_search.html"},
     "recruiter-results-page": {"manifest": "react", "template": "recruiter/react_results.html"},
@@ -29,8 +33,8 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
     flags = getattr(settings, "FRONTEND_REACT_ROUTES", {})
     if route == "recruiter-search-page" and request.GET.get("view") == "results":
         route = "recruiter-results-page"
-    # The candidate route also owns FM7 management/disclosure. It deliberately
-    # remains unregistered until that entire shared route passes its gate.
+    if route == "recruiter-candidate-page":
+        route = "recruiter-candidate-management-page"
     approved = VERIFIED_REACT_ROUTES.get(route or "")
     if approved and isinstance(flags, dict) and flags.get(route) is True:
         if approved.get("manifest") == "react":

@@ -16,8 +16,4 @@ CACHES = {
     }
 }
 
-FRONTEND_REACT_ROUTES = {
-    "platform-chooser": True,
-    "recruiter-search-page": True,
-    "recruiter-results-page": True,
-}
+FRONTEND_REACT_ROUTES = {}

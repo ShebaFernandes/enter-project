@@ -427,9 +427,16 @@ FM7 is cleared but not started.
 
 ### FM7: Recruiter management and disclosure UI
 
-- [ ] FM7-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM6-03.
-- [ ] FM7-02 Implement recruiter management and disclosure ui within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM7-01.
-- [ ] FM7-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM7-02.
+- [X] FM7-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM6-03.
+- [X] FM7-02 Implement recruiter management and disclosure ui within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM7-01.
+- [X] FM7-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM7-02.
+
+FM7 evidence: [management and disclosure verification](../../docs/evidence/frontend-migration/fm7.md).
+353 PostgreSQL tests pass (one existing skip; 354 collected); all 90 browser tests
+pass with authenticated gates enabled. Repository-wide typing, quality and all four
+builds pass. Per the explicit rollout decision, verification flags were process-local
+only: all committed React flags remain default-off and same-URL legacy rollback is
+preserved. The umbrella checklist remains unchecked. FM8 is unstarted.
 
 ### FM8: Candidate comparison
 

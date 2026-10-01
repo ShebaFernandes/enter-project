@@ -9,6 +9,7 @@ import "./criteria-review.css";
 import { SearchResults } from "./search-results";
 import "./search-results.css";
 import { mountPage } from "./mount";
+import { CandidateManagement } from "./candidate-management";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {
@@ -17,6 +18,7 @@ if (document.querySelector("[data-react-page]")) {
     "search-home": SearchHome,
     "criteria-review": CriteriaReview,
     "search-results": SearchResults,
+    "candidate-management": CandidateManagement,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

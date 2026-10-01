@@ -39,10 +39,12 @@ def test_recruiter_edits_preserve_ids_and_override_interpretation(
     api_client.force_login(recruiter.identity)
     interpreted = api_client.post(
         reverse("search-interpret", kwargs={"tenant_id": recruiter.tenant_id}),
-        {"prompt": "Python engineer in Bengaluru", "context": {"type": "AD_HOC"}},
+        {"prompt": "Maybe Python engineer in Bengaluru", "context": {"type": "AD_HOC"}},
         format="json",
         HTTP_X_TENANT_ID=str(recruiter.tenant_id),
     )
+    assert interpreted.data["requires_review"] is True
+    assert WorkflowRun.objects.get(pk=interpreted.data["workflow_id"]).status == "AWAITING_REVIEW"
     criteria = interpreted.data["criteria"]
     original_group_id = criteria["groups"][0]["id"]
     original_criterion_id = criteria["criteria"][0]["id"]

@@ -298,7 +298,17 @@ def recruiter_candidate_page(request, tenant_id, candidate_id):
     response = render(
         request,
         "recruiter/candidate-detail.html",
-        {"tenant_id": membership.tenant_id, "candidate_id": candidate_id},
+        {
+            "tenant_id": membership.tenant_id,
+            "candidate_id": candidate_id,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "candidate-management",
+                "tenantId": str(membership.tenant_id),
+                "candidateId": str(candidate_id),
+                "requiresSession": True,
+            },
+        },
     )
     response["Cache-Control"] = "no-store, private"
     return response

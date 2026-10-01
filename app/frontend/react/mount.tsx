@@ -6,6 +6,7 @@ export type PageBootstrap = {
   version: 1;
   page: string;
   tenantId?: string;
+  candidateId?: string;
   requiresSession: boolean;
   entryError?: boolean;
 };
@@ -26,6 +27,9 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     typeof value.page !== "string" ||
     typeof value.requiresSession !== "boolean" ||
     (value.entryError !== undefined && typeof value.entryError !== "boolean") ||
+    (value.candidateId !== undefined &&
+      (typeof value.candidateId !== "string" ||
+        !/^[a-f0-9-]{36}$/i.test(value.candidateId))) ||
     (value.tenantId !== undefined &&
       (typeof value.tenantId !== "string" ||
         !/^[a-f0-9-]{36}$/i.test(value.tenantId)))
@@ -37,6 +41,7 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     requiresSession: value.requiresSession,
     ...(value.entryError ? { entryError: true } : {}),
     ...(value.tenantId ? { tenantId: value.tenantId } : {}),
+    ...(value.candidateId ? { candidateId: value.candidateId } : {}),
   };
 }
 class PageBoundary extends Component<

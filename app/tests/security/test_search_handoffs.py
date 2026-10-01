@@ -38,9 +38,15 @@ def handoff(api_client, recruiter, tenant):
     base = f"/api/v1/tenants/{tenant.pk}"
     interpreted = api_client.post(
         f"{base}/searches/interpret",
-        {"prompt": "Python engineer", "context": {"type": "AD_HOC"}},
+        {"prompt": "Maybe Python engineer", "context": {"type": "AD_HOC"}},
         format="json",
     ).json()
+    # A review-only handoff must start from a genuinely ambiguous interpretation,
+    # not a validated prompt that now correctly takes the direct-results path.
+    assert interpreted["requires_review"] is True
+    from modules.operations.models import WorkflowRun
+
+    assert WorkflowRun.objects.get(pk=interpreted["workflow_id"]).status == "AWAITING_REVIEW"
     body = {"workflow_id": interpreted["workflow_id"], "criteria": interpreted["criteria"]}
     created = api_client.post(
         f"{base}/search-handoffs/criteria-review",
