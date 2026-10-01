@@ -285,12 +285,20 @@ class DisclosureConfirmView(APIView):
 
 @ensure_csrf_cookie
 def recruiter_candidate_page(request, tenant_id, candidate_id):
-    if not request.user.is_authenticated or request.tenant_id != tenant_id:
+    from modules.tenancy.models import TenantMembership
+    from modules.tenancy.page_views import _membership
+
+    if request.tenant_id is not None and request.tenant_id != tenant_id:
         raise PermissionDenied("Candidate unavailable")
+    membership = _membership(
+        request,
+        tenant_id,
+        [TenantMembership.Role.RECRUITER, TenantMembership.Role.HIRING_MANAGER],
+    )
     response = render(
         request,
         "recruiter/candidate-detail.html",
-        {"tenant_id": tenant_id, "candidate_id": candidate_id},
+        {"tenant_id": membership.tenant_id, "candidate_id": candidate_id},
     )
     response["Cache-Control"] = "no-store, private"
     return response

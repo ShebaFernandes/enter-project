@@ -4,6 +4,7 @@ import {
 } from "../shared/conflict-resolution";
 import { warnOnUnsaved } from "../shared/persistence";
 import { configureDisclosure } from "./disclosure";
+import { tenantClient } from "../shared/tenant-client";
 
 type CandidateDetail = {
   candidate_id: string;
@@ -50,6 +51,7 @@ function markDirty(form: HTMLFormElement): void {
 }
 
 if (root) {
+  const request = tenantClient(root);
   const searchId = new URLSearchParams(location.search).get("search_id");
   const status = root.querySelector<HTMLElement>("[data-page-status]")!;
   const summary = root.querySelector<HTMLElement>("[data-candidate-summary]")!;
@@ -62,7 +64,7 @@ if (root) {
 
   const loadNotes = async () => {
     if (!detail) return;
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidate-work/${detail.candidate_work.id}/notes`,
       { headers: { "X-Tenant-ID": root.dataset.tenantId! } },
     );
@@ -87,7 +89,7 @@ if (root) {
       return;
     }
     status.textContent = "Loading current authorized candidate context…";
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidates/${root.dataset.candidateId}?search_id=${searchId}`,
       { headers: { "X-Tenant-ID": root.dataset.tenantId! } },
     );
@@ -96,7 +98,7 @@ if (root) {
       return;
     }
     detail = (await response.json()) as CandidateDetail;
-    const workResponse = await fetch(
+    const workResponse = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidate-work/${detail.candidate_work.id}`,
       { headers: { "X-Tenant-ID": root.dataset.tenantId! } },
     );
@@ -127,7 +129,7 @@ if (root) {
     status.textContent = "Saving private note…";
     const body = (noteForm.elements.namedItem("body") as HTMLTextAreaElement)
       .value;
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidate-work/${detail.candidate_work.id}/notes`,
       {
         method: "POST",
@@ -158,7 +160,7 @@ if (root) {
     const reason = (
       workForm.elements.namedItem("structured_reason") as HTMLInputElement
     ).value.trim();
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidate-work/${detail.candidate_work.id}`,
       {
         method: "PATCH",
@@ -205,7 +207,7 @@ if (root) {
         "publication_internal_status",
       ) as HTMLSelectElement
     ).value;
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/applications/${detail.application_context.id}/status-preview`,
       {
         method: "POST",
@@ -242,7 +244,7 @@ if (root) {
           "candidate_status",
         ) as HTMLSelectElement
       ).value;
-      const response = await fetch(
+      const response = await request(
         `/api/v1/tenants/${root.dataset.tenantId}/applications/${detail.application_context.id}/status-publish`,
         {
           method: "POST",

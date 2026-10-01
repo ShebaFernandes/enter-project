@@ -43,7 +43,7 @@ FM1 records every file's reuse/rework/defer decision, existing test inventory an
 | Shared components | Button, Field, Textarea, Select, Checkbox, Card, Chip, Navigation, Dialog, StatusIndicator, Table, ErrorSummary, ConflictPanel |
 | Focus/validation | Visible focus, associated labels/help/errors, non-color status, polite async announcements, alert failures, dialog trap/Escape/return; WCAG 2.2 AA overrides any reference defect |
 
-Tailwind theme tokens are consumed through shared semantic components and variants. Preflight must not restyle legacy pages; separate/scoped styles and route-specific assets are required. No approved logo or local font asset was found in the application inventory; FM1 verifies repository assets and approvals. Use a text “Enter” wordmark temporarily if none is available, and record the branding difference. Do not fetch remote fonts to achieve parity.
+Tailwind theme tokens are consumed through shared semantic components and variants. Preflight must not restyle legacy pages; separate/scoped styles and route-specific assets are required. No approved logo or local font asset was found in the application inventory. The approved temporary branding is the lowercase text wordmark “enter”, a local/system sans stack, Georgia-compatible display fallback and system monospace fallback. Missing approved assets are an intentional visual difference, not an FM2 blocker. Do not fetch remote fonts or invent/redraw a logo. Keep replaceable semantic typography tokens (`font-sans`, `font-display`, `font-mono`) and a wordmark component boundary so approved assets can be substituted later without restructuring pages. This records the decision only; foundation components remain FM2 work.
 
 ## Gates applying to every phase below
 

@@ -91,10 +91,72 @@ npx playwright test --grep-invert authenticated --workers=2
 
 Use a clean, isolated synthetic database for a new baseline set. Date/UUID text may vary across newly seeded databases; retained PNGs are the reviewed capture set, not permission to silently replace goldens. Remote font differences, missing logo and dormant screens are explicitly documented. Manual assistive-technology and actual browser UI zoom certification is not claimed by CSS zoom/axe.
 
-## FM1 disposition
+## Initial FM1 disposition (superseded by authorized remediation below)
 
 - FM1-01: complete baseline/test inventory and capture evidence.
 - FM1-02: complete checkpoint classification, corrected legacy fallback, disabled WIP, default-off route controls and verification.
 - FM1-03: blocked final acceptance. Although requested automated suites pass, the live direct-navigation denial, protected search-eviction failure and outstanding manual accessibility review prevent an unconditional verified-fallback signoff.
 
 FM2 is not approved to begin under the sequential gate. Resolve or explicitly disposition these existing defects with authorized follow-up scope first. No production React cutover, FM2 work or Phase 10 work occurred.
+
+## Authorized FM1-03 remediation and final signoff — 2026-10-01
+
+The preceding results and defects describe the initial checkpoint. This section supersedes its blocked disposition. Only the explicitly authorized FM1 fixes were made; API contracts, database models/migrations, RLS policy, role policy and React rollout configuration were not changed.
+
+### Tenant context and navigation
+
+Root cause: the HTML candidate-management view required middleware tenant context supplied by `X-Tenant-ID`, but ordinary anchor/direct navigation cannot supply that API header. The route now uses the existing trusted Django membership/RLS lookup to authenticate the session, validate the route tenant and recruiter/hiring-manager role, and emit tenant bootstrap data. A conflicting header still fails closed. The shared membership lookup also explicitly requires an active tenant.
+
+`frontend/shared/tenant-client.ts` centralizes same-origin, tenant-path, cookie and CSRF transport for candidate-management and disclosure calls. No shared fetch abstraction existed previously; the existing request conventions are preserved in this small helper. Its bootstrap value is transport context, never an authorization decision or user-controlled tenant selector. Object/field authorization remains in the existing APIs.
+
+New contract tests reproduce the former failure and cover same-tenant HTML, unauthenticated/cross-tenant/mismatched-header/tenant-admin/revoked-membership denial. Updated real-browser capture verifies direct navigation, refresh and browser Back without injected headers. Manual keyboard navigation followed the actual search → detail dialog → Manage this candidate link and confirmed the authorized summary loaded.
+
+### Recent projection and provenance
+
+Root cause: recent eviction bulk-deleted search rows beyond six, including `CandidateWorkRecord.originating_search` references protected by `PROTECT`. Cleanup now bounds the six-item unexpired, unsaved, actor/tenant-specific projection using the existing `expires_at` field. An old referenced search is expired from recents but retained intact for authorized provenance; neither the work record nor its FK is detached or overwritten. Unreferenced expired/evicted ad-hoc searches remain evictable. Explicitly saved searches are excluded and remain reopenable under existing owner/tenant authorization even after recent expiry. No new model state is necessary.
+
+Cleanup locks only the search row (PostgreSQL `FOR UPDATE OF self`, not the nullable saved-search join); the FK stays protected and a protected deletion is rolled back to a savepoint. New tests execute eight searches, retain old work provenance, evict an unreferenced search, reopen an expired saved search and reject cross-tenant access. Immutable audit events and their retention controls are unchanged. Repeated live capture and regression now run against the retained database containing prior CandidateWork, rather than avoiding the defect with fresh data.
+
+### Accessibility remediation and manual checklist
+
+Embedded informational findings in results/comparison are labeled groups, not nested complementary landmarks. The criteria editor is a named section. Criteria review no longer nests a second main within the base main. The shared base provides one focusable main and a first keyboard skip link; denied HTML has a safe 403 template with a heading and main. No content disclosure is added to errors.
+
+Reviewed in Chrome on macOS using native keyboard actions, screenshots and the accessibility tree:
+
+| Checklist | Result / scope |
+|---|---|
+| Main and navigation landmarks | PASS: one main on each captured production state; result navigation has its distinct `Result filters` name; no duplicate navigation region introduced |
+| Heading hierarchy and control names | PASS: search H1 → sections H2 → candidates H3; management H1 → workflow sections H2; native tree exposes labels, checkbox values and select state |
+| Skip links and keyboard order | PASS: first Tab focuses visible main skip link; Enter targets active main; subsequent Tabs reach results shortcut, sign-out and prompt; management order reaches Back, note input/button and status select |
+| Focus and dialogs | PASS: visible outlined links/selects; detail dialog exposes its name, evidence, management link and Close; Tab remains in modal interaction and Escape returns to invoking details button |
+| Async feedback | PASS: real result count and loaded candidate context appear in existing live-status regions; browser regression covers safe errors/conflicts and disclosure feedback |
+| 320px reflow | PASS: reviewed current 320px capture including complete management/disclosure form; existing responsive/keyboard tests pass |
+| Actual browser zoom | PASS: native Chrome zoom popup verified 200%; management headings, overview and keyboard-focused workflow controls remain readable/reachable; reset verified at 100% afterward |
+| Screen-reader-oriented review | PASS for exposed roles, labels, headings, state and focus order in native accessibility tree; this is not a claim of VoiceOver/NVDA speech-output testing or a production-wide AT certification |
+
+Current manifest has **zero axe violations on every captured production state**. Capture now fails for any moderate/serious/critical finding and requires exactly one main. Existing automated accessibility, dialog, conflict, keyboard and responsive tests also pass. This signs off the requested FM1 manual keyboard/screen-reader-oriented checklist, not the later production-hardening accessibility gate.
+
+### Temporary branding and baseline differences
+
+Approved fallback: text wordmark **“enter”**, local/system sans stack, Georgia-compatible display fallback, system monospace fallback. No remote fonts, invented logo or redrawn logo. Missing approved assets are a recorded visual difference, **not an FM2 blocker**. Future semantic `font-sans`, `font-display`, `font-mono` tokens and the wordmark boundary must allow asset substitution without component restructuring; no FM2 component was implemented here.
+
+The refreshed manifest contains 26 current states × five configurations = 130 current images. Five historical `production-management-direct-navigation-denied-*` images are retained as defect evidence but are no longer current manifest entries. The new `production-management-direct-navigation-*` set demonstrates the fix. Audit/governance/organization captures include additional real synthetic audit/review records accumulated by verification; dynamic audit timestamps and the mockup's generated admin timestamp explain those content differences. Other baseline layout differences listed above remain intentional until migration. The original reference bytes and hash are unchanged.
+
+### Final verification
+
+| Check | Follow-up result |
+|---|---|
+| Complete PostgreSQL suite (once after fixes) | **275 passed, 1 expected trigger-fixture skip**, 276 collected; two regression tests added, none removed |
+| Repository-wide `mypy .` | PASS, **215 source files**, original scope unchanged |
+| Ruff lint / format | PASS, 215 files |
+| Django system / migration drift / applied migrations | PASS, no schema changes |
+| TypeScript / ESLint / Prettier | PASS |
+| Legacy / isolated React-Tailwind Vite builds | PASS, 26 / 27 modules |
+| Complete non-authenticated browser/accessibility + Tailwind isolation | **35 passed** |
+| All existing authenticated scenarios | **5 passed**: recruiter search, comparison, application/publication, Tenant Admin governance, recruiter organization |
+| Updated authenticated baseline capture | **1 passed**, direct/refresh/Back and live axe checks included |
+| Default-off / rollback / exclusive renderer tests | PASS within full PostgreSQL suite; empty verified registry and default flags unchanged |
+| Original mockup | Both copies remain SHA-256 `daeb180c0a2ec55994422e050b14edca9f62c431dea9cb113f4c33378867b9e9` |
+| Prior tests | No test files or test cases removed; full prior suites retained |
+
+Final status: **FM1-01, FM1-02 and FM1-03 complete. FM2 dependency gate cleared, but FM2 not begun.** All production routes remain legacy; no React feature route is registered/enabled. Rollback remains the default-off server-controlled mechanism described above. No outstanding FM1 blocker; missing brand assets and deliberate legacy visual differences remain documented migration inputs.

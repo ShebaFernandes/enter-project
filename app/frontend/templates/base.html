@@ -11,8 +11,9 @@
     />
   </head>
   <body data-frontend-renderer="{{ frontend_renderer|default:'legacy' }}">
+    <a class="skip-link" href="#main">Skip to main content</a>
     <!-- prettier-ignore -->
-    <main id="main">
+    <main id="main" tabindex="-1">
       {% if frontend_renderer == 'react' %}
       {% include frontend_template %}
       {% else %}

@@ -15,7 +15,7 @@ export type CandidateFinding = {
 
 export function findingMarkup(finding: CandidateFinding): string {
   const evidence = finding.evidence;
-  return `<aside class="finding" aria-label="Informational employment finding"><strong>Employment information</strong><p>${escapeText(finding.message)}</p><details><summary>Supporting evidence</summary><dl><dt>Company</dt><dd>${escapeText(evidence.company)}</dd><dt>Confirmed dates</dt><dd>${escapeText(evidence.confirmed_start_date)} to ${escapeText(evidence.confirmed_end_date)}</dd><dt>Calculated duration</dt><dd>${evidence.calculated_duration.calendar_months} months, ${evidence.calculated_duration.remaining_days} days</dd><dt>Calculation version</dt><dd>${escapeText(evidence.calculation_version)}</dd><dt>Evaluated</dt><dd>${escapeText(evidence.evaluated_at)}</dd></dl></details></aside>`;
+  return `<div class="finding" role="group" aria-label="Informational employment finding"><strong>Employment information</strong><p>${escapeText(finding.message)}</p><details><summary>Supporting evidence</summary><dl><dt>Company</dt><dd>${escapeText(evidence.company)}</dd><dt>Confirmed dates</dt><dd>${escapeText(evidence.confirmed_start_date)} to ${escapeText(evidence.confirmed_end_date)}</dd><dt>Calculated duration</dt><dd>${evidence.calculated_duration.calendar_months} months, ${evidence.calculated_duration.remaining_days} days</dd><dt>Calculation version</dt><dd>${escapeText(evidence.calculation_version)}</dd><dt>Evaluated</dt><dd>${escapeText(evidence.evaluated_at)}</dd></dl></details></div>`;
 }
 
 export function escapeText(value: string): string {

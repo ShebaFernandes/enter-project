@@ -10,12 +10,7 @@
     {
       "name": "production-results",
       "reference": false,
-      "violations": [
-        {
-          "id": "landmark-complementary-is-top-level",
-          "impact": "moderate"
-        }
-      ]
+      "violations": []
     },
     {
       "name": "production-detail-dialog",
@@ -25,26 +20,12 @@
     {
       "name": "production-comparison",
       "reference": false,
-      "violations": [
-        {
-          "id": "landmark-complementary-is-top-level",
-          "impact": "moderate"
-        }
-      ]
+      "violations": []
     },
     {
-      "name": "production-management-direct-navigation-denied",
+      "name": "production-management-direct-navigation",
       "reference": false,
-      "violations": [
-        {
-          "id": "landmark-one-main",
-          "impact": "moderate"
-        },
-        {
-          "id": "region",
-          "impact": "moderate"
-        }
-      ]
+      "violations": []
     },
     {
       "name": "production-management-disclosure",
@@ -59,20 +40,7 @@
     {
       "name": "production-criteria-review",
       "reference": false,
-      "violations": [
-        {
-          "id": "landmark-main-is-top-level",
-          "impact": "moderate"
-        },
-        {
-          "id": "landmark-no-duplicate-main",
-          "impact": "moderate"
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate"
-        }
-      ]
+      "violations": []
     },
     {
       "name": "production-role-application",

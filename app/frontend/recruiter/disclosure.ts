@@ -1,3 +1,5 @@
+import { tenantClient } from "../shared/tenant-client";
+
 type DisclosurePreview = {
   preview_id: string;
   preview_hash: string;
@@ -21,6 +23,7 @@ export function configureDisclosure(
   root: HTMLElement,
   context: { type: "APPLICATION" | "CANDIDATE_WORK"; id: string },
 ): void {
+  const request = tenantClient(root);
   const form = root.querySelector<HTMLFormElement>("[data-disclosure-form]");
   const previewRegion = root.querySelector<HTMLElement>(
     "[data-disclosure-preview]",
@@ -40,7 +43,7 @@ export function configureDisclosure(
       ...form.querySelectorAll<HTMLInputElement>("[name=fields]:checked"),
     ].map((input) => input.value);
     statusRegion.textContent = "Checking current consent and field access…";
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidates/${root.dataset.candidateId}/disclosures/preview`,
       {
         method: "POST",
@@ -83,7 +86,7 @@ export function configureDisclosure(
     if (!preview) return;
     confirm.disabled = true;
     statusRegion.textContent = "Disclosure pending…";
-    const response = await fetch(
+    const response = await request(
       `/api/v1/tenants/${root.dataset.tenantId}/candidates/${root.dataset.candidateId}/disclosures`,
       {
         method: "POST",

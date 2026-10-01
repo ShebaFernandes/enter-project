@@ -45,6 +45,10 @@ test("FM1 authenticated page and immutable mockup baseline capture", async ({
       : await new AxeBuilder({ page: page as never }).analyze();
     const violations =
       accessibility?.violations.map(({ id, impact }) => ({ id, impact })) ?? [];
+    if (!reference) {
+      expect(violations.filter(({ impact }) => impact !== "minor")).toEqual([]);
+      await expect(page.getByRole("main")).toHaveCount(1);
+    }
     for (const [width, height, zoom] of [
       [1440, 1000, 1],
       [1024, 768, 1],
@@ -110,14 +114,21 @@ test("FM1 authenticated page and immutable mockup baseline capture", async ({
     ).toBeVisible();
     await screenshot(page, "production-comparison");
     await page.goto(origin + managementUrl);
-    await expect(
-      page.getByRole("heading", { name: "403 Forbidden" }),
-    ).toBeVisible();
-    await screenshot(page, "production-management-direct-navigation-denied");
-    // Existing page requires the tenant header; record the direct-navigation defect above.
-    await recruiter.setExtraHTTPHeaders({ "X-Tenant-ID": tenant });
-    await page.goto(origin + managementUrl);
     await expect(page.locator("[data-candidate-management]")).toBeVisible();
+    await expect(page.locator("[data-candidate-summary]")).not.toHaveText(
+      "No candidate data loaded.",
+    );
+    await screenshot(page, "production-management-direct-navigation");
+    await page.reload();
+    await expect(page.locator("[data-candidate-summary]")).not.toHaveText(
+      "No candidate data loaded.",
+    );
+    await page.getByRole("link", { name: "Back to search" }).click();
+    await expect(page).toHaveURL(searchUrl);
+    await page.goBack();
+    await expect(page.locator("[data-candidate-summary]")).not.toHaveText(
+      "No candidate data loaded.",
+    );
     await expect(page.locator("[data-detail]")).toHaveCount(0);
     await page.waitForLoadState("networkidle");
     await screenshot(page, "production-management-disclosure");

@@ -21,6 +21,7 @@ from .engine import evaluate_candidate, validate_criteria
 from .models import CriteriaGroup, Criterion, SavedSearch, SearchDefinition, SearchResultSnapshot
 from .projections import authorized_findings
 from .query import SearchTemporarilyUnavailable, search_authorization_context, with_query_timeout
+from .recent import maintain_recent_searches
 from .serializers import SavedSearchInputSerializer, SearchCriteriaSerializer
 
 
@@ -112,18 +113,7 @@ def execute_search(request, tenant_id):
     )
     search.full_clean()
     search.save()
-    stale_recent = list(
-        SearchDefinition.objects.filter(
-            tenant_id=tenant_id,
-            actor=request.user,
-            context_type=SearchDefinition.ContextType.AD_HOC,
-            saved__isnull=True,
-        )
-        .order_by("-created_at")
-        .values_list("id", flat=True)[6:]
-    )
-    if stale_recent:
-        SearchDefinition.objects.filter(id__in=stale_recent).delete()
+    maintain_recent_searches(membership=membership)
     groups = validate_criteria(data["groups"], data["criteria"])
     group_models = {
         str(group["id"]): CriteriaGroup.objects.create(

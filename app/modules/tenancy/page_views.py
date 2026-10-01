@@ -16,6 +16,7 @@ def _membership(request, tenant_id, roles):
                 tenant_id=tenant_id,
                 identity=request.user,
                 status=TenantMembership.Status.ACTIVE,
+                tenant__status="ACTIVE",
                 role__in=roles,
             ).first()
     finally:

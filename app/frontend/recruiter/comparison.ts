@@ -150,7 +150,8 @@ function renderCandidate(
   });
   card.append(details);
   candidate.findings.forEach((finding) => {
-    const aside = document.createElement("aside");
+    const aside = document.createElement("div");
+    aside.setAttribute("role", "group");
     aside.className = "finding";
     aside.setAttribute("aria-label", "Informational employment finding");
     aside.innerHTML = `<strong>${escapeText(finding.code)}</strong><p>${escapeText(finding.message)}</p><p>${escapeText(finding.code)} is informational only and does not affect ordering or scores.</p>`;
