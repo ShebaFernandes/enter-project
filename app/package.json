@@ -9,6 +9,8 @@
   "scripts": {
     "build": "vite build",
     "build:wip": "vite build --mode wip",
+    "build:react": "vite build --mode react",
+    "build:showcase": "vite build --mode showcase",
     "check": "tsc --noEmit && eslint . && prettier --check frontend tests/browser *.config.js *.config.ts package.json tsconfig.json",
     "format": "prettier --write frontend tests/browser *.config.js *.config.ts package.json tsconfig.json",
     "test:browser": "playwright test"

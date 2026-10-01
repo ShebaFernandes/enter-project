@@ -3,6 +3,8 @@
 from django.conf import settings
 from django.http import HttpRequest
 
+from .frontend_assets import react_assets
+
 # Later slices register assets/template only after acceptance. WIP is excluded.
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {}
 
@@ -19,6 +21,11 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
     flags = getattr(settings, "FRONTEND_REACT_ROUTES", {})
     approved = VERIFIED_REACT_ROUTES.get(route or "")
     if approved and isinstance(flags, dict) and flags.get(route) is True:
+        if approved.get("manifest") == "react":
+            assets = react_assets(settings.BASE_DIR / "static" / "dist" / "react")
+            if assets is None:
+                return result
+            approved = {**approved, **assets}
         result.update(
             frontend_renderer="react",
             frontend_template=approved["template"],

@@ -1,0 +1,14 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main data-page-fallback aria-label="Page recovery" tabindex="-1">
+  <h1>Page unavailable</h1>
+  <p>
+    This page has not loaded. Reload to retry. Do not repeat an uncertain
+    submission.
+  </p>
+  <p>
+    If this continues, contact support. The operator can restore the legacy page
+    at this same URL.
+  </p>
+</main>

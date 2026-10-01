@@ -5,7 +5,8 @@ import { createHash } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 
 const origin = process.env.FM1_ORIGIN ?? "http://127.0.0.1:8001";
-const output = "../docs/evidence/frontend-migration/fm1-baselines";
+const output =
+  process.env.FM1_OUTPUT ?? "../docs/evidence/frontend-migration/fm1-baselines";
 const mockup =
   process.env.FM1_MOCKUP ??
   "/Users/enter/Documents/Codex/2026-09-25/fix/outputs/enter_recruiter_recruiter_candidate_ux.html";

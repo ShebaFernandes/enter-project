@@ -10,16 +10,17 @@
       href="{% static frontend_style|default:'dist/assets/app.css' %}"
     />
   </head>
+  <!-- prettier-ignore -->
   <body data-frontend-renderer="{{ frontend_renderer|default:'legacy' }}">
+    {% if frontend_renderer == 'react' %}
+    {% include frontend_template %}
+    {% else %}
     <a class="skip-link" href="#main">Skip to main content</a>
     <!-- prettier-ignore -->
     <main id="main" tabindex="-1">
-      {% if frontend_renderer == 'react' %}
-      {% include frontend_template %}
-      {% else %}
       {% block content %}{% endblock %}
-      {% endif %}
     </main>
+    {% endif %}
     <script
       type="module"
       src="{% static frontend_script|default:'dist/assets/app.js' %}"

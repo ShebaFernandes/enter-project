@@ -332,9 +332,11 @@ FM1 evidence: [reconciliation and verification](../../docs/evidence/frontend-mig
 
 ### FM2: React/Tailwind foundation and design system
 
-- [ ] FM2-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM1-03.
-- [ ] FM2-02 Implement react/tailwind foundation and design system within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM2-01.
-- [ ] FM2-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain legacy defaults without page cutover. Dependency: FM2-02.
+- [X] FM2-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM1-03.
+- [X] FM2-02 Implement react/tailwind foundation and design system within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM2-01.
+- [X] FM2-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain legacy defaults without page cutover. Dependency: FM2-02.
+
+FM2 evidence: [foundation and verification](../../docs/evidence/frontend-migration/fm2.md). Shared components, isolated showcase, 15 visual goldens, transport/mount/manifest checks and complete regression pass. Empty route registry and default-off flags remain unchanged. FM3 is not started; the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM3: Global shell and signed-out chooser
 
