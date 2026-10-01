@@ -45,6 +45,8 @@ from tests.factories import AccessGrantFactory
                 "shortlist.write",
                 "candidate.disclosure.preview",
                 "candidate.disclosure.confirm",
+                "audit.read",
+                "saved_search.manage",
             },
         ),
         (
@@ -66,6 +68,8 @@ from tests.factories import AccessGrantFactory
                 "shortlist.write",
                 "candidate.disclosure.preview",
                 "candidate.disclosure.confirm",
+                "audit.read",
+                "saved_search.manage",
             },
         ),
         (
@@ -76,6 +80,9 @@ from tests.factories import AccessGrantFactory
                 "opening.read",
                 "opening.write",
                 "tenant.admin",
+                "audit.read",
+                "access_review.manage",
+                "membership.admin",
             },
         ),
         ("PLATFORM_SECURITY_ADMIN", {"platform.tenant.provision", "security.admin"}),

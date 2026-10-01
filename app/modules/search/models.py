@@ -131,8 +131,10 @@ class SavedSearch(models.Model):
     tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.CASCADE)
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     name = models.CharField(max_length=200)
+    result_context_snapshot = models.JSONField(default=dict)
     version = models.PositiveBigIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -140,3 +142,11 @@ class SavedSearch(models.Model):
                 fields=("tenant", "actor", "name"), name="uniq_actor_saved_search_name"
             )
         ]
+
+    def clean(self):
+        if self.search_id and (
+            self.search.tenant_id != self.tenant_id or self.search.actor_id != self.actor_id
+        ):
+            raise ValidationError(
+                {"search": "Saved searches must reference their owner's tenant-scoped search."}
+            )

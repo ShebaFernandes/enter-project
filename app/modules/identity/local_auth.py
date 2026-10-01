@@ -33,6 +33,7 @@ TOKEN_TTL_SECONDS = 600
 RECRUITER_SUBJECT = "local-synthetic-recruiter"
 CANDIDATE_SUBJECT = "local-synthetic-candidate"
 COMPARISON_CANDIDATE_SUBJECT = "local-synthetic-comparison-candidate"
+TENANT_ADMIN_SUBJECT = "local-synthetic-tenant-admin"
 BASE_OPENING_ID = uuid.UUID("00000000-0000-4000-8000-000000000106")
 
 
@@ -49,6 +50,13 @@ class LocalCandidateBootstrap:
     token: str
     candidate_id: str
     opening_id: str
+
+
+@dataclass(frozen=True)
+class LocalTenantAdminBootstrap:
+    token: str
+    tenant_id: str
+    tenant_admin_id: str
 
 
 def _require_local_test() -> None:
@@ -332,6 +340,64 @@ def consume_local_recruiter_bootstrap(token: str) -> tuple[Identity, TenantMembe
     return identity, membership
 
 
+def issue_local_tenant_admin_bootstrap() -> LocalTenantAdminBootstrap:
+    _, tenant, _ = seed_local_recruiter_verification()
+    admin = _synthetic_identity(
+        subject=TENANT_ADMIN_SUBJECT,
+        email="tenant-admin@local-synthetic.invalid",
+        workforce=True,
+    )
+    with _rls_context(tenant_id=tenant.id):
+        TenantMembership.objects.update_or_create(
+            tenant=tenant,
+            identity=admin,
+            defaults={
+                "role": TenantMembership.Role.TENANT_ADMIN,
+                "status": TenantMembership.Status.ACTIVE,
+                "scope": {},
+            },
+        )
+    token = secrets.token_urlsafe(32)
+    cache.set(
+        _tenant_admin_token_key(token),
+        {"tenant_admin_id": str(admin.id), "tenant_id": str(tenant.id)},
+        timeout=TOKEN_TTL_SECONDS,
+    )
+    return LocalTenantAdminBootstrap(token, str(tenant.id), str(admin.id))
+
+
+def consume_local_tenant_admin_bootstrap(token: str) -> tuple[Identity, TenantMembership]:
+    _require_local_test()
+    if len(token) < 32:
+        raise PermissionDenied("Synthetic session unavailable")
+    key = _tenant_admin_token_key(token)
+    payload = cache.get(key)
+    if not isinstance(payload, dict) or cache.delete(key) != 1:
+        raise PermissionDenied("Synthetic session unavailable")
+    admin_id = payload.get("tenant_admin_id")
+    tenant_id = payload.get("tenant_id")
+    if not isinstance(admin_id, str) or not isinstance(tenant_id, str):
+        raise PermissionDenied("Synthetic session unavailable")
+    identity = Identity.objects.filter(
+        pk=admin_id,
+        cognito_subject=TENANT_ADMIN_SUBJECT,
+        status=Identity.Status.ACTIVE,
+    ).first()
+    if identity is None:
+        raise PermissionDenied("Synthetic session unavailable")
+    with _rls_context(tenant_id=tenant_id):
+        membership = TenantMembership.objects.filter(
+            tenant_id=tenant_id,
+            identity=identity,
+            role=TenantMembership.Role.TENANT_ADMIN,
+            status=TenantMembership.Status.ACTIVE,
+            tenant__status=Tenant.Status.ACTIVE,
+        ).first()
+    if membership is None:
+        raise PermissionDenied("Synthetic session unavailable")
+    return identity, membership
+
+
 def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
     recruiter, tenant, profile = seed_local_recruiter_verification()
     with _rls_context(tenant_id=tenant.id):
@@ -412,3 +478,8 @@ def _token_key(token: str) -> str:
 def _candidate_token_key(token: str) -> str:
     digest = hashlib.sha256(token.encode()).hexdigest()
     return f"local-synthetic-candidate-bootstrap:{digest}"
+
+
+def _tenant_admin_token_key(token: str) -> str:
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    return f"local-synthetic-tenant-admin-bootstrap:{digest}"

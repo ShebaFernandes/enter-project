@@ -108,6 +108,7 @@ def test_recent_search_cap_and_saved_search_round_trip(api_client, recruiter, se
         saved_url,
         {"name": "Synthetic saved search", "search_id": search_id},
         format="json",
+        HTTP_IDEMPOTENCY_KEY="phase9-saved-search-round-trip",
         **headers,
     )
     assert saved.status_code == 201

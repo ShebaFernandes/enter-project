@@ -1,0 +1,19 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="governance-shell"
+  data-organization
+  data-tenant-id="{{ tenant_id }}"
+>
+  <header class="recruiter-header">
+    <div>
+      <p class="eyebrow">Recruiter workspace</p>
+      <h1>Hiring organization</h1>
+      <p>Manage synthetic organization context inside the current tenant.</p>
+    </div>
+    <a href="/tenants/{{ tenant_id }}/recruiter/search/">Return to search</a>
+  </header>
+  {% csrf_token %}
+  <p role="status" aria-live="polite" data-organization-status></p>
+  {% include "recruiter/organization-controls.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %} {% block content %}
+<div
+  class="governance-shell"
+  data-governance
+  data-organization
+  data-tenant-id="{{ tenant_id }}"
+>
+  <header class="recruiter-header">
+    <div>
+      <p class="eyebrow">Tenant administration</p>
+      <h1>Tenant governance</h1>
+      <p>Administrative metadata only. Candidate content is not available.</p>
+    </div>
+  </header>
+  {% csrf_token %}
+  <p role="status" aria-live="polite" data-organization-status></p>
+  <div role="tablist" aria-label="Governance sections" class="governance-tabs">
+    <button
+      role="tab"
+      aria-selected="true"
+      aria-controls="organization-panel"
+      id="organization-tab"
+      data-governance-tab="organization"
+    >
+      Organization
+    </button>
+    <button
+      role="tab"
+      aria-selected="false"
+      aria-controls="audit-panel"
+      id="audit-tab"
+      data-governance-tab="audit"
+    >
+      Audit metadata
+    </button>
+    <button
+      role="tab"
+      aria-selected="false"
+      aria-controls="review-panel"
+      id="review-tab"
+      data-governance-tab="review"
+    >
+      Access reviews
+    </button>
+    <button
+      role="tab"
+      aria-selected="false"
+      aria-controls="emergency-panel"
+      id="emergency-tab"
+      data-governance-tab="emergency"
+    >
+      Emergency access
+    </button>
+  </div>
+  <section
+    role="tabpanel"
+    id="organization-panel"
+    aria-labelledby="organization-tab"
+    data-governance-panel="organization"
+  >
+    {% include "recruiter/organization-controls.html" %}
+  </section>
+  <section
+    role="tabpanel"
+    id="audit-panel"
+    aria-labelledby="audit-tab"
+    data-governance-panel="audit"
+    hidden
+  >
+    <h2>Redacted audit metadata</h2>
+    <p>Reading this history creates an AUDIT_READ event.</p>
+    <ul data-audit-list></ul>
+  </section>
+  <section
+    role="tabpanel"
+    id="review-panel"
+    aria-labelledby="review-tab"
+    data-governance-panel="review"
+    hidden
+  >
+    <h2>Access reviews</h2>
+    <form data-access-review-form>
+      <label
+        >Review type
+        <select name="review_type">
+          <option>MEMBERSHIP</option>
+          <option>PRIVILEGED_ROLE</option>
+          <option>PURPOSE_GRANT</option>
+          <option>EMERGENCY_GRANT</option>
+          <option>AUDIT_ACCESS</option>
+        </select>
+      </label>
+      <label
+        >Due date <input type="datetime-local" name="due_at" required
+      /></label>
+      <button type="submit">Start access review</button>
+    </form>
+    <p data-review-empty>No access reviews are due.</p>
+    <ul data-review-list></ul>
+  </section>
+  <section
+    role="tabpanel"
+    id="emergency-panel"
+    aria-labelledby="emergency-tab"
+    data-governance-panel="emergency"
+    hidden
+  >
+    {% include "admin/emergency-access.html" %}
+  </section>
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from modules.tenancy.audit import record_governance_event
 from modules.tenancy.models import BusinessUnit, TenantMembership
 from modules.tenancy.policy import AuthorizationRequest, authorize, authorize_opening
 
@@ -37,6 +38,13 @@ def create_opening(
     opening.full_clean()
     opening.save()
     _replace_hiring_team(opening, membership, hiring_team_ids)
+    record_governance_event(
+        membership=membership,
+        action="OPENING_CREATE",
+        target_type="opening",
+        target_id=opening.id,
+        changed_fields=["business_unit_id", "title", "location", "work_mode", "employment_type"],
+    )
     return opening
 
 
@@ -63,6 +71,15 @@ def update_opening(
     opening.save()
     if hiring_team_ids is not None:
         _replace_hiring_team(opening, membership, hiring_team_ids)
+    record_governance_event(
+        membership=membership,
+        action="OPENING_UPDATE",
+        target_type="opening",
+        target_id=opening.id,
+        changed_fields=sorted(
+            set(changes) | ({"hiring_team_ids"} if hiring_team_ids is not None else set())
+        ),
+    )
     return opening
 
 

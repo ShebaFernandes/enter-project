@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from .audit import record_governance_event
 from .models import BusinessUnit, TenantMembership
 from .policy import AuthorizationRequest, authorize
 
@@ -26,6 +27,13 @@ def create_business_unit(
     )
     unit.full_clean()
     unit.save()
+    record_governance_event(
+        membership=membership,
+        action="BUSINESS_UNIT_CREATE",
+        target_type="business_unit",
+        target_id=unit.id,
+        changed_fields=["name", "description", "status"],
+    )
     return unit
 
 
@@ -46,4 +54,11 @@ def update_business_unit(
     unit.version += 1
     unit.full_clean()
     unit.save()
+    record_governance_event(
+        membership=membership,
+        action="BUSINESS_UNIT_UPDATE",
+        target_type="business_unit",
+        target_id=unit.id,
+        changed_fields=sorted(set(changes) & {"name", "description", "status"}),
+    )
     return unit

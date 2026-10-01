@@ -80,6 +80,51 @@
 .comparison-value--unavailable {
   font-style: italic;
 }
+.governance-shell {
+  inline-size: min(100% - 2rem, 90rem);
+  margin-inline: auto;
+  padding-block: 1rem;
+  overflow-wrap: anywhere;
+}
+.governance-shell input,
+.governance-shell select,
+.governance-shell textarea,
+.governance-shell button {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  box-sizing: border-box;
+}
+.governance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+}
+.governance-grid section,
+[role="tabpanel"] {
+  min-inline-size: 0;
+  border: 1px solid #94a3b8;
+  padding: 1rem;
+}
+.governance-grid label,
+.governance-grid input,
+.governance-grid select,
+.governance-grid textarea {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+.governance-grid label {
+  margin-block: 0.75rem;
+}
+.governance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+.governance-tabs [aria-selected="true"] {
+  border-block-end: 0.25rem solid currentColor;
+}
 @media (max-width: 48rem) {
   .recruiter-management {
     padding: 0.75rem;
@@ -95,5 +140,8 @@
   .comparison-toolbar button,
   .comparison-shell header button {
     inline-size: 100%;
+  }
+  .governance-tabs button {
+    flex: 1 1 100%;
   }
 }

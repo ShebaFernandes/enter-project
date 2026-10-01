@@ -12,13 +12,24 @@ urlpatterns = [
 ]
 
 if settings.LOCAL_SYNTHETIC_AUTH_ENABLED:
-    from .local_views import local_candidate_session_view, local_recruiter_session_view
+    from .local_views import (
+        local_candidate_session_view,
+        local_recruiter_session_view,
+        local_tenant_admin_session_view,
+    )
 
     urlpatterns.append(
         path(
             "__local__/synthetic-recruiter-session",
             local_recruiter_session_view,
             name="local-synthetic-recruiter-session",
+        )
+    )
+    urlpatterns.append(
+        path(
+            "__local__/synthetic-tenant-admin-session",
+            local_tenant_admin_session_view,
+            name="local-synthetic-tenant-admin-session",
         )
     )
     urlpatterns.append(

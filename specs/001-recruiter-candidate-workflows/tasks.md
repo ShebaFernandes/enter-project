@@ -295,24 +295,24 @@
 
 ### Tests for User Story 7
 
-- [ ] T149 [P] [US7] Add organization contract tests for unit/opening lifecycle, synthetic provenance, saved-search restoration/change detection, rejection of top-level client `opening_id`, sole use of `criteria.context.opening_id`, conflicts, and declared errors in `app/tests/contract/test_hiring_organization_api.py`
-- [ ] T150 [P] [US7] Add audit-access tests proving role redaction, no candidate content, non-enumeration, and an `AUDIT_READ` event for allowed/denied/failed access in `app/tests/security/test_audit_access.py`
-- [ ] T151 [P] [US7] Add access-review tests for memberships, privileged roles, purpose grants, emergency grants, audit access, independent review, revocation, exceptions, and overdue state in `app/tests/security/test_access_reviews.py`
-- [ ] T152 [P] [US7] Add Tenant Admin browser tests for organization, saved searches, redacted audit view, access review, and emergency notification/revocation in `app/tests/browser/admin/tenant-governance.spec.ts`
+- [x] T149 [P] [US7] Add organization contract tests for unit/opening lifecycle, synthetic provenance, saved-search restoration/change detection, rejection of top-level client `opening_id`, sole use of `criteria.context.opening_id`, conflicts, and declared errors in `app/tests/contract/test_hiring_organization_api.py`
+- [x] T150 [P] [US7] Add audit-access tests proving role redaction, no candidate content, non-enumeration, and an `AUDIT_READ` event for allowed/denied/failed access in `app/tests/security/test_audit_access.py`
+- [x] T151 [P] [US7] Add access-review tests for memberships, privileged roles, purpose grants, emergency grants, audit access, independent review, revocation, exceptions, and overdue state in `app/tests/security/test_access_reviews.py`
+- [x] T152 [P] [US7] Add Tenant Admin browser tests for organization, saved searches, redacted audit view, access review, and emergency notification/revocation in `app/tests/browser/admin/tenant-governance.spec.ts`
 
 ### Implementation for User Story 7
 
-- [ ] T153 [P] [US7] Create saved-search models referencing authoritative search criteria without an independently writable opening field, plus owner/version and `MEMBERSHIP|PRIVILEGED_ROLE|PURPOSE_GRANT|EMERGENCY_GRANT|AUDIT_ACCESS` review types in `app/modules/search/models.py` and `app/modules/tenancy/review_models.py`
-- [ ] T154 [US7] Generate saved-search constraints ensuring any derived opening index is server-maintained and equals `criteria.context.opening_id`, plus access-review constraints/indexes in `app/modules/search/migrations/` and `app/modules/tenancy/migrations/`
-- [ ] T155 [US7] Implement named saved searches separately from six recent searches, deriving opening context exclusively from `criteria.context`, rejecting independent client opening input, and detecting changes since save in `app/modules/search/saved_searches.py`
-- [ ] T156 [US7] Implement redacted audit queries whose allowed, denied, and failed reads emit minimized `AUDIT_READ` events in `app/modules/audit/query_service.py`
-- [ ] T157 [US7] Implement periodic access-review population, assignment, decision, exception expiry, revocation, and overdue escalation in `app/modules/tenancy/access_reviews.py`
-- [ ] T158 [US7] Implement saved-search endpoints that accept and return no top-level `opening_id`, plus redacted audit and access-review endpoints from OpenAPI in `app/modules/search/saved_views.py`, `app/modules/audit/views.py`, and `app/modules/tenancy/review_views.py`
-- [ ] T159 [P] [US7] Build organization, synthetic-candidate source label, opening, and saved-search management UI that submits no top-level `opening_id` and renders opening context only from `criteria.context` in `app/frontend/recruiter/organization.ts` and `app/frontend/templates/recruiter/organization.html`
-- [ ] T160 [P] [US7] Build redacted audit and access-review UI without candidate-content rendering in `app/frontend/admin/access-review.ts` and `app/frontend/templates/admin/access-review.html`
-- [ ] T161 [P] [US7] Build emergency-access notification, scope, expiry, and revoke UI without candidate content in `app/frontend/admin/emergency-access.ts` and `app/frontend/templates/admin/emergency-access.html`
-- [ ] T162 [US7] Emit minimized audit events for organization changes, synthetic records, saved searches, audit reads, reviews, and revocations in `app/modules/tenancy/audit.py`
-- [ ] T163 [US7] Run and record tenant-governance, organization, audit-access, and access-review evidence in `docs/evidence/us7-hiring-organization.md`
+- [x] T153 [P] [US7] Create saved-search models referencing authoritative search criteria without an independently writable opening field, plus owner/version and `MEMBERSHIP|PRIVILEGED_ROLE|PURPOSE_GRANT|EMERGENCY_GRANT|AUDIT_ACCESS` review types in `app/modules/search/models.py` and `app/modules/tenancy/review_models.py`
+- [x] T154 [US7] Generate saved-search constraints ensuring any derived opening index is server-maintained and equals `criteria.context.opening_id`, plus access-review constraints/indexes in `app/modules/search/migrations/` and `app/modules/tenancy/migrations/`
+- [x] T155 [US7] Implement named saved searches separately from six recent searches, deriving opening context exclusively from `criteria.context`, rejecting independent client opening input, and detecting changes since save in `app/modules/search/saved_searches.py`
+- [x] T156 [US7] Implement redacted audit queries whose allowed, denied, and failed reads emit minimized `AUDIT_READ` events in `app/modules/audit/query_service.py`
+- [x] T157 [US7] Implement periodic access-review population, assignment, decision, exception expiry, revocation, and overdue escalation in `app/modules/tenancy/access_reviews.py`
+- [x] T158 [US7] Implement saved-search endpoints that accept and return no top-level `opening_id`, plus redacted audit and access-review endpoints from OpenAPI in `app/modules/search/saved_views.py`, `app/modules/audit/views.py`, and `app/modules/tenancy/review_views.py`
+- [x] T159 [P] [US7] Build organization, synthetic-candidate source label, opening, and saved-search management UI that submits no top-level `opening_id` and renders opening context only from `criteria.context` in `app/frontend/recruiter/organization.ts` and `app/frontend/templates/recruiter/organization.html`
+- [x] T160 [P] [US7] Build redacted audit and access-review UI without candidate-content rendering in `app/frontend/admin/access-review.ts` and `app/frontend/templates/admin/access-review.html`
+- [x] T161 [P] [US7] Build emergency-access notification, scope, expiry, and revoke UI without candidate content in `app/frontend/admin/emergency-access.ts` and `app/frontend/templates/admin/emergency-access.html`
+- [x] T162 [US7] Emit minimized audit events for organization changes, synthetic records, saved searches, audit reads, reviews, and revocations in `app/modules/tenancy/audit.py`
+- [x] T163 [US7] Run and record tenant-governance, organization, audit-access, and access-review evidence in `docs/evidence/us7-hiring-organization.md`
 
 **Checkpoint**: US7 completes organization and governance workflows without weakening tenant or candidate-content boundaries.
 

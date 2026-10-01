@@ -17,5 +17,8 @@ import "../recruiter/speech-search";
 import "../recruiter/candidate-findings";
 import "../recruiter/candidate-detail";
 import "../recruiter/comparison";
+import "../recruiter/organization";
+import "../admin/access-review";
+import "../admin/emergency-access";
 import "./navigation";
 import "./persistence";

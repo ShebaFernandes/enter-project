@@ -184,3 +184,6 @@ class EmergencyAccessRequest(models.Model):
             raise ValidationError({"requested_minutes": "Must be between 1 and 60."})
         if self.approver_id and self.approver_id == self.requester_id:
             raise ValidationError({"approver": "Requester cannot self-approve."})
+
+
+from .review_models import AccessReview, AccessReviewItem  # noqa: E402,F401

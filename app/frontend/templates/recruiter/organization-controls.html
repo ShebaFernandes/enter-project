@@ -1,0 +1,82 @@
+<div class="governance-grid">
+  <section aria-labelledby="unit-heading">
+    <h2 id="unit-heading">Business units</h2>
+    <form data-business-unit-form>
+      <label
+        >Business unit name <input name="name" required maxlength="300"
+      /></label>
+      <label
+        >Description <textarea name="description" maxlength="2000"></textarea>
+      </label>
+      <button type="submit">Create business unit</button>
+    </form>
+    <ul data-business-unit-list></ul>
+  </section>
+  <section aria-labelledby="opening-heading">
+    <h2 id="opening-heading">Openings</h2>
+    <form data-opening-form>
+      <label>Business unit ID <input name="business_unit_id" required /></label>
+      <label
+        >Opening title <input name="title" required maxlength="300"
+      /></label>
+      <label>Location <input name="location" required /></label>
+      <label
+        >Work mode
+        <select name="work_mode">
+          <option>REMOTE</option>
+          <option>HYBRID</option>
+          <option>ON_SITE</option>
+          <option>FLEXIBLE</option>
+        </select>
+      </label>
+      <label
+        >Employment type
+        <input name="employment_type" value="PERMANENT" required
+      /></label>
+      <button type="submit">Create opening</button>
+    </form>
+    <ul data-opening-list></ul>
+  </section>
+  {% if role == "RECRUITER" %}
+  <section aria-labelledby="synthetic-heading">
+    <h2 id="synthetic-heading">Synthetic candidates</h2>
+    <p><strong>Recruiter-entered synthetic record</strong></p>
+    <p>Real recruiter-entered candidate data is not accepted.</p>
+    <form data-synthetic-form>
+      <label>Display name <input name="display_name" required /></label>
+      <label>Location <input name="location" required /></label>
+      <label
+        >Experience years
+        <input
+          name="experience_years"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+      /></label>
+      <label
+        >Skills <input name="skills" required aria-describedby="skills-help"
+      /></label>
+      <small id="skills-help">Separate synthetic skills with commas.</small>
+      <label
+        ><input name="confirm_synthetic" type="checkbox" required /> I confirm
+        this record is synthetic.</label
+      >
+      <button type="submit">Create synthetic candidate</button>
+    </form>
+    <ul data-synthetic-list></ul>
+  </section>
+  <section aria-labelledby="saved-heading">
+    <h2 id="saved-heading">Saved searches</h2>
+    <p>Opening context comes only from the search criteria context.</p>
+    <form data-saved-search-form>
+      <label
+        >Saved-search name <input name="name" required maxlength="200"
+      /></label>
+      <label>Search ID <input name="search_id" required /></label>
+      <button type="submit">Save search</button>
+    </form>
+    <ul data-saved-search-list></ul>
+  </section>
+  {% endif %}
+</div>
