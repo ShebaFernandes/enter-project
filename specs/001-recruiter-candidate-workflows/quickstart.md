@@ -137,11 +137,22 @@ Use server-controlled per-route legacy/React selection. Test both modes with ide
 Run focused functional/security/browser/accessibility/build checks before each slice cutover; retain screenshot and rollback evidence. FM14 runs complete PostgreSQL collection/suite, mypy . with unchanged scope, Ruff format/lint, Django checks and migration drift check, TypeScript/ESLint/Prettier, Vite production build and complete Playwright/accessibility suite once. Compare test inventory against baseline and original mockup hash. Disable the affected route flag to roll back; retain data, contracts and URLs, never replay a mutation to change renderer. Phase 10 and production deployment remain deferred.
 # FM3 verification addendum
 
+Independent publication remediation: apply `recruiting.0014_publication_version`
+after 0013. On the legacy organization page, create the internal opening, choose
+**Open internally (does not publish)** if DRAFT/PAUSED, then **Preview**. Verify the
+allowlisted public fields and confirm **Publish** in the dialog. Check `/jobs/`
+and the returned public role URL. **Withdraw publication** requires confirmation
+and removes public visibility while retaining internal OPEN. Source edits invalidate
+publication; reopening never republishes. Refresh Preview after a 409 or uncertain
+network outcome. Publication timestamps are assigned by the server at confirmation.
+Only authorized publication management can make an OPEN record public; the earlier
+state-coupled publication behavior described in historical FM3 evidence is superseded.
+
 FM3 evidence and screenshot locations:
 [`docs/evidence/frontend-migration/fm3.md`](../../docs/evidence/frontend-migration/fm3.md).
 Apply `recruiting.0013_public_opening_projection` only with PostgreSQL and the
 approved role-provisioning authority. It does not publish/backfill existing OPEN
-records. Publish through the existing authorized opening state update; use the
+records. Publish through the confirmed publication operation described above; use the
 resulting public UUID for public role links. Do not grant anonymous SELECT on
 `recruiting_opening` or change its forced RLS.
 

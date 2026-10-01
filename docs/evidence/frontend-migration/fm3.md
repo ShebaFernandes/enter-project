@@ -1,5 +1,127 @@
 # FM3 — public entry and public-opening security clarification
 
+## Independent-publication remediation — 2026-10-01
+
+This section supersedes the state-coupled publication lifecycle in the historical
+FM3 report below. Scope is FM3-R01 → FM3-R02 → FM3-R03 only; FM4 is not implemented.
+
+### Approved contract and implementation
+
+Under `/api/v1/tenants/{tenantId}/openings/{openingId}`:
+
+- GET `/publication`: authorized status/preview, internal state, independent
+  UNPUBLISHED/PUBLISHED state, exact public allowlist, public URL when published,
+  source version/ETag, projection version and opaque SHA-256 HMAC preview digest.
+- POST `/publication/publish`: literal `confirmed: true`, current digest,
+  If-Match and Idempotency-Key. Creates/updates using the existing
+  `synchronize_publication` writer, never duplicate projection logic.
+- POST `/publication/withdraw`: confirmation, If-Match and Idempotency-Key;
+  immediately deactivates publication without changing internal OPEN.
+
+Active membership/tenant and opening.write role/object scope are reread under
+transaction locks before mutation **and before idempotent replay**. Publish also
+requires OPEN, active business unit and a non-expired projection. Digest binds
+tenant, opening, source revision, allowlisted values, projection revision/state.
+Stale ETags/digests return 409 without reflecting field values. Literal missing,
+false or string confirmation is rejected. Idempotency is scoped by actor, tenant,
+opening and action, with the body and ETag hashed; duplicate requests neither
+increment revision nor duplicate audits. Refresh status after uncertain outcomes.
+
+Creating/opening/reopening does not publish. Any source edit withdraws the old
+projection until a fresh confirmed preview. Existing SECURITY INVOKER source/link
+invalidation triggers and forced source RLS are unchanged. Expiry is enforced on
+every public read. There is no ARCHIVED source enum or source expiry field to
+invent; existing PAUSED/CLOSED/deletion and projection closes_at remain authoritative.
+An archived/inactive business unit cannot publish. Audit/synchronization failure
+rolls back proposed values and revision changes; after an already-committed source
+edit it cannot reactivate the old projection. An unchanged previously confirmed
+projection may remain only when the attempted source/publication transaction rolls
+back unchanged. No new anonymous source-table or mutation privileges exist.
+
+Migration `0014_publication_version` adds only the projection revision bigint.
+Publication decisions advance the source version without changing source state;
+the projection records that revision. No RLS or database-role migration. Applied
+to ephemeral test databases and `enter_fm3_remediation_20261001` only, not the normal
+development database. Existing public IDs remain stable; unpublished preview GET
+has no write side effects and derives a keyed public UUID without exposing source IDs.
+Publication time is explicitly shown as server-assigned at confirmation; company,
+experience/skills and other unconfigured optional publication fields remain omitted.
+
+Spec FR-067, plan, data model, OpenAPI, authorization/events contracts, migration
+guidance and tasks now record the independent lifecycle. Audits contain only
+governance metadata and changed-field names, never job field values or digests.
+The local synthetic candidate bootstrap now explicitly previews/confirms publication
+through this same guarded service; no production authentication bypass is added.
+
+### Legacy operational and accessibility verification
+
+The existing organization opening list now has compact per-opening internal/public
+status, allowlisted preview, public link, Publish/Update and Withdraw controls.
+A separately labelled **Open internally (does not publish)** action uses the existing
+opening PATCH for DRAFT/PAUSED records, which the create API correctly leaves private.
+No redesign, React mount, new workflow route or default-on flag was introduced.
+
+Live synthetic browser verification on the isolated Django server exercised:
+create DRAFT → internal OPEN/UNPUBLISHED → Preview → keyboard confirmation →
+PUBLISHED and public `/jobs/` link → concurrent source edit → stale confirmation 409
+→ fresh preview/confirmation → independent withdrawal → absent from `/jobs/` while
+source remains OPEN → refresh remains UNPUBLISHED. All calls use trusted route
+tenant context, same-origin session, CSRF and server authorization.
+
+Native labelled dialogs begin on Cancel; Escape restores invoker focus, Tab reaches
+confirmation, Enter operates both actions. Each opening has an H3 under Openings H2,
+definition-list labels, polite status announcements and visible inherited focus.
+Screenshots at 1440×1000, 1024×768, 390×844, 320×844 and 200% CSS zoom verify no
+horizontal page overflow. Automated axe checks show no serious/critical violations;
+the 320px capture was visually inspected for readable wrapping and available controls.
+This is keyboard/semantic verification, not a speech-output screen-reader certification.
+Intentional difference: these security controls are additions to the unchanged legacy
+design; no mockup redesign/parity claim is made for organization migration.
+
+### Remediation verification results
+
+- Test-first: new publication GET failed with 404 before implementation. The initial
+  sandbox database denial was rerun with approved local-service access; not treated
+  as test-first functional evidence.
+- Focused initial lifecycle/RLS/public API: **20 passed**. Expanded contract,
+  authorization and existing opening-foundation checks: **26 passed**.
+- Complete PostgreSQL suite: **308 passed, 1 expected skip**, 309 collected, 14.67s.
+  The retained skip is the audit trigger preventing a deliberately tampered fixture.
+- Repository-wide `mypy .`: **223 files**, pass; scope unchanged.
+- Ruff lint/format, Django system and migration drift: pass, no ungenerated changes.
+- TypeScript, ESLint, Prettier: pass.
+- Legacy, React, showcase and retained WIP Vite builds: pass (28/32/30/27 modules).
+- Complete non-authenticated Playwright regression: **47 passed**; includes existing
+  chooser goldens without snapshot updates, OIDC entry, accessibility and CSS isolation.
+- All authenticated journeys: **6 passed**, including the new publication lifecycle.
+- Authenticated FM1 baseline/accessibility capture: **1 passed**, 130 screenshots
+  plus manifest under `app/test-results/fm3-remediation-baselines/`; approved FM1
+  baselines were not overwritten. Total browser collection/regression: **54 passed
+  in 21 files**, run once across the existing isolated regression batches.
+
+No prior test function/file was removed. Existing publication tests were retained
+and strengthened to require explicit confirmation after edits/reopening. The
+original source-RLS migration and policies remain unchanged; restricted non-owner,
+non-BYPASSRLS reader/writer tests pass. Both original mockup copies remain SHA-256
+`daeb180c0a2ec55994422e050b14edca9f62c431dea9cb113f4c33378867b9e9`.
+Route flags remain `{}` by default; chooser opt-in was in-memory on an isolated test
+server only. Legacy production defaults and the FM1–FM14 unchecked umbrella remain.
+
+Same-URL rollback drill on `http://127.0.0.1:8004/`: the isolated React chooser
+was restarted with unchanged default-off repository settings; legacy returned with
+the same OIDC/jobs links. Public API response hash before/after remained
+`857e6dd449140c0dc0340692983fef595c55e397ffdb0a7d507491c4465e45b8`.
+No data/schema rollback or mutation replay occurred. Verification servers were
+stopped afterward. The synthetic database remains available for review.
+
+FM3-R01, FM3-R02 and FM3-R03 are complete. FM4 is dependency-cleared but not begun.
+Apply migration 0014 (after 0013) in the intended runtime before using these controls;
+this turn intentionally did not migrate the ordinary development or production DB.
+Approved temporary fonts/wordmark and absent source ARCHIVED enum remain documented
+differences, not new scope or permission to implement FM4.
+
+## Historical FM3 baseline (before independent-publication remediation)
+
 Verified 2026-10-01. Scope: FM3-01 → FM3-02 → FM3-03 only, dependent on completed
 FM2-03. FM1/FM2 remain complete. FM4 and Phase 10 were not started. The FM1–FM14
 umbrella acceptance item remains unchecked.

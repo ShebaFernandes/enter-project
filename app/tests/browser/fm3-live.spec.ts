@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const origin = process.env.FM3_ORIGIN;
+const output =
+  process.env.FM3_LIVE_OUTPUT ?? "../docs/evidence/frontend-migration/fm3";
 test.skip(!origin, "Run against the isolated FM3 Django verification server");
 
 test("FM3 real chooser, public jobs and keyboard return", async ({ page }) => {
@@ -43,7 +45,7 @@ test("FM3 real chooser, public jobs and keyboard return", async ({ page }) => {
       (await new AxeBuilder({ page: page as never }).analyze()).violations,
     ).toEqual([]);
     await page.screenshot({
-      path: `../docs/evidence/frontend-migration/fm3/jobs-live-${width}-${zoom}x.png`,
+      path: `${output}/jobs-live-${width}-${zoom}x.png`,
       fullPage: true,
     });
     await page.goBack();

@@ -16,6 +16,24 @@ Only three scope additions are approved: signed-out chooser at / using existing 
 
 ### FM3 public-opening security clarification (2026-10-01)
 
+Independent-publication remediation (explicit owner approval): extend the existing
+projection service with authenticated GET `publication`, POST `publication/publish`
+and POST `publication/withdraw` under the tenant opening. GET is read-only and
+returns separate internal/public states, exact allowlisted preview, ETag/source and
+projection versions, and an opaque keyed digest bound to tenant, opening, versions
+and public values. Publication time is server-assigned on confirmation (pending in
+preview). POST requires literal boolean confirmation, If-Match and Idempotency-Key;
+publish also requires the current digest. Lock/revalidate membership and source,
+enforce opening.write scope before idempotent replay, and scope replay by actor,
+tenant, object, action, body and If-Match. Decisions advance the source version;
+projection version records that revision. Neither OPEN, reopening nor source edits
+publish: source-change triggers invalidate old publication until fresh confirmation.
+Withdrawal leaves internal state unchanged. Atomic audit/projection/source writes
+never commit proposed unconfirmed values. On rollback only an unchanged previously
+confirmed source/projection can remain. Migration 0014 adds projection version only.
+Compact legacy controls include a separately labelled internal OPEN action and native
+confirmation dialogs; no React cutover, RLS policy changes, FM4 or redesign.
+
 Explicitly authorized security correction: anonymous discovery reads a separate
 `PublicOpeningProjection`, never `recruiting_opening`. The source table's forced
 tenant RLS and policies remain unchanged. An additive migration must install the

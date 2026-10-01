@@ -75,11 +75,15 @@ def update_opening(
     opening.save()
     if hiring_team_ids is not None:
         _replace_hiring_team(opening, membership, hiring_team_ids)
-    from .public_openings import synchronize_publication
-
-    # Editing a pre-existing private OPEN record is not an implicit publication.
-    if was_public or "state" in changes:
-        synchronize_publication(opening=opening, membership=membership)
+    # The source-change trigger withdraws the previous projection. Neither OPEN
+    # nor an ordinary edit constitutes confirmation of a new public payload.
+    if was_public:
+        record_governance_event(
+            membership=membership,
+            action="OPENING_PUBLICATION_WITHDRAWN",
+            target_type="opening",
+            target_id=opening.id,
+        )
     record_governance_event(
         membership=membership,
         action="OPENING_UPDATE",

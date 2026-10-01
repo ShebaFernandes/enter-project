@@ -94,6 +94,7 @@ class PublicOpeningProjection(models.Model):
     published_at = models.DateTimeField()
     closes_at = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=False)
+    version = models.PositiveBigIntegerField(default=1)
 
 
 class OpeningPublicationLink(models.Model):

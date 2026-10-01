@@ -362,6 +362,12 @@ checks pass. Only the chooser is eligible for server opt-in; all route flags rem
 default-off. The minimal public jobs destination remains Django-rendered. FM4 is
 cleared but not started; the FM1–FM14 umbrella item remains unchecked.
 
+### FM3 remediation: Independent publication (owner approved 2026-10-01)
+
+- [X] FM3-R01 Add test-first independent publication/lifecycle, authorization, ETag/digest, idempotency, failure, restricted-role and browser tests in `app/tests/contract/test_opening_publication.py`, `app/tests/database/test_public_opening_projection.py` and `app/tests/browser/recruiter/opening-publication.spec.ts`. Dependency: FM3-03 and approved contract amendment.
+- [X] FM3-R02 Extend the existing service with confirmed independent publication/withdrawal, a projection revision migration, contract operations and compact legacy controls in `app/modules/recruiting/`, `app/frontend/recruiter/opening-publication.ts` and `app/frontend/recruiter/organization.ts`; align planning/contracts. Dependency: FM3-R01 failing acceptance evidence.
+- [X] FM3-R03 Record publish → /jobs/ → withdraw verification, accessibility, focused checks and one complete regression pass in `docs/evidence/frontend-migration/fm3.md`; preserve flags, mockup, prior tests and unchecked umbrella gate. Dependency: FM3-R02. FM4 is gated on this remediation, not the earlier completion statement.
+
 ### FM4: Recruiter search home/sidebar
 
 - [ ] FM4-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM3-03.

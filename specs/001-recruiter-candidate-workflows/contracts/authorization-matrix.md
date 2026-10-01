@@ -75,3 +75,11 @@ authorizes recruiter or internal management access. Only the authenticated
 application workflow resolves a live public UUID through an exactly scoped
 private link, then applies the existing source/consent/resume/application checks.
 No Tenant Admin or Platform Security Admin candidate-content access is added.
+
+Independent-publication remediation: all three management operations, including
+preview GET, require current `opening.write`. Recruiter and Tenant Admin require
+active tenant membership and opening/business-unit scope; Hiring Manager, Candidate,
+Platform Security Admin and anonymous callers gain no permission. Revalidate before
+idempotent replay. Publish requires OPEN, active business unit, non-expired projection,
+current ETag and preview digest; withdrawal requires ETag and confirmation but never
+closes/pauses the opening. No candidate access is conferred. Management is no-store.

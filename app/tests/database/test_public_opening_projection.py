@@ -21,7 +21,26 @@ def publish(opening, recruiter):
     token = tenant_context.set(recruiter.tenant_id)
     try:
         with tenant_transaction():
-            return update_opening(opening=opening, membership=recruiter, changes={"state": "OPEN"})
+            from modules.recruiting.public_openings import (
+                publication_preview,
+                synchronize_publication,
+            )
+
+            opening.refresh_from_db()
+            if opening.state != "OPEN":
+                opening = update_opening(
+                    opening=opening, membership=recruiter, changes={"state": "OPEN"}
+                )
+            preview = publication_preview(opening)
+            result = synchronize_publication(
+                opening=opening,
+                membership=recruiter,
+                confirmed=True,
+                if_match=preview["source_etag"],
+                preview_digest=preview["preview_digest"],
+            )
+            opening.refresh_from_db()
+            return result
     finally:
         tenant_context.reset(token)
 
@@ -104,11 +123,17 @@ def test_updates_withdrawals_and_deletion(opening_factory, tenant, recruiter):
     try:
         with tenant_transaction():
             update_opening(opening=opening, membership=recruiter, changes={"title": "Updated role"})
+            with public_reader():
+                assert not PublicOpeningProjection.objects.exists()
+            publish(opening, recruiter)
             assert PublicOpeningProjection.objects.get().title == "Updated role"
             update_opening(opening=opening, membership=recruiter, changes={"state": "PAUSED"})
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()
             update_opening(opening=opening, membership=recruiter, changes={"state": "OPEN"})
+            with public_reader():
+                assert not PublicOpeningProjection.objects.exists()
+            publish(opening, recruiter)
             opening.delete()
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()

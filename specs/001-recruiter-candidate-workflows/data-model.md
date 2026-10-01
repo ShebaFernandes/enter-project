@@ -425,4 +425,15 @@ Source changes invalidate prior publication; failures never commit newly private
 state with a stale public projection. Existing source rows are not automatically
 published by migration. Restricted-role PostgreSQL tests are mandatory.
 
+Independent-publication clarification (2026-10-01): active and current timestamps
+determine PUBLISHED; missing/inactive/expired means UNPUBLISHED, independently of
+source OPEN. `PublicOpeningProjection.version` (positive bigint, default 1; migration
+0014) captures source revision at confirmed publication/withdrawal, never serialized
+anonymously. Decisions advance source version but not its internal state. Preview
+GET creates no record: an unlinked source uses a keyed non-reversible public UUID,
+persisted in the private link only on confirmation. Existing public UUIDs are retained.
+The digest is opaque HMAC, not a readable token exposing internal IDs. No new preview
+model or role. Existing PAUSED/CLOSED are the unavailable source states; no ARCHIVED
+enum or source expiry field is invented. Projection closes_at remains read-enforced.
+
 Recents reuse SearchDefinition, CriteriaGroup and Criterion with existing tenant/actor ownership, created_at ordering, expires_at and six-entry AD_HOC retention. Order by created_at descending then id descending for deterministic ties. SavedSearch remains the explicit named-save relation and lifecycle; exclude named saves from the unsaved recent collection. Restore criteria from current source rows, not SearchResultSnapshot or SavedSearch.result_context_snapshot. GET restoration does not update timestamps, versions or retention. Executing confirmed criteria uses the existing search creation lifecycle. No last-used column or new history model is required; earlier logical LRU wording is refined to existing execution/creation recency for this amendment. Any discovered schema necessity is a blocker to document before implementation.

@@ -1,3 +1,5 @@
+import { publicationControls } from "./opening-publication";
+
 type OrganizationRoot = HTMLElement & { dataset: { tenantId?: string } };
 
 export {};
@@ -75,7 +77,9 @@ document
         }[];
         openings.replaceChildren(
           ...data.map((value) =>
-            item(`${value.title} — ${value.state} — ${value.id}`),
+            publicationControls(value, (path, options) =>
+              request(root, path, options),
+            ),
           ),
         );
       }

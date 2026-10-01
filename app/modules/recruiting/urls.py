@@ -12,6 +12,7 @@ from .comparison_views import ComparisonView
 from .opening_views import (
     OpeningCollectionView,
     OpeningDetailView,
+    OpeningPublicationView,
     RecruiterEnteredCandidateCollectionView,
 )
 from .public_views import PublicOpeningCollectionView
@@ -26,6 +27,20 @@ from .views import (
 )
 
 urlpatterns = [
+    path(
+        "tenants/<uuid:tenant_id>/openings/<uuid:opening_id>/publication",
+        OpeningPublicationView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/openings/<uuid:opening_id>/publication/publish",
+        OpeningPublicationView.as_view(),
+        {"action": "publish"},
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/openings/<uuid:opening_id>/publication/withdraw",
+        OpeningPublicationView.as_view(),
+        {"action": "withdraw"},
+    ),
     path("public/openings", PublicOpeningCollectionView.as_view()),
     path("public/openings/<uuid:opening_id>", PublicOpeningCollectionView.as_view()),
     path("candidate/applications", CandidateApplicationCollectionView.as_view()),

@@ -4,6 +4,15 @@ All events use JSON, UTF-8, schema versioning, UUIDv7 event IDs, UTC RFC 3339 ti
 
 ## Envelope
 
+FM3 independent opening publication uses synchronous minimized governance audit,
+not a new asynchronous public-payload event. `OPENING_PUBLISHED` and
+`OPENING_PUBLICATION_WITHDRAWN` record existing actor/role/tenant, opening target,
+outcome and changed-field names only. Never include titles, descriptions, location
+values, preview digests, contact data or candidate information. Explicit decisions
+and audit commit atomically; idempotent replay emits no duplicate audit. Source edits
+that invalidate a live projection record withdrawal plus existing OPENING_UPDATE.
+Direct database invalidation remains a safety backstop, not an alternative management API.
+
 ```json
 {
   "event_id": "0199...",

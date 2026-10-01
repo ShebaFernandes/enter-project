@@ -1109,6 +1109,15 @@ saved search with its criteria and result context.
 
 Acceptance scenarios:
 
+FR-067 independent-publication clarification (owner approved 2026-10-01): internal
+OPEN is not public PUBLISHED. Creating, opening, reopening or editing MUST NOT
+implicitly publish. Publication/update requires a current public-field preview and
+explicit confirmation; confirmed withdrawal leaves internal state unchanged. Source
+changes invalidate the previous projection until fresh confirmation. PAUSED/CLOSED,
+deletion and expiry cannot remain discoverable. Only active OPEN source records can
+be published. Failed synchronization/audit must not commit unconfirmed or newly stale
+public values. No new ARCHIVED source state is introduced.
+
 1. Signed-out recruiter selection enters existing OIDC; candidate selection opens public jobs; direct protected links still enforce authentication.
 2. An active public opening appears and links to its existing role page; draft/paused/closed records do not; an empty directory shows an honest empty state and unavailable service a safe error.
 3. A role closing between list and application is revalidated and rejected by the existing application workflow.

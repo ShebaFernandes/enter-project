@@ -1,15 +1,22 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from modules.operations.concurrency import require_if_match, strong_etag
-from modules.operations.idempotency import execute
+from modules.operations.idempotency import IdempotencyConflict, complete, execute, reserve
 from modules.tenancy.models import TenantMembership
 from modules.tenancy.policy import authorize_opening
 
 from .models import Opening
 from .openings import create_opening, update_opening
+from .public_openings import (
+    authorized_publication_opening,
+    publication_preview,
+    synchronize_publication,
+)
 from .recruiter_entered import (
     create_recruiter_entered_candidate,
     list_recruiter_entered_candidates,
@@ -62,8 +69,12 @@ class OpeningDetailView(APIView):
         authorize_opening(request.tenant_membership, opening, "opening.read")
         return Response(OpeningSerializer(opening).data)
 
+    @transaction.atomic
     def patch(self, request, tenant_id, opening_id):
-        opening = get_object_or_404(Opening, pk=opening_id, tenant_id=tenant_id)
+        opening = get_object_or_404(
+            Opening.objects.select_for_update(), pk=opening_id, tenant_id=tenant_id
+        )
+        authorize_opening(request.tenant_membership, opening, "opening.write")
         require_if_match(request.headers.get("If-Match"), opening, request.data)
         serializer = OpeningPatchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -78,6 +89,76 @@ class OpeningDetailView(APIView):
         response = Response(OpeningSerializer(opening).data)
         response["ETag"] = strong_etag(opening.pk, opening.version)
         return response
+
+
+class OpeningPublicationView(APIView):
+    """Authenticated tenant-scoped management, never a public source-table read."""
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response["Cache-Control"] = "no-store"
+        return response
+
+    @transaction.atomic
+    def get(self, request, tenant_id, opening_id, action=None):
+        if action is not None:
+            return Response(status=405)
+        if request.tenant_id != tenant_id or request.tenant_membership is None:
+            return Response(status=404)
+        opening = get_object_or_404(Opening, pk=opening_id, tenant_id=tenant_id)
+        opening, _ = authorized_publication_opening(
+            opening=opening, membership=request.tenant_membership
+        )
+        data = publication_preview(opening)
+        return Response(data, headers={"ETag": data["source_etag"], "Cache-Control": "no-store"})
+
+    @transaction.atomic
+    def post(self, request, tenant_id, opening_id, action=None):
+        if action not in {"publish", "withdraw"}:
+            return Response(status=405)
+        if request.tenant_id != tenant_id or request.tenant_membership is None:
+            return Response(status=404)
+        opening = get_object_or_404(Opening, pk=opening_id, tenant_id=tenant_id)
+        opening, membership = authorized_publication_opening(
+            opening=opening, membership=request.tenant_membership
+        )
+        allowed = {"confirmed", "preview_digest"} if action == "publish" else {"confirmed"}
+        if (
+            not isinstance(request.data, dict)
+            or set(request.data) - allowed
+            or request.data.get("confirmed") is not True
+        ):
+            raise ValidationError(
+                {"confirmed": "Explicit confirmation and approved fields are required."}
+            )
+        key = request.headers.get("Idempotency-Key", "")
+        if not 16 <= len(key) <= 200:
+            raise ValidationError({"Idempotency-Key": "A 16-200 character key is required."})
+        # Scope existing persistence by actor/tenant/object/action. Revalidate
+        # authorization above even when replaying a previously successful request.
+        record, created = reserve(
+            f"{request.user.pk}:{tenant_id}:{opening_id}:{action}",
+            key,
+            {"body": request.data, "if_match": request.headers.get("If-Match")},
+        )
+        if not created:
+            if record.response_status is None:
+                raise IdempotencyConflict("Publication request is pending")
+            return Response(
+                record.response_body,
+                status=record.response_status,
+                headers={"Cache-Control": "no-store"},
+            )
+        data = synchronize_publication(
+            opening=opening,
+            membership=membership,
+            if_match=request.headers.get("If-Match"),
+            confirmed=request.data.get("confirmed"),
+            preview_digest=request.data.get("preview_digest", ""),
+            withdraw=action == "withdraw",
+        )
+        complete(record, 200, data)
+        return Response(data, headers={"ETag": data["source_etag"], "Cache-Control": "no-store"})
 
 
 class RecruiterEnteredCandidateCollectionView(APIView):

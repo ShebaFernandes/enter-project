@@ -414,10 +414,17 @@ def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
             state=Opening.State.OPEN,
             created_by=recruiter,
         )
-        from modules.recruiting.public_openings import synchronize_publication
+        from modules.recruiting.public_openings import publication_preview, synchronize_publication
 
         membership = TenantMembership.objects.get(tenant=tenant, identity=recruiter)
-        synchronize_publication(opening=opening, membership=membership)
+        preview = publication_preview(opening)
+        synchronize_publication(
+            opening=opening,
+            membership=membership,
+            confirmed=True,
+            if_match=preview["source_etag"],
+            preview_digest=preview["preview_digest"],
+        )
         public_id = opening.openingpublicationlink.public_id
     with _rls_context(identity_id=profile.identity_id):
         ConsentRecord.objects.create(
