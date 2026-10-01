@@ -144,7 +144,10 @@ function RecruiterSearch({
                 >
                   Use speech
                 </button>
-                <button className={`${button} self-start sm:mt-1.5`} type="submit">
+                <button
+                  className={`${button} self-start sm:mt-1.5`}
+                  type="submit"
+                >
                   Search candidates
                 </button>
               </div>
@@ -196,27 +199,52 @@ function RecruiterSearch({
                   ordering. Protected attributes are never used.
                 </p>
                 <div className="mt-4 grid gap-3" data-criteria-list />
-                <button className={`${secondaryButton} mt-4`} type="button" data-add-criterion>
+                <button
+                  className={`${secondaryButton} mt-4`}
+                  type="button"
+                  data-add-criterion
+                >
                   + Add criterion
                 </button>
               </aside>
             </div>
           </form>
-          <p className="search-status my-5 min-h-6 text-sm font-medium text-[#276955]" role="status" aria-live="polite" />
-          <nav className="mb-5 flex flex-wrap gap-2" aria-label="Result filters">
-            <button className={secondaryButton} type="button" data-filter="all" aria-pressed="true">
+          <p
+            className="search-status my-5 min-h-6 text-sm font-medium text-[#276955]"
+            role="status"
+            aria-live="polite"
+          />
+          <nav
+            className="mb-5 flex flex-wrap gap-2"
+            aria-label="Result filters"
+          >
+            <button
+              className={secondaryButton}
+              type="button"
+              data-filter="all"
+              aria-pressed="true"
+            >
               All results
             </button>
-            <button className={secondaryButton} type="button" data-filter="with-findings" aria-pressed="false">
+            <button
+              className={secondaryButton}
+              type="button"
+              data-filter="with-findings"
+              aria-pressed="false"
+            >
               With informational findings
             </button>
           </nav>
           <section className={card} aria-labelledby="recent-searches-heading">
-            <h2 className="text-xl font-semibold text-[#111342]" id="recent-searches-heading">
+            <h2
+              className="text-xl font-semibold text-[#111342]"
+              id="recent-searches-heading"
+            >
               Recent searches
             </h2>
             <p className="mt-1 text-sm text-[#4b5563]">
-              Your six most recent ad-hoc searches remain available for seven days.
+              Your six most recent ad-hoc searches remain available for seven
+              days.
             </p>
           </section>
           <section
@@ -230,15 +258,31 @@ function RecruiterSearch({
                 <p className="text-xs font-bold uppercase tracking-[.15em] text-[#276955]">
                   Authorized results
                 </p>
-                <h2 className="mt-1 font-serif text-3xl font-semibold" id="results-heading">
+                <h2
+                  className="mt-1 font-serif text-3xl font-semibold"
+                  id="results-heading"
+                >
                   Candidates
                 </h2>
               </div>
-              <div className="comparison-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-[#d7dbd2] bg-white p-3" data-comparison-toolbar>
-                <p className="m-0 text-sm text-[#4b5563]" data-comparison-count role="status" aria-live="polite">
+              <div
+                className="comparison-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-[#d7dbd2] bg-white p-3"
+                data-comparison-toolbar
+              >
+                <p
+                  className="m-0 text-sm text-[#4b5563]"
+                  data-comparison-count
+                  role="status"
+                  aria-live="polite"
+                >
                   0 candidates selected for comparison.
                 </p>
-                <button className={secondaryButton} type="button" data-open-comparison aria-disabled="true">
+                <button
+                  className={secondaryButton}
+                  type="button"
+                  data-open-comparison
+                  aria-disabled="true"
+                >
                   Compare selected
                 </button>
               </div>
@@ -248,7 +292,12 @@ function RecruiterSearch({
                 Run a search to see authorized candidates.
               </p>
             </div>
-            <button className={`${secondaryButton} mt-4`} type="button" data-more hidden>
+            <button
+              className={`${secondaryButton} mt-4`}
+              type="button"
+              data-more
+              hidden
+            >
               Load more candidates
             </button>
           </section>
@@ -290,11 +339,22 @@ function RecruiterSearch({
           </section>
         </aside>
       </main>
-      <dialog className="max-h-[90vh] overflow-auto rounded-xl border border-[#d7dbd2] p-0 shadow-2xl backdrop:bg-[#111342]/40" data-candidate-dialog aria-labelledby="candidate-title">
+      <dialog
+        className="max-h-[90vh] overflow-auto rounded-xl border border-[#d7dbd2] p-0 shadow-2xl backdrop:bg-[#111342]/40"
+        data-candidate-dialog
+        aria-labelledby="candidate-title"
+      >
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="font-serif text-2xl font-semibold" id="candidate-title">Candidate details</h2>
-            <button className={secondaryButton} type="button" data-close-detail>Close</button>
+            <h2
+              className="font-serif text-2xl font-semibold"
+              id="candidate-title"
+            >
+              Candidate details
+            </h2>
+            <button className={secondaryButton} type="button" data-close-detail>
+              Close
+            </button>
           </div>
           <div className="mt-5" data-detail />
         </div>
@@ -305,7 +365,10 @@ function RecruiterSearch({
 
 function CandidateProfile() {
   return (
-    <div className="min-h-screen bg-[#f4f5ef] font-sans text-[#111342] antialiased" data-candidate-profile>
+    <div
+      className="min-h-screen bg-[#f4f5ef] font-sans text-[#111342] antialiased"
+      data-candidate-profile
+    >
       <Chrome context="candidate" />
       <main className="mx-auto max-w-[1120px] px-4 py-8 sm:px-7 sm:py-12">
         <header className="mb-7 flex flex-wrap items-end justify-between gap-5">
@@ -321,100 +384,329 @@ function CandidateProfile() {
               can discover your profile.
             </p>
           </div>
-          <a className={`${secondaryButton} no-underline`} href="/candidate/rights/">
+          <a
+            className={`${secondaryButton} no-underline`}
+            href="/candidate/rights/"
+          >
             Privacy rights centre
           </a>
         </header>
-        <div className="error-summary mb-4 rounded-xl border-2 border-[#a13e2d] bg-[#fff8f6] p-4 text-sm text-[#a13e2d]" role="alert" tabIndex={-1} hidden />
-        <div className="status mb-4 min-h-6 text-sm font-semibold text-[#276955]" role="status" aria-live="polite" />
-        <section className="mb-6 rounded-2xl border border-[#c9ddd3] bg-[#eaf3ee] p-5 sm:p-6" aria-labelledby="completion-heading" data-completion-summary>
+        <div
+          className="error-summary mb-4 rounded-xl border-2 border-[#a13e2d] bg-[#fff8f6] p-4 text-sm text-[#a13e2d]"
+          role="alert"
+          tabIndex={-1}
+          hidden
+        />
+        <div
+          className="status mb-4 min-h-6 text-sm font-semibold text-[#276955]"
+          role="status"
+          aria-live="polite"
+        />
+        <section
+          className="mb-6 rounded-2xl border border-[#c9ddd3] bg-[#eaf3ee] p-5 sm:p-6"
+          aria-labelledby="completion-heading"
+          data-completion-summary
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[.14em] text-[#276955]">A good start</p>
-              <h2 className="mt-1 text-xl font-semibold" id="completion-heading">Profile completion</h2>
-              <p className="mt-2 text-sm leading-6 text-[#4b5563]" data-completion-message>
+              <p className="text-xs font-bold uppercase tracking-[.14em] text-[#276955]">
+                A good start
+              </p>
+              <h2
+                className="mt-1 text-xl font-semibold"
+                id="completion-heading"
+              >
+                Profile completion
+              </h2>
+              <p
+                className="mt-2 text-sm leading-6 text-[#4b5563]"
+                data-completion-message
+              >
                 Loading your profile requirements…
               </p>
             </div>
-            <span className="rounded-full border border-[#bfd4c9] bg-white px-3 py-1.5 text-xs font-semibold text-[#276955]">You control visibility</span>
+            <span className="rounded-full border border-[#bfd4c9] bg-white px-3 py-1.5 text-xs font-semibold text-[#276955]">
+              You control visibility
+            </span>
           </div>
         </section>
         <form className="grid gap-6" noValidate>
           <input type="hidden" name="etag" />
           <section className={card} aria-labelledby="profile-heading">
             <div className="mb-5 border-b border-[#e8ebe5] pb-4">
-              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">The essentials</p>
-              <h2 className="mt-1 font-serif text-2xl font-semibold" id="profile-heading">Profile facts</h2>
-              <p className="mt-1 text-sm text-[#4b5563]">Share the details you are comfortable including.</p>
+              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">
+                The essentials
+              </p>
+              <h2
+                className="mt-1 font-serif text-2xl font-semibold"
+                id="profile-heading"
+              >
+                Profile facts
+              </h2>
+              <p className="mt-1 text-sm text-[#4b5563]">
+                Share the details you are comfortable including.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className={label}>Full name<input className={field} name="full_name" autoComplete="name" required maxLength={200} /></label>
-              <label className={label}>Location<input className={field} name="location" autoComplete="address-level2" required /></label>
-              <label className={label}>Experience in years<input className={field} name="experience_years" type="number" min="0" step="0.01" required /></label>
-              <label className={label}>Skills<input className={field} name="skills" required aria-describedby="skills-help" /></label>
+              <label className={label}>
+                Full name
+                <input
+                  className={field}
+                  name="full_name"
+                  autoComplete="name"
+                  required
+                  maxLength={200}
+                />
+              </label>
+              <label className={label}>
+                Location
+                <input
+                  className={field}
+                  name="location"
+                  autoComplete="address-level2"
+                  required
+                />
+              </label>
+              <label className={label}>
+                Experience in years
+                <input
+                  className={field}
+                  name="experience_years"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </label>
+              <label className={label}>
+                Skills
+                <input
+                  className={field}
+                  name="skills"
+                  required
+                  aria-describedby="skills-help"
+                />
+              </label>
             </div>
-            <small className="mt-2 block text-xs text-[#6f756c]" id="skills-help">Separate skills with commas.</small>
-            <label className={`${label} mt-5`}>Meaningful work<textarea className={`${field} min-h-28 resize-y`} name="meaningful_work" maxLength={300} aria-describedby="meaningful-count" /></label>
-            <output className="mt-1 block text-right text-xs text-[#818b98]" id="meaningful-count" htmlFor="meaningful_work">0 / 300</output>
+            <small
+              className="mt-2 block text-xs text-[#6f756c]"
+              id="skills-help"
+            >
+              Separate skills with commas.
+            </small>
+            <label className={`${label} mt-5`}>
+              Meaningful work
+              <textarea
+                className={`${field} min-h-28 resize-y`}
+                name="meaningful_work"
+                maxLength={300}
+                aria-describedby="meaningful-count"
+              />
+            </label>
+            <output
+              className="mt-1 block text-right text-xs text-[#818b98]"
+              id="meaningful-count"
+              htmlFor="meaningful_work"
+            >
+              0 / 300
+            </output>
           </section>
           <section className={card} aria-labelledby="employment-heading">
             <div className="mb-5 border-b border-[#e8ebe5] pb-4">
-              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">Your story</p>
-              <h2 className="mt-1 font-serif text-2xl font-semibold" id="employment-heading">Employment history</h2>
-              <p className="mt-1 text-sm leading-6 text-[#4b5563]">Missing or uncertain dates can stay unconfirmed. We do not invent them.</p>
+              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">
+                Your story
+              </p>
+              <h2
+                className="mt-1 font-serif text-2xl font-semibold"
+                id="employment-heading"
+              >
+                Employment history
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-[#4b5563]">
+                Missing or uncertain dates can stay unconfirmed. We do not
+                invent them.
+              </p>
             </div>
             <div className="grid gap-3" data-employment-list />
-            <button className={`${secondaryButton} mt-4`} type="button" data-add-employment>Add employment record</button>
+            <button
+              className={`${secondaryButton} mt-4`}
+              type="button"
+              data-add-employment
+            >
+              Add employment record
+            </button>
           </section>
           <section className={card} aria-labelledby="preferences-heading">
             <div className="mb-5 border-b border-[#e8ebe5] pb-4">
-              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">What suits you</p>
-              <h2 className="mt-1 font-serif text-2xl font-semibold" id="preferences-heading">Opportunity preferences</h2>
+              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">
+                What suits you
+              </p>
+              <h2
+                className="mt-1 font-serif text-2xl font-semibold"
+                id="preferences-heading"
+              >
+                Opportunity preferences
+              </h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className={label}>Preferred roles<input className={field} name="role_categories" /></label>
-              <label className={label}>Preferred locations<input className={field} name="preferred_locations" /></label>
+              <label className={label}>
+                Preferred roles
+                <input className={field} name="role_categories" />
+              </label>
+              <label className={label}>
+                Preferred locations
+                <input className={field} name="preferred_locations" />
+              </label>
             </div>
             <fieldset className="mt-5 rounded-lg border border-[#d7dbd2] p-4">
-              <legend className="px-1 text-sm font-semibold">Work arrangements</legend>
+              <legend className="px-1 text-sm font-semibold">
+                Work arrangements
+              </legend>
               <div className="mt-2 flex flex-wrap gap-x-6 gap-y-3">
-                {[["FLEXIBLE", "Flexible"], ["REMOTE", "Remote"], ["HYBRID", "Hybrid"], ["ON_SITE", "On-site"]].map(([value, text]) => (
-                  <label className="flex items-center gap-2 text-sm text-[#34374c]" key={value}><input className="size-4 accent-[#276955]" type="checkbox" name="work_arrangements" value={value} />{text}</label>
+                {[
+                  ["FLEXIBLE", "Flexible"],
+                  ["REMOTE", "Remote"],
+                  ["HYBRID", "Hybrid"],
+                  ["ON_SITE", "On-site"],
+                ].map(([value, text]) => (
+                  <label
+                    className="flex items-center gap-2 text-sm text-[#34374c]"
+                    key={value}
+                  >
+                    <input
+                      className="size-4 accent-[#276955]"
+                      type="checkbox"
+                      name="work_arrangements"
+                      value={value}
+                    />
+                    {text}
+                  </label>
                 ))}
               </div>
             </fieldset>
           </section>
           <section className={card} aria-labelledby="visibility-heading">
             <div className="mb-5 border-b border-[#e8ebe5] pb-4">
-              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">You are in control</p>
-              <h2 className="mt-1 font-serif text-2xl font-semibold" id="visibility-heading">Visibility and consent</h2>
-              <p className="mt-1 text-sm leading-6 text-[#4b5563]">Choose who can discover your profile. You can change this at any time.</p>
+              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">
+                You are in control
+              </p>
+              <h2
+                className="mt-1 font-serif text-2xl font-semibold"
+                id="visibility-heading"
+              >
+                Visibility and consent
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-[#4b5563]">
+                Choose who can discover your profile. You can change this at any
+                time.
+              </p>
             </div>
             <fieldset className="grid gap-3 border-0 p-0 sm:grid-cols-2">
-              {[["APPROVED_RECRUITERS", "Approved recruiters", "Only the companies you name."], ["MATCHING_ROLES", "Matching roles", "Recruiters with roles that fit your preferences."], ["APPLIED_ROLES_ONLY", "Roles you apply to", "Only teams connected to your applications."], ["NOT_LOOKING", "Not looking right now", "Your profile stays hidden from search."]].map(([value, title, detail]) => (
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#d7dbd2] bg-[#fafbf8] p-4 transition has-checked:border-[#276955] has-checked:bg-[#eaf3ee]" key={value}>
-                  <input className="mt-1 size-4 accent-[#276955]" type="radio" name="visibility" value={value} defaultChecked={value === "NOT_LOOKING"} />
-                  <span><strong className="block text-sm font-semibold">{title}</strong><span className="mt-1 block text-xs leading-5 text-[#4b5563]">{detail}</span></span>
+              {[
+                [
+                  "APPROVED_RECRUITERS",
+                  "Approved recruiters",
+                  "Only the companies you name.",
+                ],
+                [
+                  "MATCHING_ROLES",
+                  "Matching roles",
+                  "Recruiters with roles that fit your preferences.",
+                ],
+                [
+                  "APPLIED_ROLES_ONLY",
+                  "Roles you apply to",
+                  "Only teams connected to your applications.",
+                ],
+                [
+                  "NOT_LOOKING",
+                  "Not looking right now",
+                  "Your profile stays hidden from search.",
+                ],
+              ].map(([value, title, detail]) => (
+                <label
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#d7dbd2] bg-[#fafbf8] p-4 transition has-checked:border-[#276955] has-checked:bg-[#eaf3ee]"
+                  key={value}
+                >
+                  <input
+                    className="mt-1 size-4 accent-[#276955]"
+                    type="radio"
+                    name="visibility"
+                    value={value}
+                    defaultChecked={value === "NOT_LOOKING"}
+                  />
+                  <span>
+                    <strong className="block text-sm font-semibold">
+                      {title}
+                    </strong>
+                    <span className="mt-1 block text-xs leading-5 text-[#4b5563]">
+                      {detail}
+                    </span>
+                  </span>
                 </label>
               ))}
             </fieldset>
-            <label className={`${label} mt-5`}>Approved company tenant IDs<input className={field} name="approved_tenant_ids" aria-describedby="approved-help" /></label>
-            <small className="mt-1 block text-xs text-[#6f756c]" id="approved-help">Required only for Approved recruiters; separate IDs with commas.</small>
-            <p className="mt-4 rounded-md bg-[#fafbf8] p-3 text-xs leading-5 text-[#4b5563]">Saving records affirmative consent for recruiting discovery under the audience you selected.</p>
+            <label className={`${label} mt-5`}>
+              Approved company tenant IDs
+              <input
+                className={field}
+                name="approved_tenant_ids"
+                aria-describedby="approved-help"
+              />
+            </label>
+            <small
+              className="mt-1 block text-xs text-[#6f756c]"
+              id="approved-help"
+            >
+              Required only for Approved recruiters; separate IDs with commas.
+            </small>
+            <p className="mt-4 rounded-md bg-[#fafbf8] p-3 text-xs leading-5 text-[#4b5563]">
+              Saving records affirmative consent for recruiting discovery under
+              the audience you selected.
+            </p>
           </section>
           <section className={card} aria-labelledby="resume-heading">
             <div className="mb-5 border-b border-[#e8ebe5] pb-4">
-              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">Optional document</p>
-              <h2 className="mt-1 font-serif text-2xl font-semibold" id="resume-heading">Resume</h2>
-              <p className="mt-1 text-sm text-[#4b5563]">You will review extracted suggestions before they update your profile.</p>
+              <p className="text-xs font-bold uppercase tracking-[.13em] text-[#a76f15]">
+                Optional document
+              </p>
+              <h2
+                className="mt-1 font-serif text-2xl font-semibold"
+                id="resume-heading"
+              >
+                Resume
+              </h2>
+              <p className="mt-1 text-sm text-[#4b5563]">
+                You will review extracted suggestions before they update your
+                profile.
+              </p>
             </div>
-            <label className={label}>Choose PDF, DOC, or DOCX, up to 10 MB<input className={`${field} file:mr-4 file:rounded file:border-0 file:bg-[#eaf3ee] file:px-3 file:py-2 file:font-semibold file:text-[#276955]`} type="file" data-resume accept=".pdf,.doc,.docx" /></label>
-            <div className="mt-3 text-sm text-[#4b5563]" data-resume-status role="status" aria-live="polite">No file selected.</div>
+            <label className={label}>
+              Choose PDF, DOC, or DOCX, up to 10 MB
+              <input
+                className={`${field} file:mr-4 file:rounded file:border-0 file:bg-[#eaf3ee] file:px-3 file:py-2 file:font-semibold file:text-[#276955]`}
+                type="file"
+                data-resume
+                accept=".pdf,.doc,.docx"
+              />
+            </label>
+            <div
+              className="mt-3 text-sm text-[#4b5563]"
+              data-resume-status
+              role="status"
+              aria-live="polite"
+            >
+              No file selected.
+            </div>
             <div className="mt-3" data-resume-suggestions aria-live="polite" />
           </section>
           <div className="sticky bottom-3 z-20 flex flex-wrap justify-end gap-3 rounded-xl border border-[#d7dbd2] bg-white/95 p-3 shadow-lg backdrop-blur sm:p-4">
-            <button className={secondaryButton} type="submit">Save profile</button>
-            <button className={button} type="button" data-publish>Publish profile</button>
+            <button className={secondaryButton} type="submit">
+              Save profile
+            </button>
+            <button className={button} type="button" data-publish>
+              Publish profile
+            </button>
           </div>
         </form>
       </main>
@@ -423,12 +715,26 @@ function CandidateProfile() {
 }
 
 function mount() {
-  const recruiter = document.querySelector<HTMLElement>("[data-react-recruiter-search]");
+  const recruiter = document.querySelector<HTMLElement>(
+    "[data-react-recruiter-search]",
+  );
   if (recruiter) {
     const root = createRoot(recruiter);
-    flushSync(() => root.render(<RecruiterSearch root={recruiter as HTMLElement & { dataset: DOMStringMap & { tenantId?: string } }} />));
+    flushSync(() =>
+      root.render(
+        <RecruiterSearch
+          root={
+            recruiter as HTMLElement & {
+              dataset: DOMStringMap & { tenantId?: string };
+            }
+          }
+        />,
+      ),
+    );
   }
-  const candidate = document.querySelector<HTMLElement>("[data-react-candidate-profile]");
+  const candidate = document.querySelector<HTMLElement>(
+    "[data-react-candidate-profile]",
+  );
   if (candidate) {
     const root = createRoot(candidate);
     flushSync(() => root.render(<CandidateProfile />));

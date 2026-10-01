@@ -69,8 +69,14 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
   ).toBeVisible();
 
   await resultPage
+    .getByRole("article")
+    .filter({
+      has: resultPage.getByRole("heading", {
+        name: "Synthetic Search Candidate",
+        exact: true,
+      }),
+    })
     .getByRole("button", { name: "View authorized details" })
-    .first()
     .click();
   await expect(resultPage.getByRole("dialog")).toBeVisible();
   await expect(resultPage.getByRole("dialog")).toContainText(

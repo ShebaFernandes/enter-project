@@ -324,9 +324,11 @@ Approved 2026-10-01. Normative route/component/API/state/test/fallback details f
 
 ### FM1: Reconcile WIP and capture baselines
 
-- [ ] FM1-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: Phase 9 / T163 and prior completed amendments.
-- [ ] FM1-02 Reconcile every file in checkpoint 66a3acd and any new WIP against 5372072; record reuse/rework decisions, build/security/accessibility/regression verification, original mockup hash, font/logo checks and verified legacy fallback; do not assume committed WIP is correct. Dependency: FM1-01.
+- [X] FM1-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: Phase 9 / T163 and prior completed amendments.
+- [X] FM1-02 Reconcile every file in checkpoint 66a3acd and any new WIP against 5372072; record reuse/rework decisions, build/security/accessibility/regression verification, original mockup hash, font/logo checks and verified legacy fallback; do not assume committed WIP is correct. Dependency: FM1-01.
 - [ ] FM1-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain legacy defaults without page cutover. Dependency: FM1-02.
+
+FM1 evidence: [reconciliation and verification](../../docs/evidence/frontend-migration/fm1.md). FM1-03 remains blocked by observed existing candidate-management direct-navigation denial, protected recent-search eviction failure and pending manual accessibility signoff. Automated suites pass; no WIP page is approved for cutover. FM2 must not begin.
 
 ### FM2: React/Tailwind foundation and design system
 

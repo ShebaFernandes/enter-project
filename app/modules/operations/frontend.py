@@ -1,0 +1,28 @@
+"""Server-only page rollout gate; no FM1 page is approved for React cutover."""
+
+from django.conf import settings
+from django.http import HttpRequest
+
+# Later slices register assets/template only after acceptance. WIP is excluded.
+VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {}
+
+
+def frontend_rollout(request: HttpRequest) -> dict[str, str]:
+    result = {
+        "frontend_renderer": "legacy",
+        "frontend_template": "",
+        "frontend_script": "dist/assets/app.js",
+        "frontend_style": "dist/assets/app.css",
+    }
+    match = request.resolver_match
+    route = match.url_name if match else None
+    flags = getattr(settings, "FRONTEND_REACT_ROUTES", {})
+    approved = VERIFIED_REACT_ROUTES.get(route or "")
+    if approved and isinstance(flags, dict) and flags.get(route) is True:
+        result.update(
+            frontend_renderer="react",
+            frontend_template=approved["template"],
+            frontend_script=approved["script"],
+            frontend_style=approved["style"],
+        )
+    return result

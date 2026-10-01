@@ -7,6 +7,8 @@ ENV = Environment.load()
 SECRET_KEY = ENV.secret_key
 DEBUG = False
 LOCAL_SYNTHETIC_AUTH_ENABLED = False
+# URL-name flags are server-only and require a verified route registration.
+FRONTEND_REACT_ROUTES: dict[str, bool] = {}
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = list(ENV.csrf_trusted_origins)
 INSTALLED_APPS = [
@@ -52,6 +54,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "modules.operations.frontend.frontend_rollout",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ]

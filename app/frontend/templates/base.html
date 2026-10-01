@@ -5,10 +5,23 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Enter</title>
-    <link rel="stylesheet" href="{% static 'dist/assets/app.css' %}" />
+    <link
+      rel="stylesheet"
+      href="{% static frontend_style|default:'dist/assets/app.css' %}"
+    />
   </head>
-  <body>
-    <main id="main">{% block content %}{% endblock %}</main>
-    <script type="module" src="{% static 'dist/assets/app.js' %}"></script>
+  <body data-frontend-renderer="{{ frontend_renderer|default:'legacy' }}">
+    <!-- prettier-ignore -->
+    <main id="main">
+      {% if frontend_renderer == 'react' %}
+      {% include frontend_template %}
+      {% else %}
+      {% block content %}{% endblock %}
+      {% endif %}
+    </main>
+    <script
+      type="module"
+      src="{% static frontend_script|default:'dist/assets/app.js' %}"
+    ></script>
   </body>
 </html>

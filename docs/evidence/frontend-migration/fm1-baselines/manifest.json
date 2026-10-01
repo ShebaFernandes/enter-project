@@ -1,0 +1,168 @@
+{
+  "mockupHash": "daeb180c0a2ec55994422e050b14edca9f62c431dea9cb113f4c33378867b9e9",
+  "syntheticOnly": true,
+  "records": [
+    {
+      "name": "production-search-home",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-results",
+      "reference": false,
+      "violations": [
+        {
+          "id": "landmark-complementary-is-top-level",
+          "impact": "moderate"
+        }
+      ]
+    },
+    {
+      "name": "production-detail-dialog",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-comparison",
+      "reference": false,
+      "violations": [
+        {
+          "id": "landmark-complementary-is-top-level",
+          "impact": "moderate"
+        }
+      ]
+    },
+    {
+      "name": "production-management-direct-navigation-denied",
+      "reference": false,
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "region",
+          "impact": "moderate"
+        }
+      ]
+    },
+    {
+      "name": "production-management-disclosure",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-organization",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-criteria-review",
+      "reference": false,
+      "violations": [
+        {
+          "id": "landmark-main-is-top-level",
+          "impact": "moderate"
+        },
+        {
+          "id": "landmark-no-duplicate-main",
+          "impact": "moderate"
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate"
+        }
+      ]
+    },
+    {
+      "name": "production-role-application",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-profile-resume",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-progress",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-rights",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-governance",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "production-audit",
+      "reference": false,
+      "violations": []
+    },
+    {
+      "name": "mockup-chooser",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-candidate-platform",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-search-home",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-sidebar",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-results",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-detail",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-notes",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-action",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-comparison",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-dormant-publicProfile",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-dormant-interp",
+      "reference": true,
+      "violations": []
+    },
+    {
+      "name": "mockup-dormant-admin",
+      "reference": true,
+      "violations": []
+    }
+  ]
+}
