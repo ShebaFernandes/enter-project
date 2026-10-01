@@ -394,9 +394,15 @@ default-off flag; production remains legacy. FM5 and the umbrella gate remain un
 
 ### FM5: Criteria review
 
-- [ ] FM5-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM4-03.
-- [ ] FM5-02 Implement criteria review within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM5-01.
-- [ ] FM5-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM5-02.
+- [X] FM5-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM4-03.
+- [X] FM5-02 Implement criteria review within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM5-01.
+- [X] FM5-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM5-02.
+
+FM5 evidence: [criteria-review verification](../../docs/evidence/frontend-migration/fm5.md).
+The criteria-review-page server flag remains absent/default-off as requested; only
+the isolated verification process enabled it. Same-URL legacy rollback, existing
+handoffs and all prior tests remain intact. FM6's dependency is cleared, but FM6
+has not started and the FM1–FM14 umbrella remains unchecked.
 
 ### FM6: Results and candidate detail
 

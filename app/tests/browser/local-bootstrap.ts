@@ -3,9 +3,11 @@ import { execFileSync } from "node:child_process";
 /** Fresh one-time URLs using the existing synthetic-only Django command. */
 export function localBootstrap(key: string, role = "recruiter") {
   const origin =
-    key === "LOCAL_FM4_BOOTSTRAP_URL"
-      ? process.env.FM4_AUTH_ORIGIN
-      : process.env.LOCAL_AUTH_ORIGIN;
+    key === "LOCAL_FM5_BOOTSTRAP_URL"
+      ? process.env.FM5_AUTH_ORIGIN
+      : key === "LOCAL_FM4_BOOTSTRAP_URL"
+        ? process.env.FM4_AUTH_ORIGIN
+        : process.env.LOCAL_AUTH_ORIGIN;
   if (!origin) return process.env[key];
   const result = JSON.parse(
     execFileSync(

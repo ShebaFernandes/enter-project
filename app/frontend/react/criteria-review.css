@@ -1,0 +1,87 @@
+.enter-ui .criteria-review-page h1 {
+  font-family: var(--fm-font-display);
+  text-align: center;
+}
+.enter-ui .review-shell {
+  max-width: 880px;
+  margin-inline: auto;
+  width: 100%;
+}
+.enter-ui .review-step {
+  text-align: center;
+  font-family: var(--fm-font-mono);
+  color: var(--fm-color-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+.enter-ui .review-panel {
+  background: var(--fm-color-raised);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-roomy);
+  box-shadow: var(--fm-shadow-card);
+  display: grid;
+  gap: var(--fm-spacing-section);
+}
+.enter-ui .review-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fm-spacing-section);
+  justify-content: space-between;
+}
+.enter-ui .review-heading h2 {
+  font-family: var(--fm-font-display);
+  font-size: 1.5rem;
+}
+.enter-ui .review-impact {
+  display: grid;
+  background: var(--fm-color-paper);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-panel);
+  font-size: 0.8rem;
+}
+.enter-ui .review-impact strong {
+  font-size: 1.5rem;
+}
+.enter-ui .review-controls {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: var(--fm-spacing-section);
+}
+.enter-ui .review-group,
+.enter-ui .review-criterion {
+  min-width: 0;
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-panel);
+  display: grid;
+  gap: var(--fm-spacing-panel);
+}
+.enter-ui .review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-panel);
+}
+.enter-ui .review-reference {
+  overflow-wrap: anywhere;
+  font-family: var(--fm-font-mono);
+  font-size: 0.75rem;
+}
+.enter-ui .review-shell dd {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 860px) {
+  .enter-ui .review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enter-ui .review-panel {
+    padding: var(--fm-spacing-field);
+  }
+  .enter-ui .review-group,
+  .enter-ui .review-criterion {
+    padding: var(--fm-spacing-control);
+  }
+}

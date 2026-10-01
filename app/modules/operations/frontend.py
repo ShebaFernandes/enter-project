@@ -9,6 +9,10 @@ from .frontend_assets import react_assets
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
     "platform-chooser": {"manifest": "react", "template": "public/react_chooser.html"},
     "recruiter-search-page": {"manifest": "react", "template": "recruiter/react_search.html"},
+    "criteria-review-page": {
+        "manifest": "react",
+        "template": "recruiter/react_criteria_review.html",
+    },
 }
 
 
