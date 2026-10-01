@@ -5,11 +5,13 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
+    "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["node"]
   },
   "include": [
     "frontend/**/*.ts",
+    "frontend/**/*.tsx",
     "tests/browser/**/*.ts",
     "vite.config.ts",
     "playwright.config.ts"

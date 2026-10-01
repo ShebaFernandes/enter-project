@@ -1,3 +1,4 @@
+@layer base {
 :root {
   color-scheme: light;
   font-family: system-ui, sans-serif;
@@ -83,4 +84,5 @@ fieldset {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
+}
 }
