@@ -9,6 +9,8 @@ DEBUG = False
 LOCAL_SYNTHETIC_AUTH_ENABLED = False
 # URL-name flags are server-only and require a verified route registration.
 FRONTEND_REACT_ROUTES: dict[str, bool] = {}
+# The verified legacy transport is independent of default-off React route rollout.
+SEARCH_WORKFLOW_HANDOFF_ENABLED = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = list(ENV.csrf_trusted_origins)
 INSTALLED_APPS = [

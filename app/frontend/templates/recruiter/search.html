@@ -13,7 +13,7 @@
     </div>
     <button type="button" data-sign-out>Sign out</button>
   </header>
-  <form class="search-form" data-search-form>
+  <form class="search-form" data-search-form method="post">
     {% csrf_token %}
     <label for="search-prompt">Describe the candidate you need</label>
     <div class="prompt-row">

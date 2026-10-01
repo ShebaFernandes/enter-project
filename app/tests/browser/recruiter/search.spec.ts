@@ -76,7 +76,7 @@ test("search preserves typed input and renders neutral findings responsively", a
     await page.evaluate(() =>
       sessionStorage.getItem("recruiter-search-draft-v1"),
     ),
-  ).toContain("Python in Bengaluru");
+  ).toBeNull();
 });
 
 test("empty and safe-error states preserve criteria and pass automated accessibility scan", async ({

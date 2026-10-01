@@ -1,5 +1,28 @@
 # Authorization Contract
 
+## FM4 typed handoff authority
+
+Comparison selection is a separate target kind. Create/read/replace rechecks source
+search ownership, opening/team scope, current eligible candidate IDs, source snapshot
+membership and comparison field scope. Max ten unique IDs; preserve request order.
+Denied/hidden selection fails closed; it never grants authority to final comparison.
+Return generation is authenticated, CSRF-protected, bounded by selection expiry and
+accepts no client URL. No selection operation writes recruiting workflow records.
+
+Create/restore/revise/revoke is limited to active Recruiter/Hiring Manager membership
+in the exact active tenant and the current bound authenticated SessionCredential.
+Every restore additionally checks actor, session-key hash, target kind, purpose,
+source ownership/version/existence, expiry and active state. Opening context reuses
+current opening/hiring-team authorization. Revoked credentials or lost membership
+cannot restore. Wrong tenant/actor/session/type or expired/completed state is
+concealed as 404 (existing authentication/membership denials may precede it).
+
+Unsafe operations require CSRF; revisions/revocation require current If-Match.
+Results restore is metadata-only. Separate result display rechecks current candidate
+eligibility/consent through the existing authorized projection. No handoff grants
+candidate access. Recent-search GET remains a separate actor-owned six-item display
+projection, not workflow transport. No anonymous access or SECURITY DEFINER.
+
 Authorization is evaluated server-side for every request and background operation. “Conditional” means an explicit tenant membership, object assignment, candidate visibility/consent grant, or approved emergency-access grant is also required. UI visibility is never the control.
 
 | Operation | Candidate | Recruiter | Hiring Manager | Tenant Admin | Platform Security Admin |

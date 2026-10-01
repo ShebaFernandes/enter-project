@@ -1,14 +1,16 @@
 import { escapeText } from "./candidate-findings";
+import { workflowTransport, handoffToken } from "../shared/workflow-handoff";
 
 export const COMPARISON_SELECTION_KEY = "enter.comparison-selection.v1";
-const RETURN_FOCUS_KEY = "enter.comparison-return-focus.v1";
+let currentSelection: ComparisonSelection | null = null;
+let selectionToken: string | null = null;
+let selectionEtag = "";
 
 export type ComparisonSelection = {
   tenant_id: string;
   context_type: "SEARCH" | "OPENING" | "SHORTLIST";
   context_id: string;
   candidate_ids: string[];
-  return_url?: string;
 };
 
 type ComparisonField = {
@@ -30,26 +32,105 @@ type ComparisonResult = {
 };
 
 export function readComparisonSelection(): ComparisonSelection | null {
-  try {
-    const value = JSON.parse(
-      sessionStorage.getItem(COMPARISON_SELECTION_KEY) ?? "null",
-    ) as ComparisonSelection | null;
-    if (
-      !value ||
-      !value.tenant_id ||
-      !value.context_id ||
-      !Array.isArray(value.candidate_ids)
-    )
-      return null;
-    return { ...value, candidate_ids: [...new Set(value.candidate_ids)] };
-  } catch {
-    sessionStorage.removeItem(COMPARISON_SELECTION_KEY);
-    return null;
+  return currentSelection
+    ? {
+        ...currentSelection,
+        candidate_ids: [...currentSelection.candidate_ids],
+      }
+    : null;
+}
+
+export async function writeComparisonSelection(
+  value: ComparisonSelection,
+): Promise<void> {
+  const transport = workflowTransport(value.tenant_id);
+  if (!selectionToken || currentSelection?.context_id !== value.context_id) {
+    selectionToken = await transport.create("comparison-selection", {
+      search_id: value.context_id,
+      candidate_ids: value.candidate_ids,
+    });
+    const restored = await transport.restore<{ etag: string }>(
+      "comparison-selection",
+      selectionToken,
+    );
+    selectionEtag = restored.etag;
+  } else {
+    const response = await transport.client(
+      `/api/v1/tenants/${value.tenant_id}/search-handoffs/comparison-selection`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Workflow-Handoff": selectionToken,
+          "If-Match": selectionEtag,
+        },
+        body: JSON.stringify({ candidate_ids: value.candidate_ids }),
+      },
+    );
+    if (!response.ok)
+      throw new Error(
+        "Selection changed or is unavailable. Refresh before trying again.",
+      );
+    selectionEtag = ((await response.json()) as { etag: string }).etag;
+  }
+  currentSelection = { ...value, candidate_ids: [...value.candidate_ids] };
+  if (document.querySelector("[data-recruiter-search]")) {
+    const fragment = new URLSearchParams(location.hash.slice(1));
+    fragment.set("selection", selectionToken!);
+    history.replaceState(
+      null,
+      "",
+      `${location.pathname}${location.search}#${fragment}`,
+    );
   }
 }
 
-export function writeComparisonSelection(value: ComparisonSelection): void {
-  sessionStorage.setItem(COMPARISON_SELECTION_KEY, JSON.stringify(value));
+export function comparisonDestination(tenantId: string): string {
+  if (!selectionToken) throw new Error("Selection is unavailable");
+  return `/tenants/${tenantId}/recruiter/comparison/#handoff=${selectionToken}`;
+}
+
+async function restoreSelection(
+  tenantId: string,
+): Promise<ComparisonSelection | null> {
+  selectionToken = handoffToken();
+  if (!selectionToken) return null;
+  const state = await workflowTransport(tenantId).restore<{
+    search_id: string;
+    candidate_ids: string[];
+    etag: string;
+  }>("comparison-selection", selectionToken);
+  selectionEtag = state.etag;
+  currentSelection = {
+    tenant_id: tenantId,
+    context_type: "SEARCH",
+    context_id: state.search_id,
+    candidate_ids: state.candidate_ids,
+  };
+  return readComparisonSelection();
+}
+
+export async function restoreSearchSelection(
+  tenantId: string,
+  searchId: string,
+): Promise<void> {
+  const token = new URLSearchParams(location.hash.slice(1)).get("selection");
+  if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return;
+  const state = await workflowTransport(tenantId).restore<{
+    search_id: string;
+    candidate_ids: string[];
+    etag: string;
+  }>("comparison-selection", token);
+  if (state.search_id !== searchId)
+    throw new Error("Selection context changed");
+  selectionToken = token;
+  selectionEtag = state.etag;
+  currentSelection = {
+    tenant_id: tenantId,
+    context_type: "SEARCH",
+    context_id: searchId,
+    candidate_ids: state.candidate_ids,
+  };
 }
 
 function csrfToken(): string {
@@ -186,56 +267,68 @@ if (root) {
   };
 
   const load = async () => {
-    selection = readComparisonSelection();
-    if (
-      !selection ||
-      selection.tenant_id !== root.dataset.tenantId ||
-      selection.candidate_ids.length < 2
-    ) {
-      showEmpty("No comparison request was made.");
-      return;
-    }
-    status.textContent = "Rechecking current candidate access…";
-    const response = await fetch(
-      `/api/v1/tenants/${selection.tenant_id}/comparisons`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken(),
-          "X-Tenant-ID": selection.tenant_id,
-          "Idempotency-Key": crypto.randomUUID(),
+    try {
+      selection = await restoreSelection(root.dataset.tenantId!);
+      if (
+        !selection ||
+        selection.tenant_id !== root.dataset.tenantId ||
+        selection.candidate_ids.length < 2
+      ) {
+        showEmpty("No comparison request was made.");
+        return;
+      }
+      status.textContent = "Rechecking current candidate access…";
+      const response = await fetch(
+        `/api/v1/tenants/${selection.tenant_id}/comparisons`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+            "X-Tenant-ID": selection.tenant_id,
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            candidate_ids: selection.candidate_ids,
+            context_type: selection.context_type,
+            context_id: selection.context_id,
+          }),
         },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          candidate_ids: selection.candidate_ids,
-          context_type: selection.context_type,
-          context_id: selection.context_id,
-        }),
-      },
-    );
-    if (!response.ok) {
-      showEmpty("Comparison is unavailable. Return to results and try again.");
-      return;
+      );
+      if (!response.ok) {
+        showEmpty(
+          "Comparison is unavailable. Return to results and try again.",
+        );
+        return;
+      }
+      const result = (await response.json()) as ComparisonResult;
+      const allowed = new Set(
+        result.candidates.map((item) => item.candidate_id),
+      );
+      const removed = selection.candidate_ids.length - allowed.size;
+      selection.candidate_ids = selection.candidate_ids.filter((id) =>
+        allowed.has(id),
+      );
+      await writeComparisonSelection(selection);
+      if (!result.candidates.length) {
+        showEmpty(
+          "Selected candidates are no longer available in this context.",
+        );
+        return;
+      }
+      render(result);
+      status.textContent = removed
+        ? `${removed} selected candidate${removed === 1 ? " is" : "s are"} no longer available. The comparison was updated.`
+        : `${result.candidates.length} currently authorized candidates loaded.`;
+    } catch {
+      showEmpty(
+        "Selection expired, changed or is unavailable. Return to search.",
+      );
     }
-    const result = (await response.json()) as ComparisonResult;
-    const allowed = new Set(result.candidates.map((item) => item.candidate_id));
-    const removed = selection.candidate_ids.length - allowed.size;
-    selection.candidate_ids = selection.candidate_ids.filter((id) =>
-      allowed.has(id),
-    );
-    writeComparisonSelection(selection);
-    if (!result.candidates.length) {
-      showEmpty("Selected candidates are no longer available in this context.");
-      return;
-    }
-    render(result);
-    status.textContent = removed
-      ? `${removed} selected candidate${removed === 1 ? " is" : "s are"} no longer available. The comparison was updated.`
-      : `${result.candidates.length} currently authorized candidates loaded.`;
   };
 
-  candidates.addEventListener("click", (event) => {
+  candidates.addEventListener("click", async (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
       "[data-remove-candidate]",
     );
@@ -246,10 +339,20 @@ if (root) {
       ),
     ];
     const index = controls.indexOf(button);
-    selection.candidate_ids = selection.candidate_ids.filter(
-      (id) => id !== button.dataset.removeCandidate,
-    );
-    writeComparisonSelection(selection);
+    const next = {
+      ...selection,
+      candidate_ids: selection.candidate_ids.filter(
+        (id) => id !== button.dataset.removeCandidate,
+      ),
+    };
+    try {
+      await writeComparisonSelection(next);
+      selection = next;
+    } catch {
+      status.textContent =
+        "Selection changed or is unavailable. Refresh before trying again.";
+      return;
+    }
     button.closest(".comparison-card")?.remove();
     status.textContent = `${selection.candidate_ids.length} candidate${selection.candidate_ids.length === 1 ? " remains" : "s remain"} selected.`;
     const remaining = [
@@ -262,22 +365,38 @@ if (root) {
 
   root
     .querySelector<HTMLButtonElement>("[data-close-comparison]")
-    ?.addEventListener("click", () => {
-      sessionStorage.setItem(RETURN_FOCUS_KEY, "true");
-      if (history.length > 1) history.back();
-      else if (selection?.return_url) location.assign(selection.return_url);
+    ?.addEventListener("click", async () => {
+      const tenant = root.dataset.tenantId!;
+      try {
+        if (!selectionToken) throw new Error("No context");
+        const response = await workflowTransport(tenant).client(
+          `/api/v1/tenants/${tenant}/search-handoffs/comparison-selection/return`,
+          {
+            method: "POST",
+            headers: {
+              "X-Workflow-Handoff": selectionToken,
+              "Idempotency-Key": crypto.randomUUID(),
+            },
+          },
+        );
+        if (!response.ok) throw new Error("Return unavailable");
+        location.assign(
+          ((await response.json()) as { return_path: string }).return_path,
+        );
+      } catch {
+        location.assign(`/tenants/${tenant}/recruiter/search/`);
+      }
     });
   void load();
 }
 
 function restoreComparisonFocus(): void {
-  if (sessionStorage.getItem(RETURN_FOCUS_KEY) !== "true") return;
+  if (new URLSearchParams(location.search).get("view") !== "results") return;
   const invoker = document.querySelector<HTMLButtonElement>(
     "[data-open-comparison]",
   );
   if (!invoker) return;
   invoker.focus();
-  window.setTimeout(() => sessionStorage.removeItem(RETURN_FOCUS_KEY), 250);
 }
 window.addEventListener("pageshow", () =>
   window.setTimeout(restoreComparisonFocus, 0),

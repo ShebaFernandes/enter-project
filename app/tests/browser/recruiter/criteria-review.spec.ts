@@ -11,12 +11,27 @@ const shell = `<!doctype html><html lang="en"><head><title>Review search criteri
 </main></body></html>`;
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.route("**/search-handoffs/criteria-review", (route) =>
+    route.fulfill({
+      json: {
+        etag: '"fixture-v1"',
+        criteria: {
+          context: { type: "AD_HOC" },
+          groups: [],
+          criteria: [],
+          limit: 25,
+        },
+        estimated_count: 3,
+      },
+    }),
+  );
+  await page.goto(`/#handoff=${"c".repeat(43)}`);
   await page.setContent(shell);
   await page.addScriptTag({
     path: "static/dist/assets/app.js",
     type: "module",
   });
+  await expect(page.getByRole("status")).toContainText("Criteria restored");
 });
 
 test("adds edits moves and removes criteria without changing stable IDs", async ({
@@ -60,7 +75,7 @@ test("is keyboard usable, reflows at 320px, and has no serious accessibility vio
 test("shows errors, original prompt, group semantics, and refreshed estimated impact", async ({
   page,
 }) => {
-  await expect(page.getByText("Python engineer in Bengaluru")).toBeVisible();
+  await expect(page.getByText(/original prompt is not retained/)).toBeVisible();
   await page.getByRole("button", { name: "Add group" }).click();
   await expect(
     page.getByText(/ANY includes a candidate when one criterion matches/),

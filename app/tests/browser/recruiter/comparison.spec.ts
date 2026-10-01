@@ -5,6 +5,47 @@ const tenantId = "00000000-0000-4000-8000-000000000001";
 const searchId = "00000000-0000-4000-8000-000000000002";
 const firstId = "00000000-0000-4000-8000-000000000003";
 const secondId = "00000000-0000-4000-8000-000000000004";
+const contextToken = "c".repeat(43);
+
+test.beforeEach(async ({ page }) => {
+  let selected = [firstId, secondId];
+  let version = 1;
+  await page.route("**/search-handoffs/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path.endsWith("/display"))
+      return route.fulfill({ json: searchResponse });
+    if (path.endsWith("/return"))
+      return route.fulfill({
+        json: {
+          return_path: `/search-page?view=results#handoff=${"r".repeat(43)}&selection=${contextToken}`,
+        },
+      });
+    if (method === "POST") {
+      if (path.endsWith("comparison-selection"))
+        selected = route.request().postDataJSON().candidate_ids;
+      return route.fulfill({
+        status: 201,
+        json: {
+          token: path.endsWith("comparison-selection")
+            ? contextToken
+            : "r".repeat(43),
+        },
+      });
+    }
+    if (method === "PATCH") {
+      selected = route.request().postDataJSON().candidate_ids;
+      version += 1;
+    }
+    return route.fulfill({
+      json: {
+        search_id: searchId,
+        candidate_ids: selected,
+        etag: `"v${version}"`,
+      },
+    });
+  });
+});
 
 const searchShell = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Search</title><link rel="stylesheet" href="/app/static/dist/assets/app.css"></head><body><main><div data-recruiter-search data-tenant-id="${tenantId}"><h1>Find candidates</h1><form data-search-form><input type="hidden" name="csrfmiddlewaretoken" value="synthetic"><label>Describe the candidate you need<textarea name="prompt"></textarea></label><button type="button" data-speech>Use speech</button><button type="submit">Search</button><p data-speech-status role="status"></p><label>Context<select name="context"><option>AD_HOC</option></select></label><label data-opening-row hidden>Opening<input name="opening_id"></label><div data-criteria-list></div><button type="button" data-add-criterion>Add criterion</button></form><button data-toggle-criteria aria-expanded="true">Criteria</button><aside data-criteria-panel></aside><div class="search-status" role="status"></div><nav aria-label="Result filters"><button data-filter="all" aria-pressed="true">All</button></nav><section><div data-comparison-toolbar><p data-comparison-count role="status">0 candidates selected for comparison.</p><button type="button" data-open-comparison aria-disabled="true">Compare selected candidates</button></div><div data-results tabindex="-1"></div><button data-more hidden>Load more</button></section><dialog data-candidate-dialog aria-labelledby="candidate-title"><h2 id="candidate-title">Candidate</h2><div data-detail></div><button data-close-detail>Close</button></dialog></div></main><script type="module" src="/app/static/dist/assets/app.js"></script></body></html>`;
 
@@ -135,7 +176,7 @@ test("selects, compares, removes, preserves state, and returns focus accessibly"
     name: "Compare selected candidates",
   });
   await compareButton.click();
-  await expect(page).toHaveURL(/\/recruiter\/comparison\/$/);
+  await expect(page).toHaveURL(/\/recruiter\/comparison\/#handoff=/);
   await expect(
     page.getByRole("heading", { name: "Side-by-side evidence" }),
   ).toBeVisible();
@@ -183,7 +224,7 @@ test("returns focus to the comparison invoker", async ({ page }) => {
   );
   await page.goto("/search-page");
   await page.evaluate(() => {
-    sessionStorage.setItem("enter.comparison-return-focus.v1", "true");
+    history.replaceState(null, "", "?view=results");
     window.dispatchEvent(new PageTransitionEvent("pageshow"));
   });
   await expect(
@@ -203,17 +244,8 @@ test("shows empty guidance and removes stale unauthorized selections", async ({
   ).toBeVisible();
 
   await page.evaluate(
-    ({ tenantId, searchId, firstId, secondId }) =>
-      sessionStorage.setItem(
-        "enter.comparison-selection.v1",
-        JSON.stringify({
-          tenant_id: tenantId,
-          context_type: "SEARCH",
-          context_id: searchId,
-          candidate_ids: [firstId, secondId],
-        }),
-      ),
-    { tenantId, searchId, firstId, secondId },
+    (token) => history.replaceState(null, "", `#handoff=${token}`),
+    contextToken,
   );
   await page.route("**/comparisons", (route) =>
     route.fulfill({
@@ -231,5 +263,5 @@ test("shows empty guidance and removes stale unauthorized selections", async ({
     await page.evaluate(() =>
       sessionStorage.getItem("enter.comparison-selection.v1"),
     ),
-  ).not.toContain(secondId);
+  ).toBeNull();
 });

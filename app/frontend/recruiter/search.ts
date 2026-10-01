@@ -6,8 +6,11 @@ import {
 import {
   readComparisonSelection,
   writeComparisonSelection,
+  comparisonDestination,
+  restoreSearchSelection,
   type ComparisonSelection,
 } from "./comparison";
+import { handoffToken, workflowTransport } from "../shared/workflow-handoff";
 
 type SearchItem = {
   candidate_id: string;
@@ -22,6 +25,7 @@ type SearchResponse = {
   items: SearchItem[];
 };
 type InterpretationResponse = {
+  workflow_id: string;
   original_prompt: string;
   criteria: Record<string, unknown>;
   requires_review: boolean;
@@ -29,8 +33,6 @@ type InterpretationResponse = {
   estimated_count: number;
 };
 const root = document.querySelector<HTMLElement>("[data-recruiter-search]");
-const REVIEW_KEY = "enter.criteria-review.v1";
-const RESULT_KEY = "enter.confirmed-search.v1";
 
 function csrfToken() {
   return (
@@ -169,10 +171,9 @@ if (root) {
             context_type: "SEARCH",
             context_id: searchId,
             candidate_ids: [],
-            return_url: location.href,
           };
     comparisonSelection = nextSelection;
-    writeComparisonSelection(nextSelection);
+    // Empty selection remains ephemeral until the first explicit selection.
     updateComparisonControls();
   };
   list.append(criterionRow());
@@ -224,6 +225,21 @@ if (root) {
       return null;
     }
     const data = (await response.json()) as SearchResponse;
+    if (!append) {
+      try {
+        const token = await workflowTransport(
+          searchRoot.dataset.tenantId!,
+        ).create("search-results", { search_id: data.search_id });
+        history.replaceState(
+          null,
+          "",
+          `${location.pathname}?view=results#handoff=${token}`,
+        );
+      } catch {
+        status.textContent =
+          "Results loaded, but refresh restoration is unavailable.";
+      }
+    }
     useSearchContext(data.search_id);
     if (!append) results.innerHTML = "";
     if (!data.items.length && !append)
@@ -279,13 +295,17 @@ if (root) {
       }
       const interpretation = (await response.json()) as InterpretationResponse;
       if (interpretation.requires_review) {
-        sessionStorage.setItem(REVIEW_KEY, JSON.stringify(interpretation));
-        window.dispatchEvent(
-          new Event("recruiter-search-intentional-navigation"),
-        );
-        window.location.assign(
-          `/tenants/${searchRoot.dataset.tenantId}/recruiter/search/criteria-review/`,
-        );
+        try {
+          const transport = workflowTransport(searchRoot.dataset.tenantId!);
+          const token = await transport.create("criteria-review", {
+            workflow_id: interpretation.workflow_id,
+            criteria: interpretation.criteria,
+          });
+          transport.navigate("criteria-review", token);
+        } catch {
+          status.textContent =
+            "Secure review is unavailable. Your typed query remains here.";
+        }
         return;
       }
       lastPayload = interpretation.criteria;
@@ -310,7 +330,7 @@ if (root) {
     if (!lastPayload || !nextCursor) return;
     await runSearch({ ...lastPayload, cursor: nextCursor }, true);
   });
-  window.addEventListener("recruiter-comparison-toggle", ((
+  window.addEventListener("recruiter-comparison-toggle", (async (
     event: CustomEvent<{
       candidateId: string;
       candidateName: string;
@@ -329,20 +349,33 @@ if (root) {
     }
     if (event.detail.checked) ids.add(event.detail.candidateId);
     else ids.delete(event.detail.candidateId);
-    comparisonSelection.candidate_ids = [...ids];
-    comparisonSelection.return_url = location.href;
-    writeComparisonSelection(comparisonSelection);
+    const next = { ...comparisonSelection, candidate_ids: [...ids] };
+    const selectionInputs = [
+      ...results.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+    ];
+    selectionInputs.forEach((input) => {
+      input.disabled = true;
+    });
+    try {
+      await writeComparisonSelection(next);
+      comparisonSelection = next;
+    } catch {
+      event.detail.input.checked = !event.detail.checked;
+      status.textContent =
+        "Selection changed or is unavailable. Refresh before trying again.";
+      return;
+    } finally {
+      selectionInputs.forEach((input) => {
+        input.disabled = false;
+      });
+    }
     updateComparisonControls();
-  }) as EventListener);
+  }) as unknown as EventListener);
   openComparison?.addEventListener("click", () => {
     if (!comparisonSelection || comparisonSelection.candidate_ids.length < 2)
       return;
-    comparisonSelection.return_url = location.href;
-    writeComparisonSelection(comparisonSelection);
     window.dispatchEvent(new Event("recruiter-search-intentional-navigation"));
-    location.assign(
-      `/tenants/${encodeURIComponent(searchRoot.dataset.tenantId!)}/recruiter/comparison/`,
-    );
+    location.assign(comparisonDestination(searchRoot.dataset.tenantId!));
   });
   root.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach((button) =>
     button.addEventListener("click", () => {
@@ -359,16 +392,39 @@ if (root) {
         );
     }),
   );
-  const confirmed = sessionStorage.getItem(RESULT_KEY);
+  const confirmed = handoffToken();
   if (confirmed) {
-    sessionStorage.removeItem(RESULT_KEY);
-    const data = JSON.parse(confirmed) as SearchResponse;
-    useSearchContext(data.search_id);
-    results.innerHTML = "";
-    data.items.forEach((item) => results.append(card(item, data.search_id)));
-    nextCursor = data.next_cursor;
-    more.hidden = nextCursor === null;
-    status.textContent = `${data.items.length} confirmed result(s) loaded.`;
+    const transport = workflowTransport(searchRoot.dataset.tenantId!);
+    void transport
+      .restore("search-results", confirmed)
+      .then(() =>
+        transport.restore<SearchResponse>("search-results", confirmed, true),
+      )
+      .then(async (data) => {
+        try {
+          await restoreSearchSelection(
+            searchRoot.dataset.tenantId!,
+            data.search_id,
+          );
+        } catch {
+          status.textContent =
+            "Previous selection is unavailable. Select candidates again.";
+        }
+        useSearchContext(data.search_id);
+        results.innerHTML = "";
+        data.items.forEach((item) =>
+          results.append(card(item, data.search_id)),
+        );
+        nextCursor = data.next_cursor;
+        more.hidden = nextCursor === null;
+        status.textContent = `${data.items.length} confirmed result(s) loaded.`;
+      })
+      .catch(() => {
+        status.textContent =
+          "Results expired, were revoked or are unavailable for this session. Start a new search.";
+        results.replaceChildren();
+        more.hidden = true;
+      });
   }
   updateComparisonControls();
 }

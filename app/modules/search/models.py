@@ -7,6 +7,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from .handoff_models import SearchWorkflowHandoff  # noqa: F401
+
 
 def expires_in_seven_days():
     return timezone.now() + timedelta(days=7)

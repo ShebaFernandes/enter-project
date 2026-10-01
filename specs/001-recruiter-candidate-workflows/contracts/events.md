@@ -29,6 +29,20 @@ Direct database invalidation remains a safety backstop, not an alternative manag
 
 Consumers reject unknown major schema versions, tolerate additive fields, re-authorize current object state before sensitive effects, and record a processed-event idempotency marker in the same transaction as their state change.
 
+## FM4 transitional handoff audit
+
+`SEARCH_HANDOFF_CREATED`, `SEARCH_HANDOFF_RESTORED`, `SEARCH_HANDOFF_REVISED`,
+`SEARCH_HANDOFF_REVOKED`, `SEARCH_HANDOFF_COMPLETED` use the existing immutable audit
+service. Allow only actor, tenant, effective role, outcome, hashed handoff resource
+reference, handoff type and `15_MINUTES` expiry bucket. Never include token, prompt,
+criteria, candidate rows or encrypted payload. No new asynchronous consumer or
+generic session event is authorized. Denied requests must not reveal token existence.
+
+The approved `comparison-selection` extension uses the same minimized event names
+and distinct handoff type. Ordered candidate IDs, arbitrary/full URLs and comparison
+return tokens must never enter audit metadata. Final comparison retains its existing
+request-time authorization and audit behavior.
+
 ## Event Catalog
 
 | Event | Producer | Consumer/effect | Failure rule |

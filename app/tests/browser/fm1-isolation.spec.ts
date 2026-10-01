@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
-test("legacy draft restoration waits for the criterion renderer", async ({
+test("legacy renderer discards retired protected browser drafts", async ({
   page,
 }) => {
   const template = await readFile(
@@ -36,10 +36,15 @@ test("legacy draft restoration waits for the criterion renderer", async ({
     );
   });
   await page.goto("/fm1-legacy", { timeout: 5000 });
-  await expect(page.getByLabel("Value")).toHaveCount(2);
+  await expect(page.getByLabel("Value")).toHaveCount(1);
   await expect(page.getByLabel("Describe the candidate you need")).toHaveValue(
-    "Synthetic Python search",
+    "",
   );
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("recruiter-search-draft-v1"),
+    ),
+  ).toBeNull();
 });
 
 test("legacy bundle has no Tailwind reset or React mount and retains native styling", async ({

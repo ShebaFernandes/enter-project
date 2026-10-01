@@ -1,4 +1,5 @@
 import { escapeText } from "./candidate-findings";
+import { handoffToken, workflowTransport } from "../shared/workflow-handoff";
 
 type Group = {
   id: string;
@@ -14,6 +15,7 @@ type Criterion = {
   value: unknown;
 };
 type ReviewState = {
+  etag: string;
   workflow_id?: string;
   original_prompt: string;
   criteria: {
@@ -36,8 +38,6 @@ type ReviewState = {
 const reviewRoot = document.querySelector<HTMLElement>(
   "[data-criteria-review]",
 );
-const REVIEW_KEY = "enter.criteria-review.v1";
-const RESULT_KEY = "enter.confirmed-search.v1";
 
 function csrfToken() {
   return (
@@ -56,19 +56,21 @@ if (reviewRoot) {
     "[data-original-prompt]",
   )!;
   const tenantId = reviewRoot.dataset.tenantId ?? "";
-  const stored = sessionStorage.getItem(REVIEW_KEY);
-  let state: ReviewState = stored
-    ? (JSON.parse(stored) as ReviewState)
-    : {
-        original_prompt: promptNode.textContent?.trim() ?? "",
-        criteria: {
-          context: { type: "AD_HOC" },
-          groups: [],
-          criteria: [],
-          limit: 25,
-        },
-        estimated_count: Number(count.textContent ?? 0),
-      };
+  const transport = workflowTransport(tenantId);
+  const token = handoffToken();
+  let ready = false;
+  let state: ReviewState = {
+    etag: "",
+    original_prompt:
+      "Structured criteria restored securely; the original prompt is not retained here.",
+    criteria: {
+      context: { type: "AD_HOC" },
+      groups: [],
+      criteria: [],
+      limit: 25,
+    },
+    estimated_count: Number(count.textContent ?? 0),
+  };
   let estimateTimer = 0;
 
   function groupOptions(selected: string) {
@@ -183,29 +185,14 @@ if (reviewRoot) {
       return;
     status.textContent = "Updating estimated impact…";
     try {
-      const response = await fetch(
-        `/api/v1/tenants/${tenantId}/searches/interpret`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken(),
-            "X-Tenant-ID": tenantId,
-          },
-          credentials: "same-origin",
-          body: JSON.stringify({
-            prompt: state.original_prompt,
-            context: state.criteria.context,
-            criteria: state.criteria,
-            workflow_id: state.workflow_id,
-          }),
-        },
+      if (!token || !ready) throw new Error("Review unavailable");
+      const updated = await transport.revise<ReviewState>(
+        token,
+        state.etag,
+        state.criteria,
       );
-      if (!response.ok) throw new Error("invalid review");
-      const updated = (await response.json()) as ReviewState;
-      state = updated;
+      state = { ...state, ...updated };
       count.textContent = String(state.estimated_count);
-      sessionStorage.setItem(REVIEW_KEY, JSON.stringify(state));
       status.textContent = "Estimated impact updated.";
     } catch {
       status.textContent =
@@ -263,6 +250,8 @@ if (reviewRoot) {
     .querySelector<HTMLFormElement>("[data-review-form]")!
     .addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (!ready || !token) return;
+      window.clearTimeout(estimateTimer);
       syncFromDom();
       if (!state.criteria.criteria.length) {
         status.textContent =
@@ -270,24 +259,63 @@ if (reviewRoot) {
         return;
       }
       status.textContent = "Running the confirmed criteria…";
-      const response = await fetch(`/api/v1/tenants/${tenantId}/searches`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken(),
-          "X-Tenant-ID": tenantId,
-        },
-        credentials: "same-origin",
-        body: JSON.stringify(state.criteria),
-      });
-      if (!response.ok) {
+      try {
+        state = {
+          ...state,
+          ...(await transport.revise<ReviewState>(
+            token,
+            state.etag,
+            state.criteria,
+          )),
+        };
+        const response = await transport.client(
+          `/api/v1/tenants/${tenantId}/searches`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+              "X-Tenant-ID": tenantId,
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(state.criteria),
+          },
+        );
+        if (!response.ok) {
+          status.textContent =
+            "Search failed safely. Your confirmed criteria remain available.";
+          return;
+        }
+        const result = (await response.json()) as { search_id: string };
+        const resultsToken = await transport.create("search-results", {
+          search_id: result.search_id,
+          criteria_token: token,
+        });
+        transport.navigate("search-results", resultsToken);
+      } catch {
         status.textContent =
-          "Search failed safely. Your confirmed criteria remain available.";
-        return;
+          "Review expired, changed or became unavailable. Return to search to start again.";
       }
-      sessionStorage.setItem(RESULT_KEY, JSON.stringify(await response.json()));
-      sessionStorage.removeItem(REVIEW_KEY);
-      window.location.replace(`/tenants/${tenantId}/recruiter/search/`);
     });
-  render();
+  const returnLink = document.createElement("a");
+  returnLink.href = `/tenants/${tenantId}/recruiter/search/`;
+  returnLink.textContent = "Return to search";
+  status.after(returnLink);
+  if (token) {
+    status.textContent = "Restoring authorized criteria…";
+    void transport
+      .restore<ReviewState>("criteria-review", token)
+      .then((restored) => {
+        state = { ...state, ...restored };
+        ready = true;
+        render();
+        status.textContent = "Criteria restored. Review before confirming.";
+      })
+      .catch(() => {
+        status.textContent =
+          "Review expired, was revoked or is unavailable for this session. Return to search.";
+      });
+  } else {
+    status.textContent = "No active review. Return to search.";
+  }
 }

@@ -20,6 +20,183 @@ tags:
   - name: Search
   - name: Administration
 paths:
+  /tenants/{tenantId}/search-handoffs/{kind}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: kind
+        in: path
+        required: true
+        schema: {type: string, enum: [criteria-review, search-results, comparison-selection]}
+      - name: X-Workflow-Handoff
+        in: header
+        description: Required on read/revise/revoke; random target-bound bearer, never logged.
+        schema: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+    post:
+      operationId: createTypedSearchHandoff
+      tags: [Search]
+      description: CSRF and active session required. Body must match the path kind. Comparison selection is ordered, source-result-bound and freshly authorized. Fifteen-minute maximum lifetime. Retry reuses one record and rotates the bearer; only token hashes are persisted. No arbitrary return URL or JSON accepted.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 16, maxLength: 200}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  additionalProperties: false
+                  required: [workflow_id, criteria]
+                  properties:
+                    workflow_id: {$ref: '#/components/schemas/Id'}
+                    criteria: {$ref: '#/components/schemas/SearchCriteria'}
+                - type: object
+                  additionalProperties: false
+                  required: [search_id]
+                  properties:
+                    search_id: {$ref: '#/components/schemas/Id'}
+                    criteria_token: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+                - type: object
+                  additionalProperties: false
+                  required: [search_id, candidate_ids]
+                  properties:
+                    search_id: {$ref: '#/components/schemas/Id'}
+                    candidate_ids: {$ref: '#/components/schemas/OrderedSelection'}
+      responses:
+        '201': {$ref: '#/components/responses/HandoffCreated'}
+        '200': {$ref: '#/components/responses/HandoffCreated'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+    get:
+      operationId: restoreTypedSearchHandoff
+      tags: [Search]
+      description: Revalidates actor, tenant, current session credential, target, role, source version/ownership, expiry/state and opening/team scope. Comparison also revalidates source-result membership and current candidate consent/visibility/field scope. Does not execute a search or return candidate content. Concealed denial for invalid binding/state. Cache-Control no-store, private.
+      responses:
+        '200':
+          description: Typed authorized state only
+          headers:
+            Cache-Control: {schema: {type: string, const: 'no-store, private'}}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HandoffState'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+    patch:
+      operationId: reviseTypedSearchHandoff
+      tags: [Search]
+      description: CSRF and If-Match required. Only criteria-review criteria or comparison-selection ordered candidate IDs may change; results are immutable. Fresh authorization; stale version returns 409 without protected attempted values.
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  additionalProperties: false
+                  required: [criteria]
+                  properties:
+                    criteria: {$ref: '#/components/schemas/SearchCriteria'}
+                - type: object
+                  additionalProperties: false
+                  required: [candidate_ids]
+                  properties:
+                    candidate_ids: {$ref: '#/components/schemas/OrderedSelection'}
+      responses:
+        '200':
+          description: Updated typed state; private no-store
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HandoffState'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+    delete:
+      operationId: revokeTypedSearchHandoff
+      tags: [Search]
+      description: CSRF, current bound session and If-Match required; revocation is final.
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema: {type: string}
+      responses:
+        '204': {description: Revoked; private no-store}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /tenants/{tenantId}/search-handoffs/comparison-selection/return:
+    post:
+      operationId: returnComparisonToAuthorizedResults
+      tags: [Search]
+      description: CSRF required; no request payload accepted. Revalidate comparison context and issue a distinct results token with no later expiry. Return a server-generated same-origin approved results route with opaque fragments only; never accept or persist a return URL.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: X-Workflow-Handoff
+          in: header
+          required: true
+          schema: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 16, maxLength: 200}
+      responses:
+        '200':
+          description: Private no-store return navigation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [return_path]
+                properties:
+                  return_path: {type: string, pattern: '^/tenants/[^/]+/recruiter/search/\?view=results#handoff=[A-Za-z0-9_-]{43}&selection=[A-Za-z0-9_-]{43}$'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /tenants/{tenantId}/search-handoffs/search-results/display:
+    get:
+      operationId: displayAuthorizedPersistedResults
+      tags: [Search]
+      description: Separate from metadata restore. Read only persisted snapshot membership in order, freshly rechecking current visibility/consent and existing result field projection. Never execute a new search, persist candidate copies or change recruiting records. Private no-store.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: X-Workflow-Handoff
+          in: header
+          required: true
+          schema: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+      responses:
+        '200':
+          description: Currently authorized snapshot display
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [search_id, items, next_cursor]
+                properties:
+                  search_id: {$ref: '#/components/schemas/Id'}
+                  items: {type: array, items: {$ref: '#/components/schemas/SearchResult'}}
+                  next_cursor: {type: [string, 'null']}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '429': {$ref: '#/components/responses/RateLimited'}
   /public/openings:
     get:
       security: []
@@ -1407,6 +1584,21 @@ components:
       description: Safe retry delay in seconds.
       schema: {type: integer, minimum: 1}
   responses:
+    HandoffCreated:
+      description: Private no-store token issuance; never persisted in generic idempotency responses
+      headers:
+        Cache-Control: {schema: {type: string, const: 'no-store, private'}}
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [token, expires_at, version, kind]
+            properties:
+              token: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+              expires_at: {type: string, format: date-time}
+              version: {type: integer, minimum: 1}
+              kind: {type: string, enum: [criteria-review, search-results, comparison-selection]}
     Problem:
       description: RFC 9457 problem details with non-enumerating public text
       content:
@@ -1455,6 +1647,39 @@ components:
         application/problem+json:
           schema: {$ref: '#/components/schemas/ConflictProblem'}
   schemas:
+    OrderedSelection:
+      type: array
+      maxItems: 10
+      uniqueItems: true
+      items: {$ref: '#/components/schemas/Id'}
+    HandoffState:
+      type: object
+      additionalProperties: false
+      required: [schema_version, kind, version, etag]
+      properties:
+        schema_version: {type: integer, const: 1}
+        kind: {type: string, enum: [criteria-review, search-results, comparison-selection]}
+        version: {type: integer, minimum: 1}
+        etag: {type: string}
+        workflow_id: {$ref: '#/components/schemas/Id'}
+        workflow_version: {type: string}
+        search_id: {$ref: '#/components/schemas/Id'}
+        result_context_version: {type: string}
+        criteria: {$ref: '#/components/schemas/SearchCriteria'}
+        candidate_ids: {$ref: '#/components/schemas/OrderedSelection'}
+        return_path: {type: string, pattern: '^/tenants/[^/]+/recruiter/search/$'}
+        estimated_count: {type: integer, minimum: 0}
+        group_impacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              group_id: {$ref: '#/components/schemas/Id'}
+              operator: {type: string, enum: [ANY, ALL]}
+              estimated_count: {type: integer}
+              alternate_operator: {type: string, enum: [ANY, ALL]}
+              alternate_estimated_count: {type: integer}
     Id:
       type: string
       format: uuid

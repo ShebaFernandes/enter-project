@@ -1,5 +1,29 @@
 # Data Model: Recruiter and Candidate Workflows
 
+## FM4 SearchWorkflowHandoff (explicit security clarification)
+
+Approved extension: `comparison-selection` uses the same forced-RLS encrypted
+table, adding `updated_at` and a separate target kind (migration 0007). Payload
+permits only schema version, source search UUID and ordered unique candidate UUIDs
+(0–10). No URL/token is persisted. Current source snapshots, visibility, consent and
+comparison field scope are revalidated for create/read/replace. Same credential,
+actor, tenant, expiry and optimistic version rules apply. Final comparison still
+uses its existing authorization service, independently of selection transport.
+
+Dedicated tenant-RLS table: UUID, tenant, actor, SessionCredential, kind
+(`criteria-review`/`search-results`), unique token SHA-256, retry/request hashes,
+encrypted payload, source version hash, nullable WorkflowRun/SearchDefinition
+reference selected by kind, state (`ACTIVE`/`REVOKED`/`COMPLETED`), optimistic version,
+created_at and expires_at. Credential/retry hash is unique. Source deletion deletes
+the transient record, never the reverse. Maximum lifetime is fifteen minutes.
+
+Payload schema v1 permits only structured validated criteria for review, or persisted
+search UUID for results. No prompt, candidate record, result copy or arbitrary UI
+JSON. Result-context version hashes canonical criteria and persisted snapshot IDs.
+Workflow version hashes its ID, update timestamp and status. Existing versioned
+field encryption/key management is reused. Forced tenant RLS does not replace
+actor/session/opening checks. No changes to source WorkflowRun/SearchRun RLS.
+
 **Date**: 2026-09-28  
 **Database**: PostgreSQL 16 with RLS, `pg_trgm`, full-text search, and `pgvector`.
 

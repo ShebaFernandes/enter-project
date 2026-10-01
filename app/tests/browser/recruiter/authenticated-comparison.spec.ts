@@ -24,7 +24,7 @@ test("authenticated recruiter compares two currently authorized search results",
   await page
     .getByRole("button", { name: "Compare selected candidates" })
     .click();
-  await expect(page).toHaveURL(/\/recruiter\/comparison\/$/);
+  await expect(page).toHaveURL(/\/recruiter\/comparison\/#handoff=/);
   await expect(
     page.getByText("2 currently authorized candidates loaded."),
   ).toBeVisible();

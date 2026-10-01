@@ -1,5 +1,39 @@
 # Implementation Plan: Integrated Recruiter and Candidate Workflows
 
+## FM4 transitional security clarification — 2026-10-01
+
+The separately authorized comparison extension reuses the same table with a
+distinct `comparison-selection` kind. Ordered IDs are encrypted and source-result
+bound. Replace requires If-Match (409 on stale); no arbitrary return URL is accepted.
+POST return issues a separate results-bound token and a server-generated route.
+The legacy comparison UI and final comparison endpoint stay unchanged in purpose.
+FM6 may reuse this typed transport or simplify it only with equivalent session,
+authorization, order, concurrency, refresh and storage-absence evidence. It must
+not become a generic client session store. FM4-R04–R06 gate the integration.
+
+Use a dedicated `SearchWorkflowHandoff`; existing WorkflowRun checkpoints are
+deliberately minimized hashes and must not become arbitrary client session storage.
+Only validated criteria or an authorized persisted search reference is encrypted
+with existing versioned application field keys. Fifteen-minute records bind tenant,
+actor, session credential/session-key hash, target type and source version. Opaque
+256-bit random tokens appear only in navigation fragments and API request headers;
+only their SHA-256 hashes are persisted. Never log fragments, headers or payloads.
+Retries serialize by session credential and reuse one record, rotating the bearer
+instead of storing token-bearing responses in generic idempotency storage.
+
+Every restore revalidates live session, membership, role, ownership, opening/team
+scope, source version, state and expiry. Restore returns no candidate rows and
+does not execute a search. A separate authorized read displays existing snapshots
+after current visibility/consent checks. Criteria completion is transactional with
+results handoff creation; stale review revisions require an ETag. Expired cleanup
+is explicitly tenant-scoped. All responses are private/no-store and rate limited.
+
+FM4-R01–R03 gate FM4 continuation. Legacy criteria/results remain imperative UI
+with exclusive DOM ownership. FM5/FM6 may simplify transport once both destinations
+are migrated, but must retain server authorization and remove unused endpoints only
+after compatibility tests. This is not a generic persistence service. No production
+React route is enabled by this clarification.
+
 **Branch**: `001-recruiter-candidate-workflows` | **Date**: 2026-09-28 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Approved specification, project constitution, and read-only visual/functional baseline `enter_recruiter_recruiter_candidate_ux.html`.
