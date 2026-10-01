@@ -7,7 +7,7 @@ from modules.tenancy.audit import record_governance_event
 from modules.tenancy.models import BusinessUnit, TenantMembership
 from modules.tenancy.policy import AuthorizationRequest, authorize, authorize_opening
 
-from .models import HiringTeamMember, Opening
+from .models import HiringTeamMember, Opening, OpeningPublicationLink, PublicOpeningProjection
 
 
 def _authorize_membership(membership: TenantMembership, action: str, tenant_id) -> None:
@@ -53,6 +53,10 @@ def update_opening(
     *, opening: Opening, membership: TenantMembership, changes: dict, hiring_team_ids=None
 ) -> Opening:
     authorize_opening(membership, opening, "opening.write")
+    was_public = PublicOpeningProjection.objects.filter(
+        id__in=OpeningPublicationLink.objects.filter(opening=opening).values("public_id"),
+        active=True,
+    ).exists()
     if "state" in changes and changes["state"] != opening.state:
         current_state = Opening.State(opening.state)
         target_state = Opening.State(changes["state"])
@@ -71,6 +75,11 @@ def update_opening(
     opening.save()
     if hiring_team_ids is not None:
         _replace_hiring_team(opening, membership, hiring_team_ids)
+    from .public_openings import synchronize_publication
+
+    # Editing a pre-existing private OPEN record is not an implicit publication.
+    if was_public or "state" in changes:
+        synchronize_publication(opening=opening, membership=membership)
     record_governance_event(
         membership=membership,
         action="OPENING_UPDATE",

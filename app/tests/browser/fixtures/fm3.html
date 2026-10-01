@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'"
+    />
+    <title>FM3 chooser verification</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script type="application/json" id="page-bootstrap">
+      { "version": 1, "page": "chooser", "requiresSession": false }
+    </script>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1">
+      <h1>Page unavailable</h1>
+      <a href="/api/v1/auth/login">Recruiter sign-in</a
+      ><a href="/jobs/">Candidate platform</a>
+    </main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>

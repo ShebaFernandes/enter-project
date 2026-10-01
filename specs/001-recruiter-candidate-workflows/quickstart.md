@@ -135,3 +135,33 @@ Follow [frontend-migration.md](./frontend-migration.md) and the FM tasks before 
 Use server-controlled per-route legacy/React selection. Test both modes with identical real API-backed synthetic test fixtures, current session/CSRF, and negative tenant/role/field-scope cases. New / and /jobs/ paths first receive Django fallback. Do not store protected workflow state in browser storage. Capture immutable reference and implementation screenshots at 1440×1000, 1024×768, 390×844, 320×844 and 200% zoom. Freeze test clocks/animation only in test harnesses; never edit mockup source. Record each visual difference with state, reason and approval. Fonts use local assets or measured documented fallback; temporary text wordmark difference is explicit.
 
 Run focused functional/security/browser/accessibility/build checks before each slice cutover; retain screenshot and rollback evidence. FM14 runs complete PostgreSQL collection/suite, mypy . with unchanged scope, Ruff format/lint, Django checks and migration drift check, TypeScript/ESLint/Prettier, Vite production build and complete Playwright/accessibility suite once. Compare test inventory against baseline and original mockup hash. Disable the affected route flag to roll back; retain data, contracts and URLs, never replay a mutation to change renderer. Phase 10 and production deployment remain deferred.
+# FM3 verification addendum
+
+FM3 evidence and screenshot locations:
+[`docs/evidence/frontend-migration/fm3.md`](../../docs/evidence/frontend-migration/fm3.md).
+Apply `recruiting.0013_public_opening_projection` only with PostgreSQL and the
+approved role-provisioning authority. It does not publish/backfill existing OPEN
+records. Publish through the existing authorized opening state update; use the
+resulting public UUID for public role links. Do not grant anonymous SELECT on
+`recruiting_opening` or change its forced RLS.
+
+If migration and runtime database users differ, explicitly provision runtime
+membership in `enter_public_openings_reader` and `enter_opening_publisher` without
+BYPASSRLS or source-table grants to the public reader. Public reads always assume
+the reader role, even in local development. Missing permissions fail closed.
+
+All route flags remain default-off. Only the `platform-chooser` route may opt in
+through server-side settings after FM3 verification; setting it false/removing it
+restores the legacy chooser at `/`. `/jobs/` and existing feature pages remain
+legacy. Do not reverse the projection migration to roll back a frontend renderer.
+
+Use the existing isolated PostgreSQL/Valkey synthetic setup and run the local
+Django server with `--noreload --nostatic` so configured Vite URL serving is used.
+Build legacy, WIP, React and showcase in that order. Run the new Python tests in
+`tests/database/test_public_opening_projection.py`,
+`tests/contract/test_public_directory.py`, and `tests/contract/test_fm3_entry.py`.
+For live browser evidence, set `FM3_ORIGIN` to the isolated server and run
+`tests/browser/fm3-live.spec.ts` with only the chooser flag opted in. The OIDC test
+blocks external HTTPS; it verifies the existing handoff without completing Cognito.
+Retain all prior regression and authenticated bootstrap checks. The umbrella
+FM1–FM14 checklist is still pending; FM4 has not begun.

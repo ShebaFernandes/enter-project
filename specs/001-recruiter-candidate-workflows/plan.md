@@ -14,6 +14,30 @@ Only three scope additions are approved: signed-out chooser at / using existing 
 
 ## Summary
 
+### FM3 public-opening security clarification (2026-10-01)
+
+Explicitly authorized security correction: anonymous discovery reads a separate
+`PublicOpeningProjection`, never `recruiting_opening`. The source table's forced
+tenant RLS and policies remain unchanged. An additive migration must install the
+projection, private source linkage, and a non-login, non-owner, non-BYPASSRLS
+public reader with SELECT only. The endpoint must assume that restricted role;
+superuser development results are not security evidence. Public SELECT is limited
+to published, active, non-expired projections. Publication requires existing
+opening-write authorization and explicit active publication; withdrawal/source
+invalidation and projection updates are transactional and audited without values.
+No existing opening is automatically backfilled into public discovery.
+
+The public UUID is distinct from the internal opening UUID. Public responses may
+contain only approved publication fields, never tenant/source IDs, teams, contact
+details, candidate information or private requirements. Optional company,
+experience and skills are omitted unless explicitly configured for publication.
+Public role pages resolve that public UUID; authenticated applications still
+perform existing consent, ownership, eligibility and duplicate checks against
+the authoritative source. Publication failure must roll back, and direct source
+changes must invalidate an old projection rather than leave stale public data.
+Anonymous list/detail reads require bounded pagination, rate limits, non-enumerating
+errors and no-store caching. This is attached to FM3, not FM4 or Phase 10.
+
 Turn the approved single-file recruiter/candidate mockup into an India-only production web application while preserving its information architecture, visuals, interactions, and supported workflows. Use a Django modular monolith with server-rendered templates and small TypeScript modules, PostgreSQL/RLS/pgvector, Cognito, S3 quarantine and malware scanning, SQS/outbox workers, and ECS Fargate in Mumbai with warm recovery infrastructure in Hyderabad.
 
 The architecture deliberately keeps transactional, privacy, authorization, and audit decisions together. AI is an optional, bounded assistant for resume-field suggestions, search interpretation, semantic retrieval, and cited explanations; deterministic code and humans remain authoritative. Optional-service failure degrades to manual or pending states, while identity, authorization, primary-data, and file-security failures close access.

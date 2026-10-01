@@ -406,6 +406,23 @@ Consent withdrawal/profile hiding changes visibility immediately even while down
 The final application/audit/legal-hold retention durations require legal approval before real data is enabled.
 ## Frontend migration additions (approved 2026-10-01)
 
-No new entity, field or migration is required by this design. Published directory entries project existing Opening records using the existing public eligibility state OPEN; the minimum projection is id/title/location/work_mode/employment_type. Do not introduce a separate publication flag or widen visibility through this migration.
+The FM3 security clarification of 2026-10-01 supersedes the earlier assumption
+that public discovery could read Opening directly. Add a separate
+`PublicOpeningProjection` and a private source-publication link. The projection
+has an independently generated public UUID, title, public description, location
+text, work arrangement, employment type, published_at, optional closes_at and
+publication/active state. Optional public company, experience and skills are not
+copied implicitly. Application URLs derive from the public UUID. Source opening
+and tenant identifiers live only in the private link, never the public payload.
+
+The source remains authoritative and its forced tenant RLS is unchanged. The
+projection requires forced RLS with a SELECT-only public-reader policy restricted
+to currently published, active and non-expired rows. The reader is non-owner,
+NOLOGIN and NOBYPASSRLS, with no write privileges or source/link table privileges.
+Authorized publication synchronizes transactionally with minimized audit events;
+unpublication, closure, expiry and deletion make the projection unavailable.
+Source changes invalidate prior publication; failures never commit newly private
+state with a stale public projection. Existing source rows are not automatically
+published by migration. Restricted-role PostgreSQL tests are mandatory.
 
 Recents reuse SearchDefinition, CriteriaGroup and Criterion with existing tenant/actor ownership, created_at ordering, expires_at and six-entry AD_HOC retention. Order by created_at descending then id descending for deterministic ties. SavedSearch remains the explicit named-save relation and lifecycle; exclude named saves from the unsaved recent collection. Restore criteria from current source rows, not SearchResultSnapshot or SavedSearch.result_context_snapshot. GET restoration does not update timestamps, versions or retention. Executing confirmed criteria uses the existing search creation lifecycle. No last-used column or new history model is required; earlier logical LRU wording is refined to existing execution/creation recency for this amendment. Any discovered schema necessity is a blocker to document before implementation.

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import uuid
+from typing import cast
 
 import pytest
 from django.utils import timezone
 
 from modules.audit.models import AuditEvent
 from modules.candidate.models import ConsentRecord
-from modules.recruiting.models import Application, CandidateFacingStatus
+from modules.recruiting.models import Application, CandidateFacingStatus, Opening
 from tests.factories import (
     CandidateCapabilityFactory,
     CandidateProfileFactory,
@@ -44,15 +45,25 @@ def _submission(profile, opening, *, resume=None):
 
 
 def test_public_opening_exposes_only_open_role_essentials(api_client):
-    opening = OpeningFactory(open=True)
+    opening = cast(Opening, OpeningFactory(open=True))
+    from modules.recruiting.models import OpeningPublicationLink
+    from modules.tenancy.models import TenantMembership
+    from tests.database.test_public_opening_projection import publish
 
-    response = api_client.get(f"/api/v1/public/openings/{opening.id}")
+    member = TenantMembership.objects.create(
+        tenant=opening.tenant, identity=opening.created_by, role="RECRUITER", status="ACTIVE"
+    )
+    publish(opening, member)
+    public_id = OpeningPublicationLink.objects.get(opening=opening).public_id
+
+    response = api_client.get(f"/api/v1/public/openings/{public_id}")
 
     assert response.status_code == 200
-    assert response.data["id"] == str(opening.id)
+    assert response.data["id"] == str(public_id)
+    assert public_id != opening.id
     assert response.data["title"] == opening.title
-    assert response.data["tenant_id"] == str(opening.tenant_id)
-    assert response.data["business_unit_id"] == str(opening.business_unit_id)
+    assert "tenant_id" not in response.data
+    assert "business_unit_id" not in response.data
     assert "hiring_team_ids" not in response.data
 
 

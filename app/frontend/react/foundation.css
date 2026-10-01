@@ -2,7 +2,7 @@
 @import "tailwindcss/theme.css" layer(theme) prefix(fm);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(fm) source(none);
 
-@theme {
+@theme static {
   --color-paper: #f4f5ef;
   --color-raised: #ffffff;
   --color-ink: #111342;

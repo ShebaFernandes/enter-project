@@ -1,4 +1,4 @@
-"""Server-only page rollout gate; no FM1 page is approved for React cutover."""
+"""Server-only page rollout gate. Flags remain explicitly default-off."""
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -6,7 +6,9 @@ from django.http import HttpRequest
 from .frontend_assets import react_assets
 
 # Later slices register assets/template only after acceptance. WIP is excluded.
-VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {}
+VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
+    "platform-chooser": {"manifest": "react", "template": "public/react_chooser.html"},
+}
 
 
 def frontend_rollout(request: HttpRequest) -> dict[str, str]:

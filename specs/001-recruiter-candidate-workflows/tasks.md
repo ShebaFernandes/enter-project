@@ -340,9 +340,27 @@ FM2 evidence: [foundation and verification](../../docs/evidence/frontend-migrati
 
 ### FM3: Global shell and signed-out chooser
 
-- [ ] FM3-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM2-03.
-- [ ] FM3-02 Implement global shell and signed-out chooser within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM3-01.
-- [ ] FM3-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM3-02.
+- [X] FM3-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM2-03.
+- [X] FM3-02 Implement global shell and signed-out chooser within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM3-01.
+- [X] FM3-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM3-02.
+
+FM3 security clarification (2026-10-01): FM3-01 includes publication/withdrawal,
+draft/closed/expired exclusion, synchronization failure, field minimization,
+cross-tenant non-inference, bounded pagination/rate limits and non-owner,
+NOBYPASSRLS PostgreSQL tests. FM3-02 includes the explicitly approved separate
+PublicOpeningProjection and necessary migration/private source linkage,
+transactional authorized publication with minimized audits, restricted endpoint
+reads, and projection-backed public role resolution. Never add an anonymous
+policy to recruiting_opening or change its forced RLS. No automatic source
+backfill. FM3-03 must verify these security gates plus chooser navigation and
+legacy rollback. This clarification does not authorize FM4 or Phase 10.
+
+FM3 evidence: [security, visual and regression verification](../../docs/evidence/frontend-migration/fm3.md).
+295 PostgreSQL tests collected (294 pass, one expected skip), 53 browser tests
+passed across the complete regression batches, repository-wide typing and quality
+checks pass. Only the chooser is eligible for server opt-in; all route flags remain
+default-off. The minimal public jobs destination remains Django-rendered. FM4 is
+cleared but not started; the FM1–FM14 umbrella item remains unchecked.
 
 ### FM4: Recruiter search home/sidebar
 

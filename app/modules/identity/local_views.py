@@ -57,7 +57,7 @@ def local_candidate_session_view(request: HttpRequest) -> HttpResponse:
         },
         workforce=False,
     )
-    response = HttpResponseRedirect(f"/roles/{opening.id}/")
+    response = HttpResponseRedirect(f"/roles/{opening.openingpublicationlink.public_id}/")
     response["Cache-Control"] = "no-store, private"
     response["Referrer-Policy"] = "no-referrer"
     return response

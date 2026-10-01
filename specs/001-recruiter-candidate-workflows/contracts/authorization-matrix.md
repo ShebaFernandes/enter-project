@@ -62,3 +62,16 @@ Unknown or unavailable inputs deny access. Allowed and denied sensitive operatio
 | List/restore recent search criteria | Denied | Denied | Current active membership, effective search role, exact actor and tenant; active context revalidated | No automatic search access |
 
 Public directory filtering uses the existing public-opening eligibility (OPEN) and returns only id, title, location, work_mode and employment_type. It never queries or returns candidates, team assignments or tenant-private metadata. Validate opaque cursor and bound page size; no client-selected tenant context can expose private roles. Protected recents use server-derived actor/tenant and RLS, current ownership/membership, expiry and AD_HOC context. Wrong-owner/cross-tenant/expired IDs return non-enumerating unavailable responses. Named saved OPENING searches remain separately authorized against the active opening. History contains no result snapshots; executing restored criteria repeats all current eligibility and field checks. Audit sensitive allowed/denied reads through existing minimized audit infrastructure without prompt/criteria bodies. All chooser links preserve existing OIDC/CSRF/session behavior; frontend flags never grant access.
+# FM3 public-opening security clarification (2026-10-01)
+
+Anonymous directory/detail/role reads use only active, published, unexpired
+PublicOpeningProjection rows and independent public UUIDs. The non-login,
+non-owner, NOBYPASSRLS public-reader role has SELECT only on that table and no
+source-opening/private-link privileges. No anonymous mutation is allowed.
+Source opening forced tenant RLS and its policies are unchanged. Publication
+requires current active membership and existing `opening.write` tenant/object
+scope, with minimized publication/withdrawal audit events. The projection never
+authorizes recruiter or internal management access. Only the authenticated
+application workflow resolves a live public UUID through an exactly scoped
+private link, then applies the existing source/consent/resume/application checks.
+No Tenant Admin or Platform Security Admin candidate-content access is added.

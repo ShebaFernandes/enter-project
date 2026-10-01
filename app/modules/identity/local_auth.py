@@ -414,6 +414,11 @@ def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
             state=Opening.State.OPEN,
             created_by=recruiter,
         )
+        from modules.recruiting.public_openings import synchronize_publication
+
+        membership = TenantMembership.objects.get(tenant=tenant, identity=recruiter)
+        synchronize_publication(opening=opening, membership=membership)
+        public_id = opening.openingpublicationlink.public_id
     with _rls_context(identity_id=profile.identity_id):
         ConsentRecord.objects.create(
             profile=profile,
@@ -438,7 +443,7 @@ def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
         },
         timeout=TOKEN_TTL_SECONDS,
     )
-    return LocalCandidateBootstrap(token, str(profile.identity_id), str(opening.id))
+    return LocalCandidateBootstrap(token, str(profile.identity_id), str(public_id))
 
 
 def consume_local_candidate_bootstrap(token: str) -> tuple[Identity, Opening]:
@@ -464,7 +469,11 @@ def consume_local_candidate_bootstrap(token: str) -> tuple[Identity, Opening]:
         status=Identity.Status.ACTIVE,
     ).first()
     with _rls_context(tenant_id=tenant_id):
-        opening = Opening.objects.filter(pk=opening_id, state=Opening.State.OPEN).first()
+        opening = (
+            Opening.objects.select_related("openingpublicationlink")
+            .filter(pk=opening_id, state=Opening.State.OPEN)
+            .first()
+        )
     if identity is None or opening is None:
         raise PermissionDenied("Synthetic session unavailable")
     return identity, opening

@@ -25,7 +25,7 @@ paths:
       security: []
       tags: [Recruiting]
       operationId: listPublicOpenings
-      description: Read-only OPEN public roles under existing public-opening eligibility. No candidate or tenant-private data. Stable id ascending cursor ordering; revalidate current state on each request.
+      description: Read-only active, published, unexpired PublicOpeningProjection rows; never query tenant-scoped openings anonymously. IDs are independent public UUIDs. No tenant/source IDs or private data. Stable public id ascending cursor ordering; revalidate each request. Cache-Control no-store.
       parameters:
         - name: limit
           in: query
@@ -421,8 +421,10 @@ paths:
           description: Public essentials for an open role without tenant-private fields
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Opening'}
+              schema: {$ref: '#/components/schemas/PublicOpeningSummary'}
         '404': {$ref: '#/components/responses/NotFound'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Problem'}
   /platform/tenants:
     post:
       tags: [Administration]
@@ -1761,13 +1763,17 @@ components:
     PublicOpeningSummary:
       type: object
       additionalProperties: false
-      required: [id, title, location, work_mode, employment_type]
+      required: [id, title, description, location, work_mode, employment_type, published_at, closes_at, application_url]
       properties:
         id: {$ref: '#/components/schemas/Id'}
         title: {type: string}
         location: {type: string}
         work_mode: {type: string}
         employment_type: {type: string}
+        description: {type: string}
+        published_at: {type: string, format: date-time}
+        closes_at: {type: [string, 'null'], format: date-time}
+        application_url: {type: string, pattern: '^/roles/[a-f0-9-]+/$'}
     RecentSearch:
       type: object
       additionalProperties: false

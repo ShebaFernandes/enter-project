@@ -82,6 +82,28 @@ class HiringTeamMember(models.Model):
             )
 
 
+class PublicOpeningProjection(models.Model):
+    """Publication allowlist only; never an authorization or source-of-truth record."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=300)
+    description = models.TextField(blank=True, max_length=20000)
+    location = models.CharField(max_length=300, blank=True)
+    work_mode = models.CharField(max_length=20, choices=Opening.WorkMode)
+    employment_type = models.CharField(max_length=100)
+    published_at = models.DateTimeField()
+    closes_at = models.DateTimeField(null=True, blank=True)
+    active = models.BooleanField(default=False)
+
+
+class OpeningPublicationLink(models.Model):
+    """Private linkage. Public readers have no privileges on this table."""
+
+    opening = models.OneToOneField(Opening, primary_key=True, on_delete=models.CASCADE)
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    tenant = models.ForeignKey(Tenant, on_delete=models.PROTECT)
+
+
 from .application_models import (  # noqa: E402,F401 - Django model discovery/re-export
     Application,
     ApplicationStatusEvent,

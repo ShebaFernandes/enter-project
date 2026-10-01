@@ -7,7 +7,6 @@ from .candidate_views import (
     CandidateApplicationDetailView,
     CandidateApplicationWithdrawView,
     CandidateNotificationPreferencesView,
-    PublicOpeningView,
 )
 from .comparison_views import ComparisonView
 from .opening_views import (
@@ -15,6 +14,7 @@ from .opening_views import (
     OpeningDetailView,
     RecruiterEnteredCandidateCollectionView,
 )
+from .public_views import PublicOpeningCollectionView
 from .views import (
     ApplicationInternalStatusView,
     ApplicationNoteCollectionView,
@@ -26,7 +26,8 @@ from .views import (
 )
 
 urlpatterns = [
-    path("public/openings/<uuid:opening_id>", PublicOpeningView.as_view()),
+    path("public/openings", PublicOpeningCollectionView.as_view()),
+    path("public/openings/<uuid:opening_id>", PublicOpeningCollectionView.as_view()),
     path("candidate/applications", CandidateApplicationCollectionView.as_view()),
     path(
         "candidate/applications/<uuid:application_id>",

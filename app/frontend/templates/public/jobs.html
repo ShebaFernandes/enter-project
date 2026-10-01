@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% block content %}
+<header><a href="/" aria-label="enter home">enter</a></header>
+<h1>Open roles</h1>
+<p>
+  Explore currently published roles. Applying requires a verified candidate
+  session and role-specific consent.
+</p>
+{% if directory %}
+<ul>
+  {% for item in directory.items %}
+  <li>
+    <h2><a href="{{ item.application_url }}">{{ item.title }}</a></h2>
+    <p>
+      {{ item.location|default:"Location not specified" }} · {{ item.work_mode
+      }} · {{ item.employment_type }}
+    </p>
+  </li>
+  {% empty %}
+  <li>No published roles are available right now. Please check again later.</li>
+  {% endfor %}
+</ul>
+{% if directory.next_cursor %}<a href="?cursor={{ directory.next_cursor }}"
+  >Next roles</a
+>{% endif %} {% else %}
+<p role="alert">
+  Public roles are temporarily unavailable. No application has been changed.
+</p>
+<a href="/jobs/">Try again</a>
+{% endif %} {% endblock %}

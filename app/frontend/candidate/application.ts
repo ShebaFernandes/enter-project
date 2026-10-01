@@ -3,7 +3,7 @@ import { clearDraft, loadDraft, saveDraft } from "../shared/persistence";
 type Opening = {
   id: string;
   title: string;
-  location: Record<string, string>;
+  location: string;
   work_mode: string;
   employment_type: string;
 };
@@ -31,10 +31,23 @@ if (root) {
     const opening = (await response.json()) as Opening;
     root.querySelector<HTMLElement>("[data-opening-title]")!.textContent =
       opening.title;
-    root.querySelector<HTMLElement>("[data-role-essentials]")!.innerHTML = `
-      <div><dt>Location</dt><dd>${opening.location.display ?? opening.location.city ?? "Not specified"}</dd></div>
-      <div><dt>Work arrangement</dt><dd>${opening.work_mode.replaceAll("_", " ")}</dd></div>
-      <div><dt>Employment type</dt><dd>${opening.employment_type.replaceAll("_", " ")}</dd></div>`;
+    const essentials = root.querySelector<HTMLElement>(
+      "[data-role-essentials]",
+    )!;
+    essentials.replaceChildren();
+    for (const [label, value] of [
+      ["Location", opening.location || "Not specified"],
+      ["Work arrangement", opening.work_mode.replaceAll("_", " ")],
+      ["Employment type", opening.employment_type.replaceAll("_", " ")],
+    ]) {
+      const group = document.createElement("div");
+      const term = document.createElement("dt");
+      const definition = document.createElement("dd");
+      term.textContent = label;
+      definition.textContent = value;
+      group.append(term, definition);
+      essentials.append(group);
+    }
   };
 
   const key = `application-draft:${openingId}`;

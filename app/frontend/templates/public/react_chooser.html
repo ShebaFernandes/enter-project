@@ -1,0 +1,16 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main
+  id="entry-recovery"
+  data-page-fallback
+  aria-label="Page recovery"
+  tabindex="-1"
+>
+  <h1>Choose your platform</h1>
+  <p>The enhanced page is unavailable. These secure entry links still work.</p>
+  <nav aria-label="Platform choice">
+    <a href="/api/v1/auth/login">Recruiter — secure sign-in</a>
+    <a href="/jobs/">Candidate platform — explore open roles</a>
+  </nav>
+</main>

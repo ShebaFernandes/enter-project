@@ -1,0 +1,129 @@
+/* FM3 only. No reset or selector applies to a legacy body. */
+body[data-frontend-renderer="react"]:has(.ui-public-shell) {
+  margin: 0;
+}
+.enter-ui .ui-public-shell {
+  max-width: var(--fm-container-search);
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+.enter-ui .ui-chooser-stage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.78),
+      rgba(244, 245, 239, 0.92)
+    ),
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(39, 105, 85, 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 82% 18%,
+      rgba(167, 111, 21, 0.11),
+      transparent 30%
+    );
+}
+.enter-ui .ui-chooser-card {
+  width: min(520px, 100%);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  background: var(--fm-color-raised);
+  padding: 34px;
+  box-shadow: var(--fm-shadow-dialog);
+}
+.enter-ui .ui-chooser-card .ui-header {
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--fm-color-muted);
+}
+.enter-ui .ui-chooser-card .ui-wordmark {
+  color: var(--fm-color-ink);
+}
+.enter-ui .ui-chooser-note {
+  display: inline-flex;
+  background: var(--fm-color-sage-soft);
+  color: var(--fm-color-sage);
+  border-radius: 999px;
+  font-size: 12.5px;
+  padding: 6px 11px;
+  margin-bottom: 16px;
+}
+.enter-ui .ui-chooser-card h1 {
+  font-size: 34px;
+  line-height: 1.18;
+  margin-bottom: 8px;
+}
+.enter-ui .ui-chooser-card p {
+  font-size: 13.5px;
+  color: var(--fm-color-muted);
+  margin-bottom: 24px;
+}
+.enter-ui .ui-secure-entry {
+  border-top: 1px solid var(--fm-color-hairline);
+  padding-top: 15px;
+  font-size: 12.5px;
+}
+.enter-ui .ui-secure-entry p {
+  margin: 7px 0 0;
+}
+.enter-ui .ui-platform-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+.enter-ui .ui-platform-choices a {
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: 13px 14px;
+  min-height: 112px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.enter-ui .ui-platform-choices strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.enter-ui .ui-platform-choices span {
+  display: block;
+  font-size: 12.5px;
+  color: var(--fm-color-muted);
+  line-height: 1.35;
+}
+.enter-ui .ui-platform-choices .ui-platform-primary {
+  border-color: var(--fm-color-ink);
+  box-shadow: inset 0 0 0 1px var(--fm-color-ink);
+}
+.enter-ui .ui-platform-choices a:hover {
+  border-color: var(--fm-color-sage);
+  background: var(--fm-color-paper);
+}
+.enter-ui .ui-entry-feedback {
+  min-height: 20px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+@media (max-width: 860px) {
+  .enter-ui .ui-public-shell {
+    padding: 0 16px 48px;
+  }
+  .enter-ui .ui-platform-choices {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .enter-ui .ui-platform-choices a {
+    transition: none;
+  }
+}

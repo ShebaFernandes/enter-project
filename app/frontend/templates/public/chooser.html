@@ -1,0 +1,27 @@
+{% extends "base.html" %} {% block content %}
+<header>
+  <a href="/" aria-label="enter home">enter</a> <span>Talent Platform</span>
+</header>
+<section aria-labelledby="platform-title">
+  <p>Two platforms in one hiring system</p>
+  <h1 id="platform-title">Choose your kingdom platform</h1>
+  <p>
+    Recruiters search and contact matching candidates. Candidates manage their
+    profile, explore published openings and apply.
+  </p>
+  <p>
+    Recruiter access uses secure company sign-in. Access is verified by the
+    server.
+  </p>
+  <nav aria-label="Platform choice">
+    <a href="/api/v1/auth/login">Recruiter — secure sign-in</a>
+    <a href="/jobs/">Candidate platform — explore open roles</a>
+  </nav>
+  {% if page_bootstrap.entryError %}
+  <p role="alert">
+    Sign-in could not be completed. Try secure sign-in again, or explore public
+    roles.
+  </p>
+  {% endif %}
+</section>
+{% endblock %}

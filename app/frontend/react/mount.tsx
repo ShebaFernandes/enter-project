@@ -7,6 +7,7 @@ export type PageBootstrap = {
   page: string;
   tenantId?: string;
   requiresSession: boolean;
+  entryError?: boolean;
 };
 export type PageProps = {
   bootstrap: PageBootstrap;
@@ -24,6 +25,7 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     value.version !== 1 ||
     typeof value.page !== "string" ||
     typeof value.requiresSession !== "boolean" ||
+    (value.entryError !== undefined && typeof value.entryError !== "boolean") ||
     (value.tenantId !== undefined &&
       (typeof value.tenantId !== "string" ||
         !/^[a-f0-9-]{36}$/i.test(value.tenantId)))
@@ -33,6 +35,7 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     version: 1,
     page: value.page,
     requiresSession: value.requiresSession,
+    ...(value.entryError ? { entryError: true } : {}),
     ...(value.tenantId ? { tenantId: value.tenantId } : {}),
   };
 }

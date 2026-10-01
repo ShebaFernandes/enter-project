@@ -25,7 +25,7 @@ import {
   ConflictPanel,
   Table,
   List,
-} from "../../../frontend/react/entry";
+} from "../../../frontend/react/foundation";
 
 function Showcase() {
   const [open, setOpen] = useState(false);

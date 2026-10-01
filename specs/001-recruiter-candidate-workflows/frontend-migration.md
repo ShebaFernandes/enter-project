@@ -88,6 +88,7 @@ API paths below have /api/v1 prefix unless explicitly supplied. Legacy sources a
 - Mockup mapping: #login; shared chrome; #publicProfile.
 - Component boundaries: PlatformChooser, PublicShell, AuthenticatedShell, Navigation.
 - API dependencies: Existing /api/v1/auth/login OIDC entry; new GET /public/openings. No other new operations permitted.
+- Security clarification (2026-10-01, explicitly approved): discovery and individual public role reads use the separate PublicOpeningProjection and independent public UUIDs. The additive projection/private-link migration is permitted within FM3; source opening forced tenant RLS remains unchanged. Existing authenticated application validations remain authoritative. See plan.md and data-model.md; this is not authorization for FM4 or a backend rewrite.
 - States and regression focus: Create minimal real-data jobs destination now; FM10 completes its parity; no dead candidate link.
 - Accessibility, screenshot tests, functional/security tests, fallback, cutover and rollback: all common gates above apply to this phase's routes. Foundation phases cannot independently enable page cutover; FM14 verifies every route and both renderers.
 

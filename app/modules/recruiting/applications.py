@@ -25,10 +25,6 @@ from .models import Opening
 from .statuses import candidate_status_suggestion
 
 
-def public_opening(opening_id) -> Opening:
-    return Opening.objects.get(pk=opening_id, state=Opening.State.OPEN)
-
-
 def _validate_submission_consent(
     *, profile: CandidateProfile, opening: Opening, consent_id
 ) -> ConsentRecord:
@@ -54,6 +50,34 @@ def _validate_submission_consent(
 
 @transaction.atomic
 def submit_application(*, identity, values: dict[str, object], request_key: str) -> Application:
+    # Only an authenticated candidate may resolve private publication linkage.
+    # The anonymous directory/detail paths never enter this service.
+    profile_for(identity)
+    from modules.tenancy.context import tenant_context
+    from modules.tenancy.rls import tenant_transaction
+
+    from .public_openings import application_publication_link, available_publications, public_reader
+
+    with public_reader():
+        published = available_publications().filter(pk=str(values["opening_id"])).exists()
+    if not published:
+        # Preserve authenticated internal-ID callers with their existing role-specific
+        # consent. An inactive public UUID cannot resolve as an internal opening UUID.
+        return _submit_application(identity=identity, values=values, request_key=request_key)
+    link = application_publication_link(str(values["opening_id"]))
+    token = tenant_context.set(link.tenant_id)
+    try:
+        with tenant_transaction():
+            return _submit_application(
+                identity=identity,
+                values={**values, "opening_id": str(link.opening_id)},
+                request_key=request_key,
+            )
+    finally:
+        tenant_context.reset(token)
+
+
+def _submit_application(*, identity, values: dict[str, object], request_key: str) -> Application:
     profile = profile_for(identity)
     opening_id = uuid.UUID(str(values["opening_id"]))
     resume_id = uuid.UUID(str(values["resume_id"]))

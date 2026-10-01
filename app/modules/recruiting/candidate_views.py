@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,7 +18,6 @@ from .application_models import CandidateFacingStatus, InternalRecruitingStatus
 from .applications import (
     own_application,
     preview_candidate_status,
-    public_opening,
     publish_candidate_status,
     replace_notification_preferences,
     submit_application,
@@ -73,30 +72,6 @@ class StatusPublicationSerializer(serializers.Serializer):
         if value is not True:
             raise serializers.ValidationError("Explicit confirmation is required.")
         return value
-
-
-class PublicOpeningView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, opening_id):
-        try:
-            opening = public_opening(opening_id)
-        except ObjectDoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(
-            {
-                "id": str(opening.id),
-                "tenant_id": str(opening.tenant_id),
-                "business_unit_id": str(opening.business_unit_id),
-                "title": opening.title,
-                "location": opening.location,
-                "work_mode": opening.work_mode,
-                "employment_type": opening.employment_type,
-                "description": opening.description,
-                "state": opening.state,
-                "version": opening.version,
-            }
-        )
 
 
 class CandidateApplicationCollectionView(APIView):
@@ -237,10 +212,16 @@ class ApplicationStatusPublishView(APIView):
 
 @ensure_csrf_cookie
 def public_application_page(request, opening_id):
+    from .public_openings import application_publication_link, available_publications, public_reader
+
+    with public_reader():
+        if not available_publications().filter(pk=opening_id).exists():
+            raise Http404("Role unavailable")
     context: dict[str, object] = {"opening_id": opening_id}
     if request.user.is_authenticated:
         try:
             profile = profile_for(request.user, create=False)
+            link = application_publication_link(opening_id)
             resume = profile.resumes.filter(
                 is_current=True,
                 scan_status="CLEAN",
@@ -255,7 +236,8 @@ def public_application_page(request, opening_id):
                         withdrawn_at__isnull=True,
                     )
                     if item.expires_at > timezone.now()
-                    and item.audience_scope.get("opening_id") == str(opening_id)
+                    and link is not None
+                    and item.audience_scope.get("opening_id") == str(link.opening_id)
                 ),
                 None,
             )
