@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recruiter search verification</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script type="application/json" id="page-bootstrap">
+      {
+        "version": 1,
+        "page": "search-home",
+        "requiresSession": true,
+        "tenantId": "00000000-0000-4000-8000-000000000001"
+      }
+    </script>
+    <div data-page-csrf hidden>
+      <input name="csrfmiddlewaretoken" value="synthetic" />
+    </div>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1"><h1>Page unavailable</h1></main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>

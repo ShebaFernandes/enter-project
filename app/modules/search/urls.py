@@ -1,11 +1,18 @@
 from django.urls import path
 
 from .criteria_views import execute_reviewed_search, interpret_search_view
-from .handoff_views import ComparisonReturnView, HandoffDisplayView, HandoffView, RecentSearchView
+from .handoff_views import (
+    ComparisonReturnView,
+    HandoffDisplayView,
+    HandoffView,
+    RecentSearchView,
+    ResultPageView,
+)
 from .saved_views import SavedSearchCollectionView, SavedSearchDetailView
 from .views import candidate_detail
 
 urlpatterns = [
+    path("tenants/<uuid:tenant_id>/search-handoffs/search-results/page", ResultPageView.as_view()),
     path(
         "tenants/<uuid:tenant_id>/search-handoffs/comparison-selection/return",
         ComparisonReturnView.as_view(),

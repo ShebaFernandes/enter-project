@@ -1,13 +1,18 @@
 import { expect, test } from "@playwright/test";
+import { localBootstrap } from "../local-bootstrap";
 
 test("authenticated candidate applies, recruiter publishes, candidate tracks and signs out safely", async ({
   browser,
 }) => {
-  const candidateBootstrap = process.env.LOCAL_CANDIDATE_BOOTSTRAP_URL;
+  const candidateBootstrap = localBootstrap(
+    "LOCAL_CANDIDATE_BOOTSTRAP_URL",
+    "candidate",
+  );
   // Use a dedicated one-time recruiter bootstrap because the full suite also
   // verifies the recruiter search journey in parallel.
-  const recruiterBootstrap =
-    process.env.LOCAL_APPLICATION_RECRUITER_BOOTSTRAP_URL;
+  const recruiterBootstrap = localBootstrap(
+    "LOCAL_APPLICATION_RECRUITER_BOOTSTRAP_URL",
+  );
   test.skip(
     !candidateBootstrap || !recruiterBootstrap,
     "Run with one-time local synthetic candidate and recruiter URLs",

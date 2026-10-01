@@ -1,0 +1,110 @@
+.enter-ui .ui-search-home {
+  min-height: 100vh;
+  background: #fafaf8;
+  color: var(--fm-color-ink);
+}
+.enter-ui .ui-search-tools {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+.enter-ui .ui-search-stage {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(3rem, 23.5vh, 15rem) 1.25rem 3rem;
+}
+.enter-ui .ui-search-stage h1 {
+  text-align: center;
+  font-family: var(--fm-font-sans);
+  font-size: clamp(1.4rem, 3vw, 1.5rem);
+  font-weight: 500;
+  color: #6f756c;
+  margin-bottom: 2rem;
+}
+.enter-ui .ui-search-composer {
+  background: var(--fm-color-raised, white);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: 17px;
+  padding: 1.5rem;
+  box-shadow: var(--fm-shadow-card);
+}
+.enter-ui .ui-search-composer textarea {
+  width: 100%;
+  min-height: 5rem;
+  border: none;
+  resize: vertical;
+  font: inherit;
+  background: transparent;
+}
+.enter-ui .ui-composer-bottom {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.enter-ui .ui-composer-bottom label {
+  flex: 1;
+  display: grid;
+  gap: 0.4rem;
+  min-width: 10rem;
+}
+.enter-ui .ui-composer-bottom select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  padding: 0.5rem;
+}
+.enter-ui .ui-suggested {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.enter-ui .ui-search-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  margin: 0;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  color: var(--fm-color-ink);
+  border: 0;
+  width: min(360px, 100%);
+  overflow: auto;
+  padding: 1.5rem;
+  background: var(--fm-color-paper);
+  border-left: 1px solid var(--fm-color-hairline);
+  z-index: 5;
+  box-shadow: var(--fm-shadow-dialog);
+}
+.enter-ui .ui-search-sidebar::backdrop {
+  background: rgb(0 0 0 / 12%);
+}
+.enter-ui .ui-search-sidebar details {
+  border-bottom: 1px solid var(--fm-color-hairline);
+  padding: 1rem 0;
+}
+.enter-ui .ui-search-sidebar summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+.enter-ui .ui-search-sidebar details button {
+  display: block;
+  margin: 0.5rem 0;
+  width: 100%;
+  text-align: left;
+}
+@media (max-width: 860px) {
+  .enter-ui .ui-search-stage {
+    padding-top: 3rem;
+  }
+  .enter-ui .ui-search-composer {
+    padding: 1rem;
+  }
+}

@@ -1,4 +1,8 @@
-# FM4 handoff remediation — incomplete, not approved for cutover
+# FM4 handoff remediation — historical WIP record
+
+Superseded by [final FM4 verification](fm4.md): FM4 and remediation gates pass.
+The earlier failures below are retained as history, not current blockers. Production
+React flags remain default-off and no FM5 work has begun.
 
 ## Latest extension verification — 2026-10-01
 

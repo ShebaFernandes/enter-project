@@ -25,7 +25,16 @@ def recruiter_search_page(request, tenant_id):
     response = render(
         request,
         "recruiter/search.html",
-        {"tenant_id": membership.tenant_id, "role": membership.role},
+        {
+            "tenant_id": membership.tenant_id,
+            "role": membership.role,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "search-home",
+                "requiresSession": True,
+                "tenantId": str(membership.tenant_id),
+            },
+        },
     )
     response["Cache-Control"] = "no-store, private"
     response["Pragma"] = "no-cache"

@@ -72,6 +72,7 @@ if (reviewRoot) {
     estimated_count: Number(count.textContent ?? 0),
   };
   let estimateTimer = 0;
+  let estimateWork: Promise<void> = Promise.resolve();
 
   function groupOptions(selected: string) {
     return state.criteria.groups
@@ -202,7 +203,9 @@ if (reviewRoot) {
 
   function scheduleEstimate() {
     window.clearTimeout(estimateTimer);
-    estimateTimer = window.setTimeout(refreshEstimate, 250);
+    estimateTimer = window.setTimeout(() => {
+      estimateWork = estimateWork.then(refreshEstimate);
+    }, 250);
   }
 
   reviewRoot
@@ -252,6 +255,7 @@ if (reviewRoot) {
       event.preventDefault();
       if (!ready || !token) return;
       window.clearTimeout(estimateTimer);
+      await estimateWork;
       syncFromDom();
       if (!state.criteria.criteria.length) {
         status.textContent =

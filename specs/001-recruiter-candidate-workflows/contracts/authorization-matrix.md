@@ -2,6 +2,13 @@
 
 ## FM4 typed handoff authority
 
+Results page continuation applies the identical session/source/target checks and
+CSRF requirement; it cannot accept criteria or execute a search. Each cumulative
+page reprojects currently authorized candidates in persisted ordinal order. Recent
+GETs expose only the current actor's six unexpired ad-hoc searches. Reopen creates
+a typed review checkpoint after current source ownership and opening authorization.
+Saved reopening uses the same checks and retains the existing saved-search policy.
+
 Comparison selection is a separate target kind. Create/read/replace rechecks source
 search ownership, opening/team scope, current eligible candidate IDs, source snapshot
 membership and comparison field scope. Max ten unique IDs; preserve request order.

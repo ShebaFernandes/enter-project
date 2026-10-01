@@ -1,9 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { localBootstrap } from "../local-bootstrap";
 
 test("authenticated Tenant Admin sees redacted governance without candidate content", async ({
   page,
 }) => {
-  const bootstrap = process.env.LOCAL_TENANT_ADMIN_BOOTSTRAP_URL;
+  const bootstrap = localBootstrap(
+    "LOCAL_TENANT_ADMIN_BOOTSTRAP_URL",
+    "tenant_admin",
+  );
   test.skip(!bootstrap, "LOCAL_TENANT_ADMIN_BOOTSTRAP_URL is required");
   await page.goto(bootstrap!);
   await expect(
@@ -19,7 +23,9 @@ test("authenticated Tenant Admin sees redacted governance without candidate cont
 test("authenticated recruiter opens synthetic organization management", async ({
   page,
 }) => {
-  const bootstrap = process.env.LOCAL_ORGANIZATION_RECRUITER_BOOTSTRAP_URL;
+  const bootstrap = localBootstrap(
+    "LOCAL_ORGANIZATION_RECRUITER_BOOTSTRAP_URL",
+  );
   test.skip(
     !bootstrap,
     "LOCAL_ORGANIZATION_RECRUITER_BOOTSTRAP_URL is required",

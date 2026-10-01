@@ -2,6 +2,14 @@
 
 ## FM4 SearchWorkflowHandoff (explicit security clarification)
 
+Results schema v1 additionally contains a positive `page` integer. Each page token
+is immutable; continuation retains source expiry and source-context version. Existing
+SearchResultSnapshot rows hold the entire deterministic ordered reference set, not
+only the first displayed page. No candidate values are duplicated into the handoff.
+Comparison return derives the page from selected snapshot ordinals. Recent projection
+is limited to six/seven days while CandidateWork-referenced and active-handoff source
+records are retained. No further schema migration is required for these additions.
+
 Approved extension: `comparison-selection` uses the same forced-RLS encrypted
 table, adding `updated_at` and a separate target kind (migration 0007). Payload
 permits only schema version, source search UUID and ordered unique candidate UUIDs

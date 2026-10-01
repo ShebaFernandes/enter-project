@@ -327,6 +327,31 @@ if (root) {
     await runSearch(lastPayload);
   });
   more.addEventListener("click", async () => {
+    const token = handoffToken();
+    if (token) {
+      const transport = workflowTransport(searchRoot.dataset.tenantId!);
+      try {
+        const response = await transport.client(
+          `/api/v1/tenants/${searchRoot.dataset.tenantId}/search-handoffs/search-results/page`,
+          {
+            method: "POST",
+            headers: {
+              "X-Workflow-Handoff": token,
+              "Idempotency-Key": crypto.randomUUID(),
+            },
+          },
+        );
+        if (!response.ok) throw new Error("Page unavailable");
+        transport.navigate(
+          "search-results",
+          ((await response.json()) as { token: string }).token,
+        );
+      } catch {
+        status.textContent =
+          "This result page expired or is unavailable. Start a new search.";
+      }
+      return;
+    }
     if (!lastPayload || !nextCursor) return;
     await runSearch({ ...lastPayload, cursor: nextCursor }, true);
   });
@@ -393,6 +418,11 @@ if (root) {
     }),
   );
   const confirmed = handoffToken();
+  // Fragment-only pagination/Back does not trigger a document navigation. Reload
+  // through Django so the bound source is freshly restored, never client replayed.
+  window.addEventListener("hashchange", () => {
+    if (handoffToken() !== confirmed) location.reload();
+  });
   if (confirmed) {
     const transport = workflowTransport(searchRoot.dataset.tenantId!);
     void transport

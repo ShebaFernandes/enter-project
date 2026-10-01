@@ -2,6 +2,22 @@
 
 ## FM4 transitional security clarification — 2026-10-01
 
+FM4 completion uses existing source models, with no additional migration. Search
+execution persists the complete deterministic ordered reference set; display remains
+limited. A results handoff contains a positive cumulative page number. POST page
+continuation issues a new bounded-expiry token without rerunning search, preserving
+Back/refresh. Comparison return derives the minimum page containing the selected
+references server-side. Every display rechecks current eligibility. Owned recent or
+saved searches reopen through a new criteria checkpoint, not browser history/storage.
+Active handoff sources are excluded from destructive recent cleanup; the recent API
+still projects at most six unexpired ad-hoc records. CandidateWork provenance is
+never removed by this mechanism.
+
+Only `recruiter-search-page` may select the FM4 React entry, with an absent/false
+server flag selecting legacy. `?view=results` always selects legacy even with the
+home flag on. Rollback changes neither URL nor data. Verification uses separate
+local flag-on and flag-off servers and freshly issued synthetic bootstrap URLs.
+
 The separately authorized comparison extension reuses the same table with a
 distinct `comparison-selection` kind. Ordered IDs are encrypted and source-result
 bound. Replace requires If-Match (409 on stale); no arbitrary return URL is accepted.

@@ -375,17 +375,22 @@ dedicated encrypted, typed, session-bound handoff, never browser storage or a
 general JSON session store. FM4-02 is additionally gated on FM4-R03. FM5/FM6 UI
 migration remains out of scope; the shared search route remains default-off.
 
-- [ ] FM4-R01 Add test-first typed handoff, session/actor/tenant/target binding, expiry/revocation/completion, CSRF, concurrency, rate-limit, log/audit minimization, restricted-role forced RLS and recent-search authorization tests. Dependency: FM3-R03 and explicit handoff authorization.
-- [ ] FM4-R02 Implement encrypted SearchWorkflowHandoff, forced tenant RLS migration, typed create/restore/revise/revoke operations, metadata-only restoration, separate authorized persisted-result display read, bounded cleanup and recent-search GET operations; align plan/model/OpenAPI/authorization/events. Dependency: FM4-R01 failing tests.
-- [ ] FM4-R03 Replace legacy criteria/results browser-storage transport with opaque-fragment/server restore; verify all 24 remediation cases, refresh/back/sign-out, browser-storage absence and same-URL rollback. No legacy UI migration. Dependency: FM4-R02. FM4-01–03 completion requires passing this security gate.
+- [X] FM4-R01 Add test-first typed handoff, session/actor/tenant/target binding, expiry/revocation/completion, CSRF, concurrency, rate-limit, log/audit minimization, restricted-role forced RLS and recent-search authorization tests. Dependency: FM3-R03 and explicit handoff authorization.
+- [X] FM4-R02 Implement encrypted SearchWorkflowHandoff, forced tenant RLS migration, typed create/restore/revise/revoke operations, metadata-only restoration, separate authorized persisted-result display read, bounded cleanup and recent-search GET operations; align plan/model/OpenAPI/authorization/events. Dependency: FM4-R01 failing tests.
+- [X] FM4-R03 Replace legacy criteria/results browser-storage transport with opaque-fragment/server restore; verify all 24 remediation cases, refresh/back/sign-out, browser-storage absence and same-URL rollback. No legacy UI migration. Dependency: FM4-R02. FM4-01–03 completion requires passing this security gate.
 
-- [ ] FM4-R04 Test ordered comparison-selection transport, binding/target isolation, source membership/current consent, 409 concurrency, ten-item limit, no recruiting side effects, CSRF/rate limits, RLS and minimized auditing. Dependency: FM4-R02 and explicit comparison-transport authorization.
-- [ ] FM4-R05 Extend the encrypted handoff with comparison-selection, typed create/read/replace/revoke and server-generated return operation; replace legacy selection persistence without UI migration. Dependency: FM4-R04 failing tests.
-- [ ] FM4-R06 Verify all 25 comparison remediation cases, refresh/Back/return/focus, absence of protected browser storage and the complete chained authenticated journey; run full regression evidence before any completion/cutover. Dependency: FM4-R05; gates FM4-R03 and FM4-03. FM5 scope is unchanged.
+- [X] FM4-R04 Test ordered comparison-selection transport, binding/target isolation, source membership/current consent, 409 concurrency, ten-item limit, no recruiting side effects, CSRF/rate limits, RLS and minimized auditing. Dependency: FM4-R02 and explicit comparison-transport authorization.
+- [X] FM4-R05 Extend the encrypted handoff with comparison-selection, typed create/read/replace/revoke and server-generated return operation; replace legacy selection persistence without UI migration. Dependency: FM4-R04 failing tests.
+- [X] FM4-R06 Verify all 25 comparison remediation cases, refresh/Back/return/focus, absence of protected browser storage and the complete chained authenticated journey; run full regression evidence before any completion/cutover. Dependency: FM4-R05; gates FM4-R03 and FM4-03. FM5 scope is unchanged.
 
-- [ ] FM4-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM3-03.
-- [ ] FM4-02 Implement recruiter search home/sidebar within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM4-01.
-- [ ] FM4-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM4-02.
+- [X] FM4-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM3-03.
+- [X] FM4-02 Implement recruiter search home/sidebar within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM4-01.
+- [X] FM4-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM4-02.
+
+FM4 evidence: [final verification](../../docs/evidence/frontend-migration/fm4.md).
+345 PostgreSQL tests passed (one existing trigger-fixture skip); all 60 browser tests
+passed with authenticated gates enabled. Search home is verified locally behind its
+default-off flag; production remains legacy. FM5 and the umbrella gate remain unchecked.
 
 ### FM5: Criteria review
 

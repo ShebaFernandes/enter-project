@@ -92,12 +92,12 @@ def create(request, tenant_id, kind, *, internal_body=None, expires_at=None):
     if not 16 <= len(key) <= 200:
         raise ValidationError({"Idempotency-Key": "A retry key is required."})
     allowed = (
-        {"workflow_id", "criteria"}
+        {"workflow_id", "criteria", "search_id"}
         if kind == "criteria-review"
         else (
             {"search_id", "candidate_ids"}
             if kind == "comparison-selection"
-            else {"search_id", "criteria_token"}
+            else {"search_id", "criteria_token", "page"}
         )
     )
     if not isinstance(body, dict) or set(body) - allowed:
@@ -106,6 +106,38 @@ def create(request, tenant_id, kind, *, internal_body=None, expires_at=None):
     payload: dict[str, Any]
     try:
         if kind == "criteria-review":
+            if "search_id" in body:
+                if set(body) != {"search_id"}:
+                    raise ValidationError("Reopen accepts only the source search identifier.")
+                from modules.ai.intent_schema import SearchIntent
+                from modules.ai.search_graph import persist_checkpoint
+
+                source = SearchDefinition.objects.get(
+                    pk=str(body["search_id"]), tenant_id=tenant_id, actor=request.user
+                )
+                if source.expires_at <= timezone.now() and not hasattr(source, "saved"):
+                    raise Http404
+                validate_search_context(source.criteria_context, membership)
+                existing = SearchWorkflowHandoff.objects.filter(
+                    credential=credential, retry_hash=digest(f"{tenant_id}:{kind}:{key}")
+                ).first()
+                if existing is not None:
+                    workflow = existing.workflow
+                else:
+                    workflow = persist_checkpoint(
+                        SearchIntent(
+                            criteria=SearchCriteriaInput.model_validate(_criteria(source)),
+                            requires_review=True,
+                            ambiguities=[],
+                            ai_status="NOT_NEEDED",
+                        ),
+                        actor=request.user,
+                        tenant_id=tenant_id,
+                        prompt="",
+                    )
+                if workflow is None:
+                    raise Http404
+                body = {"workflow_id": str(workflow.pk), "criteria": _criteria(source)}
             workflow = WorkflowRun.objects.get(
                 pk=str(body.get("workflow_id", "")),
                 tenant_id=tenant_id,
@@ -135,6 +167,13 @@ def create(request, tenant_id, kind, *, internal_body=None, expires_at=None):
             )
             validate_search_context(search.criteria_context, membership)
             payload = {"schema_version": 1, "search_id": str(search.pk)}
+            if kind == "search-results":
+                page = body.get("page", 1)
+                if type(page) is not int or not 1 <= page <= max(
+                    1, (search.results.count() + search.result_limit - 1) // search.result_limit
+                ):
+                    raise ValidationError("Result page is unavailable.")
+                payload["page"] = page
             if kind == "comparison-selection":
                 payload["candidate_ids"] = selection_ids(
                     body.get("candidate_ids"), search, membership
@@ -268,8 +307,12 @@ def restore(request, tenant_id, kind, token=None, *, lock=False):
             ] != str(resource.pk):
                 raise Http404
             selection_ids(payload["candidate_ids"], resource, membership)
-        elif set(payload) != {"schema_version", "search_id"} or payload["search_id"] != str(
+        elif set(payload) != {"schema_version", "search_id", "page"} or payload["search_id"] != str(
             resource.pk
+        ):
+            raise Http404
+        elif type(payload["page"]) is not int or not 1 <= payload["page"] <= max(
+            1, (resource.results.count() + resource.result_limit - 1) // resource.result_limit
         ):
             raise Http404
         context = (
@@ -310,6 +353,8 @@ def metadata(item, payload, membership):
         )
     else:
         output.update(search_id=str(item.search_id), result_context_version=item.resource_version)
+        if item.kind == "search-results":
+            output["page"] = payload["page"]
         if item.kind == "comparison-selection":
             output.update(
                 candidate_ids=payload["candidate_ids"],

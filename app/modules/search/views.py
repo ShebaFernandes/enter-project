@@ -170,14 +170,15 @@ def execute_search(request, tenant_id):
         return Response({"cursor": ["Cursor is invalid."]}, status=422)
     page = ranked[offset : offset + data["limit"]]
     items = []
-    for ordinal, (profile, matched) in enumerate(page, offset + 1):
-        item = _result(profile, matched, membership)
-        items.append(item)
+    # Persist ordered references once so later page reads do not re-execute search.
+    for ordinal, (profile, matched) in enumerate(ranked, 1):
+        if offset < ordinal <= offset + data["limit"]:
+            items.append(_result(profile, matched, membership))
         SearchResultSnapshot.objects.create(
             search=search,
             candidate_profile_id=profile.id,
             ordinal=ordinal,
-            score=Decimal(item["score"]),
+            score=Decimal(matched.score),
             evidence=matched.evidence,
             unknowns=matched.unknowns,
         )

@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { localBootstrap } from "../local-bootstrap";
 
 test("authenticated recruiter compares two currently authorized search results", async ({
   page,
 }) => {
-  const bootstrapUrl = process.env.LOCAL_RECRUITER_BOOTSTRAP_URL;
+  const bootstrapUrl = localBootstrap("LOCAL_RECRUITER_BOOTSTRAP_URL");
   test.skip(!bootstrapUrl, "Run with a one-time local synthetic recruiter URL");
 
   await page.goto(bootstrapUrl!);

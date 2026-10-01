@@ -195,6 +195,7 @@ def test_results_restoration_is_metadata_only_and_closes_review(handoff):
             "kind",
             "search_id",
             "result_context_version",
+            "page",
         }
     assert SearchDefinition.objects.count() == before
     for wrong_token in [created["token"], token]:

@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { localBootstrap } from "../local-bootstrap";
 
 test("authenticated local recruiter searches, views evidence, and signs out safely", async ({
   page,
 }) => {
-  const bootstrapUrl = process.env.LOCAL_RECRUITER_BOOTSTRAP_URL;
+  const bootstrapUrl = localBootstrap("LOCAL_RECRUITER_BOOTSTRAP_URL");
   test.skip(!bootstrapUrl, "Run with a one-time local synthetic recruiter URL");
 
   await page.goto(bootstrapUrl!);
@@ -14,41 +15,18 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
     .fill("Maybe an engineer");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page).toHaveURL(/criteria-review/);
-  await expect(page.getByText("Maybe an engineer")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Criteria restored");
   await expect(page.getByText(/estimated candidates in scope/)).toBeVisible();
   await page.getByLabel("Match within group").selectOption("ANY");
   const tenantId = await page
     .locator("[data-criteria-review]")
     .getAttribute("data-tenant-id");
   expect(tenantId).not.toBeNull();
-  const confirmed = await page.evaluate(async (activeTenantId) => {
-    const reviewed = JSON.parse(
-      sessionStorage.getItem("enter.criteria-review.v1") ?? "null",
-    ) as { criteria: unknown } | null;
-    const csrf = (
-      document.querySelector("[name=csrfmiddlewaretoken]") as HTMLInputElement
-    ).value;
-    const response = await fetch(`/api/v1/tenants/${activeTenantId}/searches`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrf,
-        "X-Tenant-ID": activeTenantId!,
-      },
-      credentials: "same-origin",
-      body: JSON.stringify(reviewed!.criteria),
-    });
-    const body = (await response.json()) as Record<string, unknown>;
-    sessionStorage.setItem("enter.confirmed-search.v1", JSON.stringify(body));
-    return { ok: response.ok, body };
-  }, tenantId);
-  expect(confirmed.ok).toBe(true);
+  await page.getByRole("button", { name: "Run confirmed search" }).click();
+  await expect(page).toHaveURL(/search\/\?view=results#handoff=/);
   const resultPage = await page.context().newPage();
-  const resultsUrl = `${new URL(page.url()).origin}/tenants/${tenantId}/recruiter/search/`;
+  const resultsUrl = page.url();
   await resultPage.goto(resultsUrl);
-  await resultPage.evaluate((result) => {
-    sessionStorage.setItem("enter.confirmed-search.v1", JSON.stringify(result));
-  }, confirmed.body);
   await resultPage.reload();
   await page.close({ runBeforeUnload: false });
   await expect(resultPage.locator(".search-status")).toContainText(

@@ -34,7 +34,7 @@ paths:
     post:
       operationId: createTypedSearchHandoff
       tags: [Search]
-      description: CSRF and active session required. Body must match the path kind. Comparison selection is ordered, source-result-bound and freshly authorized. Fifteen-minute maximum lifetime. Retry reuses one record and rotates the bearer; only token hashes are persisted. No arbitrary return URL or JSON accepted.
+      description: CSRF and active session required. Body must match the path kind. Criteria review accepts workflow_id with criteria, or only search_id for an owned unexpired recent/saved search reopened into a fresh review checkpoint. Results accept search_id, optional page and criteria_token. Comparison selection is ordered, source-result-bound and freshly authorized. Fifteen-minute maximum lifetime. Retry reuses one record and rotates the bearer; only token hashes are persisted. No arbitrary return URL or JSON accepted.
       parameters:
         - name: Idempotency-Key
           in: header
@@ -58,6 +58,7 @@ paths:
                   properties:
                     search_id: {$ref: '#/components/schemas/Id'}
                     criteria_token: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+                    page: {type: integer, minimum: 1, default: 1}
                 - type: object
                   additionalProperties: false
                   required: [search_id, candidate_ids]
@@ -138,6 +139,29 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /tenants/{tenantId}/search-handoffs/search-results/page:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: X-Workflow-Handoff
+        in: header
+        required: true
+        schema: {type: string, pattern: '^[A-Za-z0-9_-]{43}$'}
+    post:
+      operationId: continueSearchResultHandoff
+      tags: [Search]
+      description: CSRF-protected empty-body continuation. Revalidates the bound source and issues a separate opaque results token for the next cumulative display page; never executes a new search. Original tokens preserve Back/refresh. Expiry cannot exceed the source handoff. Out-of-range returns 422. No-store.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 16, maxLength: 200}
+      responses:
+        '201': {$ref: '#/components/responses/HandoffCreated'}
+        '200': {$ref: '#/components/responses/HandoffCreated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/Problem'}
         '429': {$ref: '#/components/responses/RateLimited'}
   /tenants/{tenantId}/search-handoffs/comparison-selection/return:
     post:
@@ -1665,6 +1689,7 @@ components:
         workflow_version: {type: string}
         search_id: {$ref: '#/components/schemas/Id'}
         result_context_version: {type: string}
+        page: {type: integer, minimum: 1}
         criteria: {$ref: '#/components/schemas/SearchCriteria'}
         candidate_ids: {$ref: '#/components/schemas/OrderedSelection'}
         return_path: {type: string, pattern: '^/tenants/[^/]+/recruiter/search/$'}

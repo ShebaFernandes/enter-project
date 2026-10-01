@@ -20,6 +20,17 @@ def maintain_recent_searches(*, membership) -> None:
         context_type=SearchDefinition.ContextType.AD_HOC,
         saved__isnull=True,
     )
+    # A visible-list eviction must not invalidate an active, session-bound journey.
+    from .models import SearchWorkflowHandoff
+
+    active_ids = SearchWorkflowHandoff.objects.filter(
+        tenant_id=membership.tenant_id,
+        actor=membership.identity,
+        state="ACTIVE",
+        expires_at__gt=now,
+        search_id__isnull=False,
+    ).values_list("search_id", flat=True)
+    owned = owned.exclude(pk__in=active_ids)
     # expires_at bounds recent presentation, not the lifetime of provenance.
     keep = list(
         owned.filter(expires_at__gt=now)

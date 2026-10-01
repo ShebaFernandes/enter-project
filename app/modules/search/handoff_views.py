@@ -80,11 +80,12 @@ class HandoffDisplayView(PrivateView):
     """
 
     def get(self, request, tenant_id):
-        item, _, membership = handoffs.restore(request, tenant_id, "search-results")
+        item, payload, membership = handoffs.restore(request, tenant_id, "search-results")
         search = item.search
         criteria = _criteria(search)
         groups = validate_criteria(criteria["groups"], criteria["criteria"])
-        snapshots = list(search.results.order_by("ordinal"))
+        boundary = payload["page"] * search.result_limit
+        snapshots = list(search.results.order_by("ordinal")[:boundary])
         with search_authorization_context(search.criteria_context):
             profiles = {
                 str(p.pk): p
@@ -100,7 +101,30 @@ class HandoffDisplayView(PrivateView):
                 matched = evaluate_candidate(_candidate_values(profile), groups)
                 if matched.eligible:
                     items.append(_result(profile, matched, membership))
-        return Response({"search_id": str(search.pk), "items": items, "next_cursor": None})
+        next_page = payload["page"] + 1 if search.results.count() > boundary else None
+        return Response(
+            {
+                "search_id": str(search.pk),
+                "items": items,
+                "next_cursor": str(next_page) if next_page else None,
+            }
+        )
+
+
+class ResultPageView(PrivateView):
+    @transaction.atomic
+    def post(self, request, tenant_id):
+        item, payload, _ = handoffs.restore(request, tenant_id, "search-results")
+        if request.data:
+            raise ValidationError("Page continuation accepts no client criteria.")
+        result, created = handoffs.create(
+            request,
+            tenant_id,
+            "search-results",
+            internal_body={"search_id": str(item.search_id), "page": payload["page"] + 1},
+            expires_at=item.expires_at,
+        )
+        return Response(result, status=201 if created else 200)
 
 
 class ComparisonReturnView(PrivateView):
@@ -110,12 +134,19 @@ class ComparisonReturnView(PrivateView):
     def post(self, request, tenant_id):
         if request.data:
             raise ValidationError("Return navigation does not accept a payload.")
-        item, _, _ = handoffs.restore(request, tenant_id, "comparison-selection", lock=True)
+        item, payload, _ = handoffs.restore(request, tenant_id, "comparison-selection", lock=True)
+        last_selected = (
+            item.search.results.filter(candidate_profile_id__in=payload["candidate_ids"])
+            .order_by("-ordinal")
+            .values_list("ordinal", flat=True)
+            .first()
+        ) or 1
+        page = (last_selected - 1) // item.search.result_limit + 1
         result, _ = handoffs.create(
             request,
             tenant_id,
             "search-results",
-            internal_body={"search_id": str(item.search_id)},
+            internal_body={"search_id": str(item.search_id), "page": page},
             expires_at=item.expires_at,
         )
         return Response(

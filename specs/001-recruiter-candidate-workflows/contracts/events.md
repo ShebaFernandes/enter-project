@@ -31,6 +31,11 @@ Consumers reject unknown major schema versions, tolerate additive fields, re-aut
 
 ## FM4 transitional handoff audit
 
+Pagination continuation and recent/saved reopening reuse the minimized handoff
+creation event. No page token, source criteria, recent prompt or selected candidate
+identifier is added to the event payload. Pagination does not emit search execution
+events because it only reads existing persisted ordered references.
+
 `SEARCH_HANDOFF_CREATED`, `SEARCH_HANDOFF_RESTORED`, `SEARCH_HANDOFF_REVISED`,
 `SEARCH_HANDOFF_REVOKED`, `SEARCH_HANDOFF_COMPLETED` use the existing immutable audit
 service. Allow only actor, tenant, effective role, outcome, hashed handoff resource

@@ -98,7 +98,7 @@ API paths below have /api/v1 prefix unless explicitly supplied. Legacy sources a
 - Exact routes: /tenants/{tenant_id}/recruiter/search/.
 - Mockup mapping: #home; Projects/Recents sidebar.
 - Component boundaries: SearchHome, PromptComposer, SearchSidebar, RecentSearchList, SavedSearchList.
-- API dependencies: POST /tenants/{tenantId}/searches/interpret; POST /tenants/{tenantId}/searches; existing saved-search GET/POST/detail; new recent-search GET collection/detail. No other new operations permitted.
+- API dependencies: POST /tenants/{tenantId}/searches/interpret; POST /tenants/{tenantId}/searches; existing saved-search GET/POST/detail; new recent-search GET collection/detail. Explicit FM4 security clarifications additionally permit the typed session-bound handoff operations documented in OpenAPI, including persisted-results page continuation and comparison return. They are transitional transport, not new React feature pages.
 - States and regression focus: Reauthorize owner, tenant and opening on list/restore; never return stored candidate results.
 - Accessibility, screenshot tests, functional/security tests, fallback, cutover and rollback: all common gates above apply to this phase's routes. Foundation phases cannot independently enable page cutover; FM14 verifies every route and both renderers.
 

@@ -1,7 +1,7 @@
 const speechRoot = document.querySelector<HTMLElement>(
   "[data-recruiter-search]",
 );
-type Recognition = {
+export type Recognition = {
   continuous: boolean;
   interimResults: boolean;
   lang: string;

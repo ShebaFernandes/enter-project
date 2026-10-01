@@ -1,10 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { localBootstrap } from "../local-bootstrap";
 
 test("FM3 legacy opening publication is confirmed, public and independently withdrawn", async ({
   page,
 }, testInfo) => {
-  const bootstrap = process.env.LOCAL_PUBLICATION_RECRUITER_BOOTSTRAP_URL;
+  const bootstrap = localBootstrap("LOCAL_PUBLICATION_RECRUITER_BOOTSTRAP_URL");
   test.skip(
     !bootstrap,
     "Authenticated synthetic publication bootstrap required",
