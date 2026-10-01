@@ -50,3 +50,15 @@
 - `SHORT_TENURE` is informational only, uses deterministic confirmed-date calculation, excludes
   current/temporary/insufficient-data records, and cannot influence eligibility, scoring, ranking,
   recommendation, status, or outcome.
+## Approved frontend amendment review (2026-10-01)
+
+- [x] FR-066–FR-068 define approved chooser, real published jobs and backend recents with acceptance scenarios.
+- [x] Three additive read-only operations, owner/tenant boundaries and minimized response shapes are documented.
+- [x] Existing models suffice; no migration planned; OPEN and execution recency reuse existing semantics.
+- [x] FM1 inventories all 11 checkpoint files and requires verification before WIP reuse.
+- [x] FM1–FM14 precede deferred Phase 10 and define per-route fallback, rollback and acceptance gates.
+- [x] Tokens, local font/wordmark fallback, CSS isolation and exclusive DOM ownership are planned.
+- [x] No code/test deletion, backend rewrite or original mockup modification is authorized by this artifact update.
+- [ ] FM1–FM14 implementation and required evidence pass (pending implementation, not claimed by planning review).
+
+Earlier scenario/requirement totals above describe the pre-amendment baseline; this amendment adds three requirements and five acceptance scenarios. Framework details remain in plan/research, not these product requirements.

@@ -318,7 +318,97 @@
 
 ---
 
+## Frontend Migration: after Phase 9, before Phase 10
+
+Approved 2026-10-01. Normative route/component/API/state/test/fallback details for every phase are in [frontend-migration.md](./frontend-migration.md). Preserve all existing task completion marks. Each phase is test-first: define/capture acceptance coverage, implement the slice, verify before cutover. Every task remains unchecked until implementation and acceptance pass. FM task IDs are a dedicated namespace, not replacements for T001–T206.
+
+### FM1: Reconcile WIP and capture baselines
+
+- [ ] FM1-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: Phase 9 / T163 and prior completed amendments.
+- [ ] FM1-02 Reconcile every file in checkpoint 66a3acd and any new WIP against 5372072; record reuse/rework decisions, build/security/accessibility/regression verification, original mockup hash, font/logo checks and verified legacy fallback; do not assume committed WIP is correct. Dependency: FM1-01.
+- [ ] FM1-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain legacy defaults without page cutover. Dependency: FM1-02.
+
+### FM2: React/Tailwind foundation and design system
+
+- [ ] FM2-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM1-03.
+- [ ] FM2-02 Implement react/tailwind foundation and design system within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM2-01.
+- [ ] FM2-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; retain legacy defaults without page cutover. Dependency: FM2-02.
+
+### FM3: Global shell and signed-out chooser
+
+- [ ] FM3-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM2-03.
+- [ ] FM3-02 Implement global shell and signed-out chooser within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM3-01.
+- [ ] FM3-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM3-02.
+
+### FM4: Recruiter search home/sidebar
+
+- [ ] FM4-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM3-03.
+- [ ] FM4-02 Implement recruiter search home/sidebar within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM4-01.
+- [ ] FM4-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM4-02.
+
+### FM5: Criteria review
+
+- [ ] FM5-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM4-03.
+- [ ] FM5-02 Implement criteria review within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM5-01.
+- [ ] FM5-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM5-02.
+
+### FM6: Results and candidate detail
+
+- [ ] FM6-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM5-03.
+- [ ] FM6-02 Implement results and candidate detail within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM6-01.
+- [ ] FM6-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM6-02.
+
+### FM7: Recruiter management and disclosure UI
+
+- [ ] FM7-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM6-03.
+- [ ] FM7-02 Implement recruiter management and disclosure ui within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM7-01.
+- [ ] FM7-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM7-02.
+
+### FM8: Candidate comparison
+
+- [ ] FM8-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM7-03.
+- [ ] FM8-02 Implement candidate comparison within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM8-01.
+- [ ] FM8-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM8-02.
+
+### FM9: Candidate profile and resume flow
+
+- [ ] FM9-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM8-03.
+- [ ] FM9-02 Implement candidate profile and resume flow within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM9-01.
+- [ ] FM9-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM9-02.
+
+### FM10: Public jobs, role and application
+
+- [ ] FM10-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM9-03.
+- [ ] FM10-02 Implement public jobs, role and application within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM10-01.
+- [ ] FM10-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM10-02.
+
+### FM11: Candidate progress and rights
+
+- [ ] FM11-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM10-03.
+- [ ] FM11-02 Implement candidate progress and rights within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM11-01.
+- [ ] FM11-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM11-02.
+
+### FM12: Recruiter organization/openings
+
+- [ ] FM12-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM11-03.
+- [ ] FM12-02 Implement recruiter organization/openings within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM12-01.
+- [ ] FM12-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM12-02.
+
+### FM13: Tenant Admin governance
+
+- [ ] FM13-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM12-03.
+- [ ] FM13-02 Implement tenant admin governance within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM13-01.
+- [ ] FM13-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM13-02.
+
+### FM14: Full parity, accessibility and regression verification
+
+- [ ] FM14-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM13-03.
+- [ ] FM14-02 Run full PostgreSQL collection/suite, mypy ., Ruff, Django/migration checks, frontend checks/build and complete authenticated Playwright/accessibility/visual suites; prove no deleted tests or reduced type scope. Dependency: FM14-01.
+- [ ] FM14-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; approve migration completion only with no unexplained drift; Phase 10 stays deferred until this gate passes. Dependency: FM14-02.
+
 ## Phase 10: Production Hardening, Manual Review, and Release Evidence
+
+Deferred: requires FM14-03. No production-hardening work begins during frontend migration.
 
 **Purpose**: Validate accessibility, usability, privacy, incident response, security, AI promotion, recovery, scale, and existing-functionality preservation.
 
@@ -376,7 +466,8 @@
 7. **US4** follows US2 and US6 so sourced records can link to implemented applications without merging.
 8. **US5** follows US2 and US4 because comparison consumes authorized result and shortlist state.
 9. **US7** follows the shared shell and US2 because saved-search restoration uses implemented searches; its audit/access-review work is otherwise independent.
-10. **Production hardening** follows all launch stories, although infrastructure and protocol authoring may begin earlier.
+10. **Frontend migration** follows Phase 9: FM1 → FM2 → FM3 → FM4 → FM5 → FM6 → FM7 → FM8 → FM9 → FM10 → FM11 → FM12 → FM13 → FM14. Each phase gates the next; FM3 supplies the minimum real jobs destination before FM10 visual completion.
+11. **Production hardening** follows FM14-03; earlier infrastructure/protocol authoring is deferred by the approved migration sequence.
 
 ### Dependency Graph
 
@@ -387,7 +478,7 @@ Setup → Foundation (tenant/business-unit/opening shell) → US1 (MVP)
                      └─────────┴→ US4 → US5
                           US2 ───────→ US7 saved-search integration
 
-All launch stories → manual accessibility + incident + access review + DAST/AI + restore/replay gates
+All launch stories → FM1–FM14 → deferred Phase 10 manual accessibility + incident + access review + DAST/AI + restore/replay gates
 ```
 
 ### Parallel Opportunities
@@ -396,7 +487,7 @@ All launch stories → manual accessibility + incident + access review + DAST/AI
 - Foundation policy, operations, audit, communications, infrastructure, and test files marked `[P]` can proceed in parallel after shared models stabilize.
 - Tests marked `[P]` within a story can be authored together before implementation.
 - After Foundation, US1 and the non-search parts of US7 may proceed alongside US2 using synthetic fixtures, but the numbered integration order remains authoritative.
-- Production infrastructure, test automation, manual-review protocols, incident-runbook drafting, and usability-protocol drafting can run concurrently; executions wait for the integrated product.
+- Production-hardening infrastructure and protocols remain deferred until FM14-03. Within frontend migration, only independent acceptance checks in the current phase may run concurrently.
 
 ---
 

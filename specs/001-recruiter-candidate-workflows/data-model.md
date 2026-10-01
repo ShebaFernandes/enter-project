@@ -404,3 +404,8 @@ Consent withdrawal/profile hiding changes visibility immediately even while down
 | Rate-limit counters | Window plus 24 hours; anomaly evidence follows security schedule |
 
 The final application/audit/legal-hold retention durations require legal approval before real data is enabled.
+## Frontend migration additions (approved 2026-10-01)
+
+No new entity, field or migration is required by this design. Published directory entries project existing Opening records using the existing public eligibility state OPEN; the minimum projection is id/title/location/work_mode/employment_type. Do not introduce a separate publication flag or widen visibility through this migration.
+
+Recents reuse SearchDefinition, CriteriaGroup and Criterion with existing tenant/actor ownership, created_at ordering, expires_at and six-entry AD_HOC retention. Order by created_at descending then id descending for deterministic ties. SavedSearch remains the explicit named-save relation and lifecycle; exclude named saves from the unsaved recent collection. Restore criteria from current source rows, not SearchResultSnapshot or SavedSearch.result_context_snapshot. GET restoration does not update timestamps, versions or retention. Executing confirmed criteria uses the existing search creation lifecycle. No last-used column or new history model is required; earlier logical LRU wording is refined to existing execution/creation recency for this amendment. Any discovered schema necessity is a blocker to document before implementation.

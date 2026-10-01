@@ -6,6 +6,12 @@
 
 **Planning constraint**: This artifact describes implementation only. No application code or existing HTML was modified.
 
+## Approved frontend architecture amendment (2026-10-01)
+
+React + TypeScript + Tailwind through the existing Vite pipeline are approved for all user-facing pages. Django/DRF retain URLs, session, CSRF, authentication, authorization, validation, business logic, audit and database authority. The detailed [frontend migration plan](./frontend-migration.md) is normative for FM1–FM14, including WIP inventory, exact routes, components, APIs, design tokens, state/accessibility tests, fallback and rollback. This supersedes earlier server-rendered-only/no-framework statements below; historical infrastructure and AI plans do not authorize work during migration. Phase 10 remains deferred until FM14-03.
+
+Only three scope additions are approved: signed-out chooser at / using existing OIDC, public jobs at /jobs/ using a minimum published-opening GET collection, and backend recent-search GET list/criteria restoration using existing models. All other backend APIs/models remain unchanged. Every route retains a verified Django/legacy fallback until its replacement passes functional, security, accessibility and visual gates. Original mockup stays immutable; production privacy/security/accessibility controls take precedence. No protected browser storage and no shared React/imperative DOM ownership are permitted.
+
 ## Summary
 
 Turn the approved single-file recruiter/candidate mockup into an India-only production web application while preserving its information architecture, visuals, interactions, and supported workflows. Use a Django modular monolith with server-rendered templates and small TypeScript modules, PostgreSQL/RLS/pgvector, Cognito, S3 quarantine and malware scanning, SQS/outbox workers, and ECS Fargate in Mumbai with warm recovery infrastructure in Hyderabad.
@@ -69,7 +75,7 @@ flowchart LR
 ### Architectural style
 
 - **Modular monolith**: one repository, one Django deployment artifact, one worker artifact from the same code, and explicit domain modules. Modules communicate through service interfaces and transactional events, not direct cross-module table mutation.
-- **Server-rendered UI**: split the existing HTML into accessible base/layout/partial templates without redesigning it. Preserve class names and key DOM hooks initially. Move CSS with minimal change, and migrate inline JavaScript one flow at a time into typed modules.
+- **Django-hosted React UI**: migrate one page at a time to React/TypeScript and shared Tailwind components using Django bootstrap and the existing Vite manifest. Retain verified legacy templates/entries behind per-route server flags until acceptance passes; separate DOM ownership and styles.
 - **Same-origin API**: JSON REST under `/api/v1` for async interaction; OpenAPI 3.1 is the interface contract. Secure cookie sessions plus CSRF avoid browser token storage.
 - **One transactional source**: PostgreSQL owns candidate, application, consent, status, audit, outbox, and workflow state. Search projections are derived and disposable.
 - **Managed infrastructure**: AWS services carry identity, load balancing, files, queues, email, keys, secrets, monitoring, and malware scanning; the team owns domain behavior.
@@ -375,7 +381,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 
 | Alternative | Reason rejected for launch |
 |---|---|
-| React/Next/Vue SPA | Unnecessary state duplication and migration risk for an existing server-renderable design |
+| Separate Next.js/Vue frontend server | Not required; approved React pages stay in the Django/Vite application |
 | FastAPI plus separate frontend | More assembly and two application surfaces without an API-first requirement |
 | Microservices | Distributed consistency/operations exceed current team and scale needs |
 | Kubernetes/EKS | Fargate satisfies runtime and scaling without cluster administration |

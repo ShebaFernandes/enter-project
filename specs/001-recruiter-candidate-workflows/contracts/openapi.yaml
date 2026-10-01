@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: Recruiter and Candidate Workflow API
-  version: 1.1.0
+  version: 1.2.0
   description: >-
-    Same-origin API contract for the server-rendered application. Authentication uses a secure
+    Same-origin API contract for the Django-hosted application. Authentication uses a secure
     HttpOnly application session; unsafe methods also require CSRF protection. All protected
     operations are authorized by actor, tenant, object, purpose, consent, and field scope.
     Protected operations return non-enumerating 401/403/404 problems as applicable. Unsafe
@@ -20,6 +20,78 @@ tags:
   - name: Search
   - name: Administration
 paths:
+  /public/openings:
+    get:
+      security: []
+      tags: [Recruiting]
+      operationId: listPublicOpenings
+      description: Read-only OPEN public roles under existing public-opening eligibility. No candidate or tenant-private data. Stable id ascending cursor ordering; revalidate current state on each request.
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 25}
+        - name: cursor
+          in: query
+          schema: {type: string, maxLength: 2048}
+      responses:
+        '200':
+          description: Public role essentials; empty items when none are available
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                additionalProperties: false
+                properties:
+                  items: {type: array, items: {$ref: '#/components/schemas/PublicOpeningSummary'}}
+                  next_cursor: {type: [string, 'null']}
+        '422': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /tenants/{tenantId}/recent-searches:
+    get:
+      tags: [Search]
+      operationId: listRecentSearches
+      description: Current authorized actor and tenant only; at most six unexpired unsaved AD_HOC definitions, created_at descending then id descending. Excludes named saves and all candidate snapshots. GET does not refresh retention. Private no-store response.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Authorized recent criteria records
+          headers:
+            Cache-Control: {schema: {type: string, const: 'no-store, private'}}
+          content:
+            application/json:
+              schema: {type: array, maxItems: 6, items: {$ref: '#/components/schemas/RecentSearch'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /tenants/{tenantId}/recent-searches/{searchId}:
+    get:
+      tags: [Search]
+      operationId: restoreRecentSearchCriteria
+      description: Revalidate current search role, active tenant membership, exact ownership, AD_HOC context, expiry and recent eligibility. Return criteria for review only; no search execution, result snapshot, write or retention refresh. Confirm using existing search execution endpoint. Named saves use the existing saved-search detail operation.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: searchId
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Id'}
+      responses:
+        '200':
+          description: Authorized criteria; never historical candidate data
+          headers:
+            Cache-Control: {schema: {type: string, const: 'no-store, private'}}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecentSearch'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '503': {$ref: '#/components/responses/Problem'}
   /session:
     get:
       tags: [Identity]
@@ -1686,6 +1758,27 @@ components:
           items: {$ref: '#/components/schemas/CandidateFinding'}
         unknowns: {type: array, items: {type: string}}
         explanation: {type: [string, 'null']}
+    PublicOpeningSummary:
+      type: object
+      additionalProperties: false
+      required: [id, title, location, work_mode, employment_type]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        title: {type: string}
+        location: {type: string}
+        work_mode: {type: string}
+        employment_type: {type: string}
+    RecentSearch:
+      type: object
+      additionalProperties: false
+      required: [search_id, prompt, criteria, created_at, expires_at]
+      properties:
+        search_id: {$ref: '#/components/schemas/Id'}
+        prompt: {type: string, maxLength: 4000}
+        criteria: {$ref: '#/components/schemas/SearchCriteria'}
+        created_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+      description: Sole context is criteria.context and must be AD_HOC for recents. No top-level opening_id, result data, contacts, notes or candidate identifiers.
     SavedSearch:
       type: object
       required: [id, name, search_id, prompt, criteria, version]

@@ -54,3 +54,11 @@ Deletion authorization additionally requires recent subject-bound step-up verifi
 Tenant provisioning and boundary changes are not tenant administration: they are platform-onboarding actions with separate authorization and audit. Business units remain inside one tenant boundary.
 
 Unknown or unavailable inputs deny access. Allowed and denied sensitive operations emit audit events. Candidate existence, tenant membership, grant status, and rate-limit state are not revealed in public error text.
+## Approved frontend entry and read-only additions
+
+| Operation | Public | Candidate | Recruiter / Hiring Manager | Tenant Admin / Platform Security Admin |
+|---|---|---|---|---|
+| Platform chooser / published opening list | Allowed public essentials only | Same public projection | Same public projection | Same public projection; no additional content |
+| List/restore recent search criteria | Denied | Denied | Current active membership, effective search role, exact actor and tenant; active context revalidated | No automatic search access |
+
+Public directory filtering uses the existing public-opening eligibility (OPEN) and returns only id, title, location, work_mode and employment_type. It never queries or returns candidates, team assignments or tenant-private metadata. Validate opaque cursor and bound page size; no client-selected tenant context can expose private roles. Protected recents use server-derived actor/tenant and RLS, current ownership/membership, expiry and AD_HOC context. Wrong-owner/cross-tenant/expired IDs return non-enumerating unavailable responses. Named saved OPENING searches remain separately authorized against the active opening. History contains no result snapshots; executing restored criteria repeats all current eligibility and field checks. Audit sensitive allowed/denied reads through existing minimized audit infrastructure without prompt/criteria bodies. All chooser links preserve existing OIDC/CSRF/session behavior; frontend flags never grant access.

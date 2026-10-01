@@ -1101,3 +1101,16 @@ saved search with its criteria and result context.
   resolved during planning and recorded before production launch.
 - The recruiter management workspace for companies, openings, and recruiter-entered candidates is
   a supporting workflow with lower priority than candidate profile creation and ad-hoc search.
+## Approved public entry and recent-search amendment (2026-10-01)
+
+- **FR-066**: Signed-out users MUST see a recruiter/candidate platform chooser matching the reference. Recruiter selection starts the existing identity-provider sign-in; candidate selection opens public published jobs. Selection never authenticates a user, assigns a role or grants protected access.
+- **FR-067**: The public jobs directory MUST list only real, currently open published roles using the existing public-opening eligibility semantics. Draft, paused, closed and otherwise unavailable openings MUST be absent; expose only public job essentials. No mock roles or browser-local persistence is permitted. Opening a role retains its existing URL; applying still requires candidate authentication, current consent and existing validation.
+- **FR-068**: Recents MUST use backend records scoped to the current authorized actor and tenant, distinct from explicitly named saved searches. Reuse existing search definitions and saved-search ownership where possible. Expose at most the six most recent unexpired AD_HOC searches (existing seven-day window); named saves retain their separate lifecycle. Restore criteria only after current membership, role, owner and context checks. Opening-based named searches revalidate the active opening. Restoration MUST NOT return historical candidate results or bypass confirmed execution and fresh candidate authorization. No protected search data may be persisted in browser storage.
+
+Acceptance scenarios:
+
+1. Signed-out recruiter selection enters existing OIDC; candidate selection opens public jobs; direct protected links still enforce authentication.
+2. An active public opening appears and links to its existing role page; draft/paused/closed records do not; an empty directory shows an honest empty state and unavailable service a safe error.
+3. A role closing between list and application is revalidated and rejected by the existing application workflow.
+4. Recents return only current actor/tenant records, ordered deterministically; expiry/eviction and named-save separation are enforced. Wrong tenant/owner, revoked membership and guessed IDs do not disclose search content.
+5. Reopening restores criteria for review; confirmed execution retrieves newly authorized results. Expired/deleted records show unavailable; inaccessible opening-based named saves cannot execute. No Application or CandidateWork is created by restoring history.
