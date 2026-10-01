@@ -1,0 +1,34 @@
+{% extends "base.html" %} {% block content %}
+<div class="comparison-shell" data-comparison data-tenant-id="{{ tenant_id }}">
+  <header class="recruiter-header">
+    <div>
+      <p class="eyebrow">Recruiter workspace</p>
+      <h1>Compare candidates</h1>
+      <p>Signed in as {{ role|lower }}</p>
+    </div>
+    <button type="button" data-close-comparison>Return to results</button>
+  </header>
+  {% csrf_token %}
+  <p data-comparison-status role="status" aria-live="polite"></p>
+  <section data-comparison-empty>
+    <h2>No candidates selected</h2>
+    <p>
+      Select between two and ten candidates from the current authorized result
+      view. Candidate access is checked again when comparison opens.
+    </p>
+  </section>
+  <section
+    data-comparison-content
+    tabindex="-1"
+    hidden
+    aria-labelledby="comparison-heading"
+  >
+    <h2 id="comparison-heading">Side-by-side evidence</h2>
+    <p>
+      Unknown and unavailable values remain explicit. This view provides no
+      recommendation or automated hiring conclusion.
+    </p>
+    <div class="comparison-grid" data-comparison-candidates></div>
+  </section>
+</div>
+{% endblock %}

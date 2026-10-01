@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from typing import cast
 
 import pytest
 from django.utils import timezone
@@ -9,7 +10,7 @@ from modules.recruiting.candidate_work import (
     create_or_reuse_candidate_work,
     link_application_candidate_work,
 )
-from modules.recruiting.models import CandidateWorkRecord
+from modules.recruiting.models import Application, CandidateWorkRecord
 from modules.search.models import SearchDefinition, SearchResultSnapshot
 from tests.factories import ApplicationFactory
 
@@ -87,11 +88,14 @@ def test_later_application_links_without_overwriting_candidate_work(profile_fact
     work.internal_status = "CONTACTED"
     work.structured_reasons = ["SYNTHETIC_CONTEXT"]
     work.save()
-    application = ApplicationFactory(
-        tenant=recruiter.tenant,
-        opening__tenant=recruiter.tenant,
-        candidate_profile_id=profile.id,
-        internal_status="SCREENING",
+    application = cast(
+        Application,
+        ApplicationFactory(
+            tenant=recruiter.tenant,
+            opening__tenant=recruiter.tenant,
+            candidate_profile_id=profile.id,
+            internal_status="SCREENING",
+        ),
     )
     linked = link_application_candidate_work(application)
     application.refresh_from_db()

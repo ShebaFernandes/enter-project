@@ -271,17 +271,17 @@
 
 ### Tests for User Story 5
 
-- [ ] T141 [P] [US5] Add comparison API tests for consistent fields, stable order, missing evidence, selection limits, disappearing candidates, and tenant/object authorization in `app/tests/contract/test_comparison_api.py`
-- [ ] T142 [P] [US5] Add browser tests for no selection, selecting/removing, side-by-side evidence, state preservation, focus return, keyboard use, 320px layout, and 200% zoom in `app/tests/browser/recruiter/comparison.spec.ts`
-- [ ] T143 [P] [US5] Add boundary tests proving comparison produces no generated recommendation and cannot reject, shortlist, contact, or change status in `app/tests/security/test_comparison_boundaries.py`
+- [x] T141 [P] [US5] Add comparison API tests for consistent fields, stable order, missing evidence, selection limits, disappearing candidates, and tenant/object authorization in `app/tests/contract/test_comparison_api.py`
+- [x] T142 [P] [US5] Add browser tests for no selection, selecting/removing, side-by-side evidence, state preservation, focus return, keyboard use, 320px layout, and 200% zoom in `app/tests/browser/recruiter/comparison.spec.ts`
+- [x] T143 [P] [US5] Add boundary tests proving comparison produces no generated recommendation and cannot reject, shortlist, contact, or change status in `app/tests/security/test_comparison_boundaries.py`
 
 ### Implementation for User Story 5
 
-- [ ] T144 [US5] Implement authorized deterministic comparison projections with consistent evidence, unknowns, and field ordering in `app/modules/recruiting/comparison.py`
-- [ ] T145 [US5] Implement the OpenAPI comparison endpoint with per-request reauthorization and no model-generated summary in `app/modules/recruiting/comparison_views.py`
-- [ ] T146 [P] [US5] Build accessible responsive comparison table/cards, empty guidance, missing-data labels, removal controls, and focus-return path in `app/frontend/recruiter/comparison.ts` and `app/frontend/templates/recruiter/comparison.html`
-- [ ] T147 [US5] Preserve comparison selection through allowed result interactions and remove newly unauthorized candidates with explanation in `app/frontend/recruiter/comparison.ts`
-- [ ] T148 [US5] Run and record comparison, preservation, and no-automation evidence in `docs/evidence/us5-comparison.md`
+- [x] T144 [US5] Implement authorized deterministic comparison projections with consistent evidence, unknowns, and field ordering in `app/modules/recruiting/comparison.py`
+- [x] T145 [US5] Implement the OpenAPI comparison endpoint with per-request reauthorization and no model-generated summary in `app/modules/recruiting/comparison_views.py`
+- [x] T146 [P] [US5] Build accessible responsive comparison table/cards, empty guidance, missing-data labels, removal controls, and focus-return path in `app/frontend/recruiter/comparison.ts` and `app/frontend/templates/recruiter/comparison.html`
+- [x] T147 [US5] Preserve comparison selection through allowed result interactions and remove newly unauthorized candidates with explanation in `app/frontend/recruiter/comparison.ts`
+- [x] T148 [US5] Run and record comparison, preservation, and no-automation evidence in `docs/evidence/us5-comparison.md`
 
 **Checkpoint**: US5 supports deterministic human comparison without the removed AI-summary feature.
 

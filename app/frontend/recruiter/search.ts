@@ -3,6 +3,11 @@ import {
   findingMarkup,
   type CandidateFinding,
 } from "./candidate-findings";
+import {
+  readComparisonSelection,
+  writeComparisonSelection,
+  type ComparisonSelection,
+} from "./comparison";
 
 type SearchItem = {
   candidate_id: string;
@@ -70,7 +75,32 @@ function card(item: SearchItem, searchId: string) {
   article.className = "candidate-card";
   article.dataset.findings = String(item.findings.length);
   const summary = item.summary;
-  article.innerHTML = `<h3>${escapeText(String(summary.name ?? "Candidate"))}</h3><p>${escapeText(String(summary.current_role ?? summary.headline ?? "Role not provided"))}</p><p>${escapeText(String((summary.location as Record<string, string>)?.display ?? "Location not provided"))}</p><p>${item.evidence.length} matching evidence item(s)</p>${item.findings.map(findingMarkup).join("")}<button type="button">View authorized details</button>`;
+  const candidateName = String(summary.name ?? "Candidate");
+  article.innerHTML = `<h3>${escapeText(candidateName)}</h3><p>${escapeText(String(summary.current_role ?? summary.headline ?? "Role not provided"))}</p><p>${escapeText(String((summary.location as Record<string, string>)?.display ?? "Location not provided"))}</p><p>${item.evidence.length} matching evidence item(s)</p>${item.findings.map(findingMarkup).join("")}<button type="button">View authorized details</button>`;
+  const comparisonLabel = document.createElement("label");
+  comparisonLabel.className = "candidate-card__comparison";
+  const comparisonInput = document.createElement("input");
+  comparisonInput.type = "checkbox";
+  comparisonInput.dataset.comparisonCandidate = item.candidate_id;
+  comparisonInput.checked =
+    readComparisonSelection()?.context_id === searchId &&
+    (readComparisonSelection()?.candidate_ids.includes(item.candidate_id) ??
+      false);
+  comparisonInput.addEventListener("change", () =>
+    window.dispatchEvent(
+      new CustomEvent("recruiter-comparison-toggle", {
+        detail: {
+          candidateId: item.candidate_id,
+          candidateName,
+          searchId,
+          checked: comparisonInput.checked,
+          input: comparisonInput,
+        },
+      }),
+    ),
+  );
+  comparisonLabel.append(comparisonInput, ` Compare ${candidateName}`);
+  article.insertBefore(comparisonLabel, article.querySelector("button"));
   article
     .querySelector("button")
     ?.addEventListener("click", () => openDetail(item.candidate_id, searchId));
@@ -106,8 +136,45 @@ if (root) {
   const context = form.elements.namedItem("context") as HTMLSelectElement;
   const openingRow = root.querySelector<HTMLElement>("[data-opening-row]")!;
   const more = root.querySelector<HTMLButtonElement>("[data-more]")!;
+  const comparisonCount = root.querySelector<HTMLElement>(
+    "[data-comparison-count]",
+  );
+  const openComparison = root.querySelector<HTMLButtonElement>(
+    "[data-open-comparison]",
+  );
   let lastPayload: Record<string, unknown> | null = null;
   let nextCursor: string | null = null;
+  let activeSearchId = "";
+  let comparisonSelection: ComparisonSelection | null = null;
+
+  const updateComparisonControls = () => {
+    const count = comparisonSelection?.candidate_ids.length ?? 0;
+    if (comparisonCount)
+      comparisonCount.textContent = `${count} candidate${count === 1 ? "" : "s"} selected for comparison.`;
+    if (openComparison)
+      openComparison.setAttribute("aria-disabled", String(count < 2));
+  };
+
+  const useSearchContext = (searchId: string) => {
+    activeSearchId = searchId;
+    const stored = readComparisonSelection();
+    const nextSelection: ComparisonSelection =
+      stored &&
+      stored.tenant_id === searchRoot.dataset.tenantId &&
+      stored.context_type === "SEARCH" &&
+      stored.context_id === searchId
+        ? stored
+        : {
+            tenant_id: searchRoot.dataset.tenantId!,
+            context_type: "SEARCH",
+            context_id: searchId,
+            candidate_ids: [],
+            return_url: location.href,
+          };
+    comparisonSelection = nextSelection;
+    writeComparisonSelection(nextSelection);
+    updateComparisonControls();
+  };
   list.append(criterionRow());
   root
     .querySelector("[data-add-criterion]")
@@ -157,6 +224,7 @@ if (root) {
       return null;
     }
     const data = (await response.json()) as SearchResponse;
+    useSearchContext(data.search_id);
     if (!append) results.innerHTML = "";
     if (!data.items.length && !append)
       results.innerHTML =
@@ -242,6 +310,40 @@ if (root) {
     if (!lastPayload || !nextCursor) return;
     await runSearch({ ...lastPayload, cursor: nextCursor }, true);
   });
+  window.addEventListener("recruiter-comparison-toggle", ((
+    event: CustomEvent<{
+      candidateId: string;
+      candidateName: string;
+      searchId: string;
+      checked: boolean;
+      input: HTMLInputElement;
+    }>,
+  ) => {
+    if (event.detail.searchId !== activeSearchId || !comparisonSelection)
+      return;
+    const ids = new Set(comparisonSelection.candidate_ids);
+    if (event.detail.checked && ids.size >= 10) {
+      event.detail.input.checked = false;
+      status.textContent = "You can compare at most 10 candidates.";
+      return;
+    }
+    if (event.detail.checked) ids.add(event.detail.candidateId);
+    else ids.delete(event.detail.candidateId);
+    comparisonSelection.candidate_ids = [...ids];
+    comparisonSelection.return_url = location.href;
+    writeComparisonSelection(comparisonSelection);
+    updateComparisonControls();
+  }) as EventListener);
+  openComparison?.addEventListener("click", () => {
+    if (!comparisonSelection || comparisonSelection.candidate_ids.length < 2)
+      return;
+    comparisonSelection.return_url = location.href;
+    writeComparisonSelection(comparisonSelection);
+    window.dispatchEvent(new Event("recruiter-search-intentional-navigation"));
+    location.assign(
+      `/tenants/${encodeURIComponent(searchRoot.dataset.tenantId!)}/recruiter/comparison/`,
+    );
+  });
   root.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach((button) =>
     button.addEventListener("click", () => {
       root
@@ -261,10 +363,12 @@ if (root) {
   if (confirmed) {
     sessionStorage.removeItem(RESULT_KEY);
     const data = JSON.parse(confirmed) as SearchResponse;
+    useSearchContext(data.search_id);
     results.innerHTML = "";
     data.items.forEach((item) => results.append(card(item, data.search_id)));
     nextCursor = data.next_cursor;
     more.hidden = nextCursor === null;
     status.textContent = `${data.items.length} confirmed result(s) loaded.`;
   }
+  updateComparisonControls();
 }

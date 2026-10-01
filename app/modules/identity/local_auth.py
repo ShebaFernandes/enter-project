@@ -32,6 +32,7 @@ from .services import link_identity_with_role
 TOKEN_TTL_SECONDS = 600
 RECRUITER_SUBJECT = "local-synthetic-recruiter"
 CANDIDATE_SUBJECT = "local-synthetic-candidate"
+COMPARISON_CANDIDATE_SUBJECT = "local-synthetic-comparison-candidate"
 BASE_OPENING_ID = uuid.UUID("00000000-0000-4000-8000-000000000106")
 
 
@@ -227,6 +228,62 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
                 "expires_at": timezone.now() + timedelta(days=365),
                 "withdrawn_at": None,
+            },
+        )
+
+    comparison_identity = _synthetic_identity(
+        subject=COMPARISON_CANDIDATE_SUBJECT,
+        email="comparison-candidate@local-synthetic.invalid",
+        workforce=False,
+    )
+    with _rls_context(identity_id=comparison_identity.id):
+        comparison_profile, _ = CandidateProfile.objects.update_or_create(
+            identity=comparison_identity,
+            defaults={
+                "full_name_ciphertext": encrypt("Synthetic Comparison Candidate"),
+                "location": {"normalized": "bengaluru", "display": "Bengaluru"},
+                "headline": "Platform engineer",
+                "current_role": "Platform Engineer",
+                "current_company": "Synthetic Platform Employer",
+                "experience_years": "6.00",
+                "role_categories": ["software engineer"],
+                "preferred_locations": ["bengaluru"],
+                "work_arrangements": ["REMOTE"],
+                "notice_period": "Unknown",
+                "profile_state": CandidateProfile.State.PUBLISHED,
+                "consent_expires_at": timezone.now() + timedelta(days=365),
+            },
+        )
+        CandidateSkill.objects.update_or_create(
+            profile=comparison_profile,
+            normalized_name="python",
+            defaults={"display_name": "Python", "ordering": 0},
+        )
+        comparison_consent, _ = ConsentRecord.objects.update_or_create(
+            profile=comparison_profile,
+            source_request_id="local-synthetic-comparison-verification",
+            defaults={
+                "purpose": "RECRUITING_DISCOVERY",
+                "field_scope": ["profile", "employment_history", "skills"],
+                "audience_scope": {"approved_tenant_ids": [str(tenant.id)]},
+                "notice_version": "candidate-discovery-v1",
+                "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
+                "expires_at": timezone.now() + timedelta(days=365),
+                "withdrawn_at": None,
+            },
+        )
+        VisibilityRule.objects.filter(
+            profile=comparison_profile, superseded_at__isnull=True
+        ).exclude(consent_record=comparison_consent).update(superseded_at=timezone.now())
+        VisibilityRule.objects.update_or_create(
+            profile=comparison_profile,
+            consent_record=comparison_consent,
+            defaults={
+                "mode": VisibilityRule.Mode.APPROVED_RECRUITERS,
+                "approved_tenant_ids": [str(tenant.id)],
+                "matching_preferences": {},
+                "actor": comparison_identity,
+                "superseded_at": None,
             },
         )
     return recruiter, tenant, profile

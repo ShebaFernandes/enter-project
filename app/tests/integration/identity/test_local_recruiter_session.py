@@ -60,7 +60,9 @@ def test_one_time_bootstrap_creates_real_assured_recruiter_session_and_search():
         headers={"X-Tenant-ID": issued.tenant_id},
     )
     assert search.status_code == 200
-    result = search.json()["items"][0]
+    result = next(
+        item for item in search.json()["items"] if item["candidate_id"] == issued.candidate_id
+    )
     assert result["candidate_id"] == issued.candidate_id
     assert result["findings"][0]["code"] == "SHORT_TENURE"
     assert result["findings"][0]["informational_only"] is True

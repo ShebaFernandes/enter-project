@@ -60,7 +60,7 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
   await resultPage.getByLabel("Value").fill("Python");
   await resultPage.getByRole("button", { name: "Search", exact: true }).click();
   await expect(
-    resultPage.getByText("Synthetic Search Candidate"),
+    resultPage.getByRole("heading", { name: "Synthetic Search Candidate" }),
   ).toBeVisible();
   await expect(
     resultPage.getByText(
@@ -70,6 +70,7 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
 
   await resultPage
     .getByRole("button", { name: "View authorized details" })
+    .first()
     .click();
   await expect(resultPage.getByRole("dialog")).toBeVisible();
   await expect(resultPage.getByRole("dialog")).toContainText(

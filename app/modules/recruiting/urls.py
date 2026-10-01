@@ -9,6 +9,7 @@ from .candidate_views import (
     CandidateNotificationPreferencesView,
     PublicOpeningView,
 )
+from .comparison_views import ComparisonView
 from .opening_views import (
     OpeningCollectionView,
     OpeningDetailView,
@@ -66,6 +67,11 @@ urlpatterns = [
     path(
         "tenants/<uuid:tenant_id>/candidate-work/<uuid:context_id>/notes",
         CandidateWorkNoteCollectionView.as_view(),
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/comparisons",
+        ComparisonView.as_view(),
+        name="candidate-comparison",
     ),
     path(
         "tenants/<uuid:tenant_id>/candidates/<uuid:candidate_id>/disclosures/preview",

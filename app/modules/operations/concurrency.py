@@ -1,7 +1,15 @@
 import hashlib
 import json
+from typing import TypedDict
 
 from rest_framework.exceptions import APIException
+
+
+class Reconciliation(TypedDict):
+    current: dict[str, object]
+    attempted: dict[str, object]
+    changed_fields: list[str]
+    current_etag: str
 
 
 def strong_etag(object_id: object, version: int) -> str:
@@ -22,7 +30,7 @@ class StaleWrite(APIException):
         version: int,
     ) -> None:
         changed = sorted(key for key in attempted if attempted.get(key) != current.get(key))
-        self.reconciliation = {
+        self.reconciliation: Reconciliation = {
             "current": current,
             "attempted": attempted,
             "changed_fields": changed,

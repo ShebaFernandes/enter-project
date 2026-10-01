@@ -16,5 +16,6 @@ import "../recruiter/criteria-review";
 import "../recruiter/speech-search";
 import "../recruiter/candidate-findings";
 import "../recruiter/candidate-detail";
+import "../recruiter/comparison";
 import "./navigation";
 import "./persistence";
