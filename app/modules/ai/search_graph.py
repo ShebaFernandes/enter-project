@@ -33,6 +33,10 @@ class SearchIntentGateway(Protocol):
 
 def _safe_fallback(prompt: str, context: dict[str, object], status: str) -> SearchIntent:
     fallback = deterministic_fallback(prompt, context)
+    # A complete deterministic interpretation does not need a model or a review
+    # screen. Ambiguous, protected, or instruction-like input remains blocked.
+    if not fallback.requires_review and len(fallback.criteria.criteria) >= 2:
+        return fallback
     return fallback.model_copy(
         update={
             "ai_status": status,

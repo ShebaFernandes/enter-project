@@ -150,7 +150,9 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "current_role": "Software Engineer",
                 "current_company": "Synthetic Current Employer",
                 "experience_years": "5.00",
-                "role_categories": ["software engineer"],
+                # Exact category membership matches the local prompt's "engineer";
+                # retain the opening-title category for existing synthetic journeys.
+                "role_categories": ["engineer", "software engineer"],
                 "preferred_locations": ["bengaluru"],
                 "work_arrangements": ["REMOTE"],
                 "profile_state": CandidateProfile.State.PUBLISHED,

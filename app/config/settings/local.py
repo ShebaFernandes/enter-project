@@ -15,4 +15,9 @@ CACHES = {
         "LOCATION": ENV.valkey_url,  # noqa: F405
     }
 }
-FRONTEND_REACT_ROUTES = {}
+
+FRONTEND_REACT_ROUTES = {
+    "platform-chooser": True,
+    "recruiter-search-page": True,
+    "recruiter-results-page": True,
+}
