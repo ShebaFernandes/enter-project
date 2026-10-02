@@ -1,0 +1,13 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main data-page-fallback tabindex="-1" aria-label="Page recovery">
+  <h1>Hiring organization unavailable</h1>
+  <p>
+    Reload to retry. No organization or opening changes were submitted
+    automatically.
+  </p>
+  <a href="/tenants/{{ tenant_id }}/recruiter/search/"
+    >Return to recruiter search</a
+  >
+</main>

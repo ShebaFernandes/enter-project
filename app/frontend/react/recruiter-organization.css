@@ -1,0 +1,95 @@
+body[data-frontend-renderer="react"]:has(.fm12-grid) {
+  margin: 0;
+  background: var(--fm-color-paper);
+}
+.enter-ui .fm12-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-panel);
+  align-items: start;
+}
+.enter-ui .fm12-grid > .ui-card {
+  min-width: 0;
+  display: grid;
+  gap: var(--fm-spacing-field);
+}
+.enter-ui .fm12-form {
+  display: grid;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .fm12-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+.enter-ui .fm12-form-grid > :last-child {
+  grid-column: 1 / -1;
+}
+.enter-ui .fm12-list,
+.enter-ui .fm12-opening-list {
+  display: grid;
+  gap: var(--fm-spacing-control);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.enter-ui .fm12-list > li,
+.enter-ui .fm12-opening {
+  min-width: 0;
+  padding: var(--fm-spacing-field);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+}
+.enter-ui .fm12-card-head,
+.enter-ui .fm12-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .fm12-kicker {
+  color: var(--fm-color-sage);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.enter-ui .fm12-publication {
+  display: grid;
+  gap: var(--fm-spacing-control);
+  margin-top: var(--fm-spacing-field);
+  padding-top: var(--fm-spacing-field);
+  border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm12-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .fm12-preview div {
+  min-width: 0;
+  padding: 10px;
+  background: var(--fm-color-paper);
+  border-radius: var(--fm-radius-control);
+}
+.enter-ui .fm12-preview dt {
+  color: var(--fm-color-muted);
+  text-transform: capitalize;
+}
+.enter-ui .fm12-preview dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .enter-ui .fm12-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .enter-ui .fm12-form-grid,
+  .enter-ui .fm12-preview {
+    grid-template-columns: 1fr;
+  }
+  .enter-ui .fm12-form-grid > :last-child {
+    grid-column: auto;
+  }
+}

@@ -19,6 +19,8 @@ import "./public-opportunities.css";
 import { CandidateProgress } from "./candidate-progress";
 import { CandidateRights } from "./candidate-rights";
 import "./candidate-control.css";
+import { OrganizationPage } from "./recruiter-organization";
+import "./recruiter-organization.css";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {
@@ -34,6 +36,7 @@ if (document.querySelector("[data-react-page]")) {
     "public-role": RolePage,
     "candidate-progress": CandidateProgress,
     "candidate-rights": CandidateRights,
+    "recruiter-organization": OrganizationPage,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

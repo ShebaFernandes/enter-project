@@ -500,9 +500,17 @@ checklist remains unchecked.
 
 ### FM12: Recruiter organization/openings
 
-- [ ] FM12-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM11-03.
-- [ ] FM12-02 Implement recruiter organization/openings within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM12-01.
-- [ ] FM12-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM12-02.
+- [X] FM12-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM11-03.
+- [X] FM12-02 Implement recruiter organization/openings within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM12-01.
+- [X] FM12-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM12-02.
+
+FM12 evidence: [recruiter organization, openings and verification](../../docs/evidence/frontend-migration/fm12.md).
+The organization route now has an independent, reversible React renderer.
+Business units remain tenant context rather than security boundaries; opening
+publication remains separate from internal state and ETag protected; synthetic
+candidate provenance stays immutable and cannot merge into candidate profiles.
+All committed route flags remain default-off. FM13 is cleared but not started;
+the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM13: Tenant Admin governance
 

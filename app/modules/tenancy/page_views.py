@@ -35,9 +35,19 @@ def recruiter_organization_page(request, tenant_id):
     response = render(
         request,
         "recruiter/organization.html",
-        {"tenant_id": tenant_id, "role": membership.role},
+        {
+            "tenant_id": tenant_id,
+            "role": membership.role,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "recruiter-organization",
+                "tenantId": str(tenant_id),
+                "requiresSession": True,
+            },
+        },
     )
     response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
     return response
 
 
