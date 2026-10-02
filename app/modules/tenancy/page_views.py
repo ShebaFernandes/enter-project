@@ -80,7 +80,15 @@ def tenant_governance_page(request, tenant_id):
             "tenant_id": tenant_id,
             "role": membership.role,
             "emergency_access": emergency,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "tenant-governance",
+                "tenantId": str(tenant_id),
+                "requiresSession": True,
+                "emergencyAccess": emergency,
+            },
         },
     )
     response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
     return response

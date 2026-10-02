@@ -12,6 +12,15 @@ export type PageBootstrap = {
   consentId?: string;
   requiresSession: boolean;
   entryError?: boolean;
+  emergencyAccess?: {
+    id: string;
+    reason_code: string;
+    field_scope: string[];
+    operation_scope: string[];
+    object_count: number;
+    status: string;
+    expires_at: string | null;
+  }[];
 };
 export type PageProps = {
   bootstrap: PageBootstrap;
@@ -26,6 +35,25 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
   )
     throw new Error("Invalid bootstrap element");
   const value = JSON.parse(element.textContent ?? "") as Partial<PageBootstrap>;
+  const emergencyAccessValid =
+    value.emergencyAccess === undefined ||
+    (Array.isArray(value.emergencyAccess) &&
+      value.emergencyAccess.every(
+        (item) =>
+          item &&
+          isUuid(item.id) &&
+          typeof item.reason_code === "string" &&
+          Array.isArray(item.field_scope) &&
+          item.field_scope.every((field) => typeof field === "string") &&
+          Array.isArray(item.operation_scope) &&
+          item.operation_scope.every(
+            (operation) => typeof operation === "string",
+          ) &&
+          Number.isInteger(item.object_count) &&
+          item.object_count >= 0 &&
+          typeof item.status === "string" &&
+          (item.expires_at === null || typeof item.expires_at === "string"),
+      ));
   if (
     !value ||
     value.version !== 1 ||
@@ -36,7 +64,8 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     (value.tenantId !== undefined && !isUuid(value.tenantId)) ||
     (value.openingId !== undefined && !isUuid(value.openingId)) ||
     (value.resumeId !== undefined && !isUuid(value.resumeId)) ||
-    (value.consentId !== undefined && !isUuid(value.consentId))
+    (value.consentId !== undefined && !isUuid(value.consentId)) ||
+    !emergencyAccessValid
   )
     throw new Error("Invalid page bootstrap");
   return {
@@ -49,6 +78,9 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     ...(value.openingId ? { openingId: value.openingId } : {}),
     ...(value.resumeId ? { resumeId: value.resumeId } : {}),
     ...(value.consentId ? { consentId: value.consentId } : {}),
+    ...(value.emergencyAccess
+      ? { emergencyAccess: value.emergencyAccess }
+      : {}),
   };
 }
 class PageBoundary extends Component<

@@ -21,6 +21,8 @@ import { CandidateRights } from "./candidate-rights";
 import "./candidate-control.css";
 import { OrganizationPage } from "./recruiter-organization";
 import "./recruiter-organization.css";
+import { GovernancePage } from "./tenant-governance";
+import "./tenant-governance.css";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {
@@ -37,6 +39,7 @@ if (document.querySelector("[data-react-page]")) {
     "candidate-progress": CandidateProgress,
     "candidate-rights": CandidateRights,
     "recruiter-organization": OrganizationPage,
+    "tenant-governance": GovernancePage,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

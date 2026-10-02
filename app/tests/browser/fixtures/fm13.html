@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FM13 tenant governance</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script id="page-bootstrap" type="application/json">
+      {
+        "version": 1,
+        "page": "tenant-governance",
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "requiresSession": true,
+        "emergencyAccess": [
+          {
+            "id": "00000000-0000-4000-8000-000000000136",
+            "reason_code": "INCIDENT_SUPPORT",
+            "field_scope": ["profile_state"],
+            "operation_scope": ["READ"],
+            "object_count": 1,
+            "status": "ACTIVE",
+            "expires_at": "2026-10-02T18:00:00Z"
+          }
+        ]
+      }
+    </script>
+    <div data-page-csrf hidden>
+      <input name="csrfmiddlewaretoken" value="synthetic-csrf" />
+    </div>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1">
+      <h1>Tenant governance unavailable</h1>
+    </main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>

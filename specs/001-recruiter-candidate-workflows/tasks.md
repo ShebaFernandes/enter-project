@@ -514,9 +514,17 @@ the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM13: Tenant Admin governance
 
-- [ ] FM13-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM12-03.
-- [ ] FM13-02 Implement tenant admin governance within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM13-01.
-- [ ] FM13-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM13-02.
+- [X] FM13-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM12-03.
+- [X] FM13-02 Implement tenant admin governance within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM13-01.
+- [X] FM13-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM13-02.
+
+FM13 evidence: [Tenant Admin governance and verification](../../docs/evidence/frontend-migration/fm13.md).
+The governance route now has an independent, reversible React renderer. Audit
+metadata remains redacted and its reads are audited; access-review completion is
+ETag protected with explicit revocation and bounded-exception decisions; Tenant
+Admins may revoke minimized emergency grants without receiving candidate content.
+All committed route flags remain default-off. FM14 is cleared but not started;
+the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM14: Full parity, accessibility and regression verification
 
