@@ -1,0 +1,83 @@
+.enter-ui .candidate-comparison-page .ui-container {
+  max-width: var(--fm-container-search);
+}
+.enter-ui .comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--fm-spacing-section);
+  align-items: start;
+  min-width: 0;
+}
+.enter-ui .comparison-card {
+  background: var(--fm-color-raised);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  box-shadow: var(--fm-shadow-card);
+  padding: var(--fm-spacing-panel);
+  display: grid;
+  gap: var(--fm-spacing-panel);
+  min-width: 0;
+}
+.enter-ui .comparison-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-spacing-field);
+  min-width: 0;
+}
+.enter-ui .comparison-card-head h2 {
+  overflow-wrap: anywhere;
+}
+.enter-ui .comparison-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fm-color-sage-soft);
+  color: var(--fm-color-sage);
+  font-weight: 800;
+}
+.enter-ui .comparison-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-control);
+  margin: 0;
+}
+.enter-ui .comparison-fields > div {
+  background: var(--fm-color-paper);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-control);
+  min-width: 0;
+}
+.enter-ui .comparison-fields dt {
+  color: var(--fm-color-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.enter-ui .comparison-fields dd {
+  margin: var(--fm-spacing-tight) 0 0;
+  overflow-wrap: anywhere;
+}
+.enter-ui .comparison-value ul {
+  margin: 0;
+  padding-inline-start: 20px;
+}
+.enter-ui .comparison-finding {
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  padding: var(--fm-spacing-field);
+  display: grid;
+  gap: var(--fm-spacing-control);
+}
+@media (max-width: 540px) {
+  .enter-ui .comparison-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enter-ui .comparison-card {
+    padding: var(--fm-spacing-field);
+  }
+}

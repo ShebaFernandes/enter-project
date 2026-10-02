@@ -27,7 +27,9 @@ test("authenticated recruiter compares two currently authorized search results",
     .click();
   await expect(page).toHaveURL(/\/recruiter\/comparison\/#handoff=/);
   await expect(
-    page.getByText("2 currently authorized candidates loaded."),
+    page.getByRole("status").filter({
+      hasText: "2 currently authorized candidates loaded.",
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Synthetic Search Candidate" }),
@@ -35,7 +37,5 @@ test("authenticated recruiter compares two currently authorized search results",
   await expect(
     page.getByRole("heading", { name: "Synthetic Comparison Candidate" }),
   ).toBeVisible();
-  await expect(page.locator("[data-comparison-content] > p")).toContainText(
-    "provides no recommendation",
-  );
+  await expect(page.getByText(/provides no recommendation/)).toBeVisible();
 });

@@ -1,0 +1,13 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main data-page-fallback tabindex="-1" aria-label="Page recovery">
+  <h1>Comparison unavailable</h1>
+  <p>
+    Reload to retry. No candidate information is retained by this recovery page.
+  </p>
+  {% if tenant_id %}<a
+    href="{% url 'recruiter-search-page' tenant_id=tenant_id %}"
+    >Return to search</a
+  >{% else %}<a href="/">Return to platform selection</a>{% endif %}
+</main>

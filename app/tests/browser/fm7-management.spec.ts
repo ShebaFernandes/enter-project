@@ -258,9 +258,11 @@ test("FM7 application publication needs a separate explicit confirmation", async
   await page
     .getByRole("button", { name: "Confirm publication", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "published after confirmation",
-  );
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "published after confirmation" }),
+  ).toBeVisible();
   expect(publishes).toBe(1);
 });
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FM8 synthetic fixture</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script id="page-bootstrap" type="application/json">
+      {
+        "version": 1,
+        "page": "candidate-comparison",
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "requiresSession": true
+      }
+    </script>
+    <div data-page-csrf hidden>
+      <input name="csrfmiddlewaretoken" value="synthetic-csrf" />
+    </div>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1">Comparison unavailable</main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>

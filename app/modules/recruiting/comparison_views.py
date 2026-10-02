@@ -66,6 +66,12 @@ def recruiter_comparison_page(request, tenant_id):
         {
             "tenant_id": tenant_id,
             "role": membership.role,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "candidate-comparison",
+                "tenantId": str(tenant_id),
+                "requiresSession": True,
+            },
         },
     )
     response["Cache-Control"] = "no-store, private"

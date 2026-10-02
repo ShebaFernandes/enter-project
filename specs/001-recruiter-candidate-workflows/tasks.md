@@ -436,16 +436,24 @@ FM7 evidence: [management and disclosure verification](../../docs/evidence/front
 pass with authenticated gates enabled. Repository-wide typing, quality and all four
 builds pass. Per the explicit rollout decision, verification flags were process-local
 only: all committed React flags remain default-off and same-URL legacy rollback is
-preserved. The umbrella checklist remains unchecked. FM8 is unstarted.
+preserved. At the FM7 checkpoint, the umbrella checklist remained unchecked and
+FM8 was unstarted.
 
 ### FM8: Candidate comparison
 
 Requirement coverage: FR-019, FR-021, FR-032, ISR-005, AR-001–AR-010,
 PR-003–PR-004, SC-008–SC-011, SC-013–SC-014, and SC-037.
 
-- [ ] FM8-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM7-03.
-- [ ] FM8-02 Implement candidate comparison within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM8-01.
-- [ ] FM8-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM8-02.
+- [X] FM8-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM7-03.
+- [X] FM8-02 Implement candidate comparison within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM8-01.
+- [X] FM8-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM8-02.
+
+FM8 evidence: [candidate comparison and verification](../../docs/evidence/frontend-migration/fm8.md).
+The exact comparison route now has an independently reversible React renderer,
+authorized handoff restoration, deterministic evidence, accessible responsive
+cards, stale-selection reconciliation and no business-data mutations. All
+committed route flags remain default-off. FM9 is cleared but not started; the
+FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM9: Candidate profile and resume flow
 
