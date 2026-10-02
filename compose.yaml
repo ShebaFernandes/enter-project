@@ -39,6 +39,7 @@ services:
       AWS_DEFAULT_REGION: ap-south-1
       S3_ENDPOINT_URL: http://localhost:4566
       RESUME_QUARANTINE_BUCKET: enter-resume-quarantine
+      FRONTEND_REACT_ROUTES: ${FRONTEND_REACT_ROUTES:-}
     command: ["web"]
     volumes:
       - ./app:/workspace/app

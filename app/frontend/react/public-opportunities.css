@@ -1,0 +1,146 @@
+body[data-frontend-renderer="react"]:has(.fm10-shell) {
+  margin: 0;
+  background: var(--fm-color-paper);
+}
+.enter-ui .fm10-shell {
+  min-height: 100vh;
+}
+.enter-ui .fm10-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.enter-ui .fm10-nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.enter-ui .fm10-nav a[aria-current="page"] {
+  background: var(--fm-color-ink);
+  color: var(--fm-color-paper);
+}
+.enter-ui .fm10-hero {
+  display: grid;
+  gap: 12px;
+  padding: clamp(32px, 7vw, 76px) 0 clamp(28px, 5vw, 52px);
+  max-width: 720px;
+}
+.enter-ui .fm10-hero > p:last-child,
+.enter-ui .fm10-job-card > p,
+.enter-ui .fm10-description p,
+.enter-ui .fm10-resume p {
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm10-kicker {
+  color: var(--fm-color-sage);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.enter-ui .fm10-job-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.enter-ui .fm10-job-card {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-width: 0;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-card);
+  background: var(--fm-color-raised);
+  box-shadow: var(--fm-shadow-card);
+}
+.enter-ui .fm10-card-heading {
+  display: grid;
+  gap: 6px;
+}
+.enter-ui .fm10-essentials {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.enter-ui .fm10-essentials div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+}
+.enter-ui .fm10-essentials dt {
+  color: var(--fm-color-muted);
+  font-size: 0.75rem;
+}
+.enter-ui .fm10-essentials dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+}
+.enter-ui .fm10-card-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.enter-ui .fm10-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+.enter-ui .fm10-role-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: clamp(22px, 5vw, 52px);
+  align-items: start;
+  padding-block: clamp(28px, 6vw, 68px);
+}
+.enter-ui .fm10-role-copy,
+.enter-ui .fm10-application-form,
+.enter-ui .fm10-description,
+.enter-ui .fm10-resume {
+  display: grid;
+  gap: 14px;
+}
+.enter-ui .fm10-role-copy > h1 {
+  margin-bottom: 10px;
+}
+.enter-ui .fm10-description {
+  padding-top: 18px;
+  border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm10-resume {
+  padding: 16px;
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-sage-soft);
+}
+.enter-ui .fm10-channels {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+}
+.enter-ui .fm10-channels legend {
+  padding-inline: 5px;
+  font-weight: 650;
+}
+@media (max-width: 860px) {
+  .enter-ui .fm10-job-grid,
+  .enter-ui .fm10-role-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .enter-ui .fm10-essentials {
+    grid-template-columns: 1fr;
+  }
+  .enter-ui .fm10-nav {
+    width: 100%;
+  }
+}

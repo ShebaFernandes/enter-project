@@ -7,6 +7,9 @@ export type PageBootstrap = {
   page: string;
   tenantId?: string;
   candidateId?: string;
+  openingId?: string;
+  resumeId?: string;
+  consentId?: string;
   requiresSession: boolean;
   entryError?: boolean;
 };
@@ -15,6 +18,8 @@ export type PageProps = {
   request: ReturnType<typeof sameOriginClient>;
 };
 export function readBootstrap(element: HTMLElement): PageBootstrap {
+  const isUuid = (candidate: unknown) =>
+    typeof candidate === "string" && /^[a-f0-9-]{36}$/i.test(candidate);
   if (
     element.tagName !== "SCRIPT" ||
     element.getAttribute("type") !== "application/json"
@@ -27,12 +32,11 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     typeof value.page !== "string" ||
     typeof value.requiresSession !== "boolean" ||
     (value.entryError !== undefined && typeof value.entryError !== "boolean") ||
-    (value.candidateId !== undefined &&
-      (typeof value.candidateId !== "string" ||
-        !/^[a-f0-9-]{36}$/i.test(value.candidateId))) ||
-    (value.tenantId !== undefined &&
-      (typeof value.tenantId !== "string" ||
-        !/^[a-f0-9-]{36}$/i.test(value.tenantId)))
+    (value.candidateId !== undefined && !isUuid(value.candidateId)) ||
+    (value.tenantId !== undefined && !isUuid(value.tenantId)) ||
+    (value.openingId !== undefined && !isUuid(value.openingId)) ||
+    (value.resumeId !== undefined && !isUuid(value.resumeId)) ||
+    (value.consentId !== undefined && !isUuid(value.consentId))
   )
     throw new Error("Invalid page bootstrap");
   return {
@@ -42,6 +46,9 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     ...(value.entryError ? { entryError: true } : {}),
     ...(value.tenantId ? { tenantId: value.tenantId } : {}),
     ...(value.candidateId ? { candidateId: value.candidateId } : {}),
+    ...(value.openingId ? { openingId: value.openingId } : {}),
+    ...(value.resumeId ? { resumeId: value.resumeId } : {}),
+    ...(value.consentId ? { consentId: value.consentId } : {}),
   };
 }
 class PageBoundary extends Component<

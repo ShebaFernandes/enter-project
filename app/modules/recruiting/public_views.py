@@ -87,7 +87,11 @@ def public_jobs(request):
     response = PublicOpeningCollectionView.as_view()(request)
     context = {
         "directory": response.data if response.status_code == 200 else None,
-        "page_bootstrap": {"version": 1, "page": "jobs", "requiresSession": False},
+        "page_bootstrap": {
+            "version": 1,
+            "page": "public-jobs",
+            "requiresSession": False,
+        },
     }
     result = render(request, "public/jobs.html", context, status=response.status_code)
     result["Cache-Control"] = "no-store"

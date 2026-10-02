@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
+from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -21,7 +22,13 @@ from .services import profile_data, profile_for, publish_profile, update_profile
 from .visibility import replace_visibility
 
 
+class MergePatchJSONParser(JSONParser):
+    media_type = "application/merge-patch+json"
+
+
 class CandidateProfileView(APIView):
+    parser_classes = [JSONParser, MergePatchJSONParser]
+
     def get(self, request):
         profile = profile_for(request.user)
         response = Response(profile_data(profile))
@@ -114,4 +121,17 @@ class ResumeStateView(APIView):
 
 @ensure_csrf_cookie
 def candidate_profile_page(request):
-    return render(request, "candidate/profile.html")
+    response = render(
+        request,
+        "candidate/profile.html",
+        {
+            "page_bootstrap": {
+                "version": 1,
+                "page": "candidate-profile",
+                "requiresSession": True,
+            }
+        },
+    )
+    response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
+    return response

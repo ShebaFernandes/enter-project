@@ -7,6 +7,18 @@ from .frontend_assets import react_assets
 
 # Later slices register assets/template only after acceptance. WIP is excluded.
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
+    "public-jobs-page": {
+        "manifest": "react",
+        "template": "public/react_jobs.html",
+    },
+    "public-role-page": {
+        "manifest": "react",
+        "template": "candidate/react_application.html",
+    },
+    "candidate-profile-page": {
+        "manifest": "react",
+        "template": "candidate/react_profile.html",
+    },
     "recruiter-comparison-page": {
         "manifest": "react",
         "template": "recruiter/react_comparison.html",
@@ -39,6 +51,10 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
         route = "recruiter-results-page"
     if route == "recruiter-candidate-page":
         route = "recruiter-candidate-management-page"
+    if route == "public-jobs":
+        route = "public-jobs-page"
+    if route == "public-application-page":
+        route = "public-role-page"
     approved = VERIFIED_REACT_ROUTES.get(route or "")
     if approved and isinstance(flags, dict) and flags.get(route) is True:
         if approved.get("manifest") == "react":

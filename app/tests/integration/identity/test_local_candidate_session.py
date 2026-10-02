@@ -4,6 +4,7 @@ import pytest
 from django.conf import settings
 from django.test import Client, override_settings
 
+from modules.candidate.models import ResumeAsset
 from modules.identity.local_auth import issue_local_candidate_bootstrap
 from modules.identity.models import SessionCredential
 
@@ -34,6 +35,24 @@ def test_one_time_bootstrap_creates_verified_candidate_session_and_role_context(
     assert b'data-consent-id=""' not in page.content
     replay = Client().get("/api/v1/__local__/synthetic-candidate-session", {"token": issued.token})
     assert replay.status_code == 404
+
+
+@override_settings(CACHES=LOCAL_CACHE)
+def test_repeated_bootstrap_restores_the_synthetic_resume_fixture():
+    issue_local_candidate_bootstrap()
+    ResumeAsset.objects.filter(is_current=True).update(
+        scan_status=ResumeAsset.ScanStatus.SCAN_FAILED,
+        parse_status=ResumeAsset.ParseStatus.PARSE_FAILED,
+    )
+
+    issued = issue_local_candidate_bootstrap()
+    client = Client()
+    response = client.get("/api/v1/__local__/synthetic-candidate-session", {"token": issued.token})
+    page = client.get(response["Location"])
+
+    assert page.status_code == 200
+    assert b'data-resume-id=""' not in page.content
+    assert b'data-consent-id=""' not in page.content
 
 
 @override_settings(

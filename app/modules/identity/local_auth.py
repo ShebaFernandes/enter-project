@@ -224,6 +224,13 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 scan_status=ResumeAsset.ScanStatus.CLEAN,
                 parse_status=ResumeAsset.ParseStatus.READY,
             )
+        else:
+            # The local synthetic identity is reused between learning exercises.
+            # Restore the fixture promised by this bootstrap after failure drills.
+            resume.scan_status = ResumeAsset.ScanStatus.CLEAN
+            resume.parse_status = ResumeAsset.ParseStatus.READY
+            resume.deleted_at = None
+            resume.save(update_fields=["scan_status", "parse_status", "deleted_at"])
         ConsentRecord.objects.update_or_create(
             profile=profile,
             source_request_id=f"local-application-{opening.id}",

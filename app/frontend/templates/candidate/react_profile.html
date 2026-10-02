@@ -1,0 +1,8 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main data-page-fallback tabindex="-1" aria-label="Page recovery">
+  <h1>Candidate profile unavailable</h1>
+  <p>Reload to retry. No profile changes are submitted automatically.</p>
+  <a href="/">Return to platform selection</a>
+</main>

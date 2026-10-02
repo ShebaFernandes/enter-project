@@ -217,7 +217,16 @@ def public_application_page(request, opening_id):
     with public_reader():
         if not available_publications().filter(pk=opening_id).exists():
             raise Http404("Role unavailable")
-    context: dict[str, object] = {"opening_id": opening_id}
+    page_bootstrap: dict[str, object] = {
+        "version": 1,
+        "page": "public-role",
+        "requiresSession": False,
+        "openingId": str(opening_id),
+    }
+    context: dict[str, object] = {
+        "opening_id": opening_id,
+        "page_bootstrap": page_bootstrap,
+    }
     if request.user.is_authenticated:
         try:
             profile = profile_for(request.user, create=False)
@@ -247,9 +256,16 @@ def public_application_page(request, opening_id):
                     "consent_id": consent.id if consent else "",
                 }
             )
+            if resume:
+                page_bootstrap["resumeId"] = str(resume.id)
+            if consent:
+                page_bootstrap["consentId"] = str(consent.id)
         except (PermissionDenied, ObjectDoesNotExist):
             pass
-    return render(request, "candidate/application.html", context)
+    response = render(request, "candidate/application.html", context)
+    response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 @ensure_csrf_cookie

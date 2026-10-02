@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import timedelta
 
@@ -46,6 +47,19 @@ def test_profile_access_correction_etag_and_stale_conflict(candidate_api):
     )
     assert stale.status_code == 409
     assert {"current", "attempted", "changed_fields", "current_etag"} <= set(stale.json())
+
+
+def test_profile_accepts_openapi_merge_patch_media_type(candidate_api):
+    client, _identity, profile = candidate_api
+    response = client.patch(
+        "/api/v1/candidate/profile",
+        data=json.dumps({"meaningful_work": "Synthetic merge-patch verification"}),
+        content_type="application/merge-patch+json",
+        HTTP_IF_MATCH=strong_etag(profile.id, profile.version),
+        HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+    )
+    assert response.status_code == 200
+    assert response.json()["meaningful_work"] == "Synthetic merge-patch verification"
 
 
 @override_settings(

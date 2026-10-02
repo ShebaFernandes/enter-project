@@ -1,3 +1,5 @@
+import os
+
 from .base import *  # noqa: F403
 
 DEBUG = True
@@ -16,4 +18,14 @@ CACHES = {
     }
 }
 
-FRONTEND_REACT_ROUTES = {}
+# Vite writes reviewed development bundles here. Production still serves only
+# collected/versioned assets from its deployment image.
+STATICFILES_DIRS = [BASE_DIR / "static"]  # noqa: F405
+
+# Local preview flags are explicit process configuration; absence remains safely
+# default-off. Production settings do not read this development-only variable.
+FRONTEND_REACT_ROUTES = {
+    route.strip(): True
+    for route in os.environ.get("FRONTEND_REACT_ROUTES", "").split(",")
+    if route.strip()
+}

@@ -15,12 +15,12 @@ def page_request(query=""):
     return request
 
 
-def test_default_and_client_flags_cannot_enable_wip():
+def test_default_and_client_flags_cannot_enable_verified_route():
     request = page_request("?react=true&frontend=candidate-profile-page")
     request.COOKIES["frontend"] = "react"
     assert frontend_rollout(request)["frontend_renderer"] == "legacy"
     with override_settings(FRONTEND_REACT_ROUTES={"candidate-profile-page": True}):
-        assert frontend_rollout(request)["frontend_renderer"] == "legacy"
+        assert frontend_rollout(request)["frontend_renderer"] == "react"
 
 
 def test_verified_route_requires_explicit_boolean_flag_and_rolls_back():
@@ -48,7 +48,7 @@ def test_unknown_route_fails_to_legacy():
 
 def test_actual_page_fallback_has_no_wip_assets_or_mounts():
     request = page_request()
-    with override_settings(FRONTEND_REACT_ROUTES={"candidate-profile-page": True}):
+    with override_settings(FRONTEND_REACT_ROUTES={"candidate-profile-page": False}):
         html = render_to_string("candidate/profile.html", request=request)
     assert 'data-frontend-renderer="legacy"' in html
     assert "data-candidate-profile" in html

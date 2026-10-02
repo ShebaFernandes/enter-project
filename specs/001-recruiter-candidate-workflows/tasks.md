@@ -452,20 +452,37 @@ FM8 evidence: [candidate comparison and verification](../../docs/evidence/fronte
 The exact comparison route now has an independently reversible React renderer,
 authorized handoff restoration, deterministic evidence, accessible responsive
 cards, stale-selection reconciliation and no business-data mutations. All
-committed route flags remain default-off. FM9 is cleared but not started; the
-FM1–FM14 umbrella checklist remains unchecked.
+committed route flags remain default-off. At the FM8 checkpoint, FM9 was cleared
+but unstarted and the FM1–FM14 umbrella checklist remained unchecked.
 
 ### FM9: Candidate profile and resume flow
 
-- [ ] FM9-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM8-03.
-- [ ] FM9-02 Implement candidate profile and resume flow within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM9-01.
-- [ ] FM9-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM9-02.
+- [X] FM9-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM8-03.
+- [X] FM9-02 Implement candidate profile and resume flow within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM9-01.
+- [X] FM9-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM9-02.
+- [X] FM9-R01 Add test-first drag-and-drop resume acceptance with secure quarantine upload, candidate-selected source-backed suggestions and proof that profile fields remain unchanged before approval in `app/tests/browser/fm9-profile.spec.ts`. Dependency: FM9-03.
+- [X] FM9-R02 Implement responsive resume drop, explicit suggestion selection and editable-draft autofill in `app/frontend/react/candidate-profile.tsx` and `app/frontend/react/candidate-profile.css`; never silently overwrite, save or publish candidate facts. Dependency: FM9-R01.
+- [X] FM9-R03 Refresh visual evidence and run focused FM9 plus complete Chromium regression, frontend quality and all production builds; document the parser/scan boundary and preserve the default-off route flag. Dependency: FM9-R02.
+
+FM9 evidence: [candidate profile, resume and verification](../../docs/evidence/frontend-migration/fm9.md).
+The candidate profile route now has an independently reversible React renderer,
+candidate-controlled facts and audience consent, ETag reconciliation, explicit
+publication and quarantine-safe resume handling with manual recovery. All
+committed route flags remain default-off. FM10 is cleared but not started; the
+FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM10: Public jobs, role and application
 
-- [ ] FM10-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM9-03.
-- [ ] FM10-02 Implement public jobs, role and application within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM10-01.
-- [ ] FM10-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM10-02.
+- [X] FM10-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM9-03.
+- [X] FM10-02 Implement public jobs, role and application within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM10-01.
+- [X] FM10-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM10-02.
+
+FM10 evidence: [public jobs, role/application and verification](../../docs/evidence/frontend-migration/fm10.md).
+The public jobs and role routes now have independent, reversible React
+renderers; anonymous reads remain public-projection-only, while application
+submission still requires candidate authentication, a clean resume, role consent,
+CSRF and idempotency. All committed route flags remain default-off. FM11 is
+cleared but not started; the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM11: Candidate progress and rights
 

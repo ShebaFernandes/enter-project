@@ -1,0 +1,98 @@
+.enter-ui .candidate-profile-page main .ui-container {
+  max-width: var(--fm-container-profile);
+}
+.enter-ui .profile-form,
+.enter-ui .profile-employment-list {
+  display: grid;
+  gap: var(--fm-spacing-section);
+}
+.enter-ui .profile-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-field) var(--fm-spacing-panel);
+  align-items: end;
+}
+.enter-ui .profile-employment {
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+  display: grid;
+  gap: var(--fm-spacing-field);
+  min-width: 0;
+  padding: var(--fm-spacing-panel);
+}
+.enter-ui .profile-employment legend {
+  font-weight: 700;
+  padding-inline: 6px;
+}
+.enter-ui .profile-record-meta,
+.enter-ui .profile-state-row,
+.enter-ui .profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .profile-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fm-spacing-tight) var(--fm-spacing-panel);
+}
+.enter-ui .profile-visibility-list {
+  display: grid;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .profile-visibility-list > div {
+  border-bottom: 1px solid var(--fm-color-hairline);
+  padding-block-end: var(--fm-spacing-control);
+}
+.enter-ui .profile-visibility-list .ui-help {
+  padding-inline-start: 30px;
+}
+.enter-ui .profile-suggestion {
+  border-inline-start: 4px solid var(--fm-color-gold);
+  display: grid;
+  gap: var(--fm-spacing-tight);
+  padding: var(--fm-spacing-control) var(--fm-spacing-field);
+}
+.enter-ui .profile-drop-zone {
+  background: var(--fm-color-paper);
+  border: 2px dashed var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+  display: grid;
+  gap: var(--fm-spacing-control);
+  padding: var(--fm-spacing-panel);
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.enter-ui .profile-drop-zone.is-dragging {
+  background: var(--fm-color-sage-soft);
+  border-color: var(--fm-color-ink);
+}
+.enter-ui .profile-drop-zone-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+}
+.enter-ui .profile-suggestion-list {
+  display: grid;
+  gap: var(--fm-spacing-control);
+  margin-block: var(--fm-spacing-control);
+}
+.enter-ui .profile-suggestion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fm-spacing-control);
+}
+@media (max-width: 680px) {
+  .enter-ui .profile-field-grid,
+  .enter-ui .profile-choice-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enter-ui .profile-actions > * {
+    width: 100%;
+  }
+  .enter-ui .profile-suggestion-actions > * {
+    width: 100%;
+  }
+}

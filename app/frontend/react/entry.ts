@@ -12,6 +12,10 @@ import { mountPage } from "./mount";
 import { CandidateManagement } from "./candidate-management";
 import { CandidateComparison } from "./candidate-comparison";
 import "./candidate-comparison.css";
+import { CandidateProfilePage } from "./candidate-profile";
+import "./candidate-profile.css";
+import { JobsDirectory, RolePage } from "./public-opportunities";
+import "./public-opportunities.css";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {
@@ -22,6 +26,9 @@ if (document.querySelector("[data-react-page]")) {
     "search-results": SearchResults,
     "candidate-management": CandidateManagement,
     "candidate-comparison": CandidateComparison,
+    "candidate-profile": CandidateProfilePage,
+    "public-jobs": JobsDirectory,
+    "public-role": RolePage,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

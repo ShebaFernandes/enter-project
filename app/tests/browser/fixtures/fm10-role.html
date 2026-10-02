@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FM10 public role fixture</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script id="page-bootstrap" type="application/json">
+      {
+        "version": 1,
+        "page": "public-role",
+        "requiresSession": false,
+        "openingId": "00000000-0000-4000-8000-000000000101",
+        "resumeId": "00000000-0000-4000-8000-000000000102",
+        "consentId": "00000000-0000-4000-8000-000000000103"
+      }
+    </script>
+    <div data-page-csrf hidden>
+      <input name="csrfmiddlewaretoken" value="synthetic-csrf" />
+    </div>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1" aria-label="Page recovery">
+      <h1>Role unavailable</h1>
+      <p>Reload to retry. No application has been submitted.</p>
+    </main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FM9 candidate profile fixture</title>
+    <link rel="stylesheet" href="/app/static/dist/react/assets/app.css" />
+  </head>
+  <body data-frontend-renderer="react">
+    <script id="page-bootstrap" type="application/json">
+      { "version": 1, "page": "candidate-profile", "requiresSession": true }
+    </script>
+    <div data-page-csrf hidden>
+      <input name="csrfmiddlewaretoken" value="synthetic-csrf" />
+    </div>
+    <div data-react-page></div>
+    <main data-page-fallback tabindex="-1" aria-label="Page recovery">
+      <h1>Candidate profile unavailable</h1>
+      <p>Reload to retry. No changes are submitted automatically.</p>
+    </main>
+    <script type="module" src="/app/static/dist/react/assets/app.js"></script>
+  </body>
+</html>
