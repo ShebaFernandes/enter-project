@@ -99,7 +99,10 @@ def _submit_application(*, identity, values: dict[str, object], request_key: str
         profile=profile, opening=opening, consent_id=values["consent_record_id"]
     )
     preferences = values["notification_preferences"]
-    assert isinstance(preferences, dict)
+    if not isinstance(preferences, dict):
+        raise ValidationError(
+            {"notification_preferences": "Notification preferences must be an object."}
+        )
     submitted_at = timezone.now()
     application = Application(
         tenant=opening.tenant,

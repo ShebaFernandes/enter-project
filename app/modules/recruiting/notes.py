@@ -12,10 +12,12 @@ from .work_models import RecruiterNote
 
 def _authorize_note(membership, note: RecruiterNote, action: str) -> None:
     if note.candidate_work_id:
-        assert note.candidate_work is not None
+        if note.candidate_work is None:
+            raise PermissionDenied("Note unavailable")
         authorize_candidate_work(membership, note.candidate_work, action)
     else:
-        assert note.application is not None
+        if note.application is None:
+            raise PermissionDenied("Note unavailable")
         authorize_application(membership, note.application, action)
     if membership.role == "HIRING_MANAGER" and not note.hiring_team_visible:
         raise PermissionDenied("Note unavailable")

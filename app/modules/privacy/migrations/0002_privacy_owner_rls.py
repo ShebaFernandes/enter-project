@@ -19,10 +19,11 @@ def enable_rls(apps, schema_editor):
         for table, column in PROFILE_TABLES.items():
             cursor.execute(f'ALTER TABLE "{table}" ENABLE ROW LEVEL SECURITY')
             cursor.execute(f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY')
+            # SQL identifiers come only from the fixed module-level mapping above.
             predicate = (
                 f'''EXISTS (SELECT 1 FROM candidate_candidateprofile p
                     WHERE p.id = "{table}"."{column}"
-                    AND p.identity_id = nullif(current_setting('app.identity_id', true), '')::uuid)'''
+                    AND p.identity_id = nullif(current_setting('app.identity_id', true), '')::uuid)'''  # nosec B608
             )
             cursor.execute(
                 f'CREATE POLICY privacy_owner_isolation ON "{table}" USING ({predicate}) WITH CHECK ({predicate})'
@@ -30,11 +31,12 @@ def enable_rls(apps, schema_editor):
         for table, column in REQUEST_TABLES.items():
             cursor.execute(f'ALTER TABLE "{table}" ENABLE ROW LEVEL SECURITY')
             cursor.execute(f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY')
+            # SQL identifiers come only from the fixed module-level mapping above.
             predicate = (
                 f'''EXISTS (SELECT 1 FROM privacy_datarightsrequest rr
                     JOIN candidate_candidateprofile p ON p.id = rr.profile_id
                     WHERE rr.id = "{table}"."{column}"
-                    AND p.identity_id = nullif(current_setting('app.identity_id', true), '')::uuid)'''
+                    AND p.identity_id = nullif(current_setting('app.identity_id', true), '')::uuid)'''  # nosec B608
             )
             cursor.execute(
                 f'CREATE POLICY privacy_owner_isolation ON "{table}" USING ({predicate}) WITH CHECK ({predicate})'

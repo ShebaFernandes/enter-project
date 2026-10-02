@@ -36,7 +36,8 @@ def quarantine_upload_grant(resume: ResumeAsset) -> dict[str, object]:
             {
                 "endpoint_url": settings.S3_ENDPOINT_URL,
                 "aws_access_key_id": "test",
-                "aws_secret_access_key": "test",
+                # LocalStack accepts this documented non-secret test credential.
+                "aws_secret_access_key": "test",  # nosec B105
             }
         )
     client = boto3.client(**client_kwargs)

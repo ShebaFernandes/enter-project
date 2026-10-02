@@ -237,7 +237,8 @@ def create(request, tenant_id, kind, *, internal_body=None, expires_at=None):
         )
         audit(item, membership, "CREATED")
     if fresh and kind == "search-results" and body.get("criteria_token"):
-        assert search is not None
+        if search is None:
+            raise Http404
         previous, previous_payload, _ = restore(
             request, tenant_id, "criteria-review", body["criteria_token"], lock=True
         )

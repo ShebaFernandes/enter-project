@@ -299,9 +299,10 @@ def confirm_disclosure(
         raise PermissionDenied("Disclosure unavailable")
     if isinstance(context, Application):
         authorize_application(membership, context, "candidate.disclosure.confirm")
-    else:
-        assert isinstance(context, CandidateWorkRecord)
+    elif isinstance(context, CandidateWorkRecord):
         authorize_candidate_work(membership, context, "candidate.disclosure.confirm")
+    else:
+        raise PermissionDenied("Disclosure unavailable")
     if not _visible(membership=membership, context=context):
         raise PermissionDenied("Disclosure unavailable")
     consent = _current_consent(context=context, purpose=disclosure.purpose)

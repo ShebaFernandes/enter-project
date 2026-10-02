@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:all": "npm run build && npm run build:wip && npm run build:showcase && npm run build:react",
     "build:wip": "vite build --mode wip",
     "build:react": "vite build --mode react",
     "build:showcase": "vite build --mode showcase",
