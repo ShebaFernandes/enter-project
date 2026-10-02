@@ -486,9 +486,17 @@ cleared but not started; the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM11: Candidate progress and rights
 
-- [ ] FM11-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM10-03.
-- [ ] FM11-02 Implement candidate progress and rights within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM11-01.
-- [ ] FM11-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM11-02.
+- [X] FM11-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM10-03.
+- [X] FM11-02 Implement candidate progress and rights within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM11-01.
+- [X] FM11-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; enable only this phase's verified route replacements. Dependency: FM11-02.
+
+FM11 evidence: [candidate progress, privacy rights and verification](../../docs/evidence/frontend-migration/fm11.md).
+The candidate progress and rights routes now have independent, reversible React
+renderers. Application withdrawal and deletion remain explicit-confirmation
+operations; channel preferences retain ETag protection, and rights requests keep
+step-up, expiry, hold and escalation enforcement in Django. All committed route
+flags remain default-off. FM12 is cleared but not started; the FM1–FM14 umbrella
+checklist remains unchecked.
 
 ### FM12: Recruiter organization/openings
 
