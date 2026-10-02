@@ -37,5 +37,7 @@ test("authenticated recruiter compares two currently authorized search results",
   await expect(
     page.getByRole("heading", { name: "Synthetic Comparison Candidate" }),
   ).toBeVisible();
-  await expect(page.getByText(/provides no recommendation/)).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Side-by-side evidence" }),
+  ).toContainText("provides no recommendation", { timeout: 10_000 });
 });

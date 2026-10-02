@@ -528,9 +528,11 @@ the FM1–FM14 umbrella checklist remains unchecked.
 
 ### FM14: Full parity, accessibility and regression verification
 
-- [ ] FM14-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM13-03.
-- [ ] FM14-02 Run full PostgreSQL collection/suite, mypy ., Ruff, Django/migration checks, frontend checks/build and complete authenticated Playwright/accessibility/visual suites; prove no deleted tests or reduced type scope. Dependency: FM14-01.
-- [ ] FM14-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; approve migration completion only with no unexplained drift; Phase 10 stays deferred until this gate passes. Dependency: FM14-02.
+- [X] FM14-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM13-03.
+- [X] FM14-02 Run full PostgreSQL collection/suite, mypy ., Ruff, Django/migration checks, frontend checks/build and complete authenticated Playwright/accessibility/visual suites; prove no deleted tests or reduced type scope. Dependency: FM14-01.
+- [X] FM14-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; approve migration completion only with no unexplained drift; Phase 10 stays deferred until this gate passes. Dependency: FM14-02.
+
+FM14 evidence: `docs/evidence/frontend-migration/fm14.md` and `docs/evidence/frontend-migration/fm14/`. The full deterministic backend, frontend, authenticated browser, accessibility, responsive, rollback and visual checks passed with no unexplained drift. FM1–FM14 are complete. Phase 10 remains deferred and required for production release.
 
 ## Phase 10: Production Hardening, Manual Review, and Release Evidence
 
