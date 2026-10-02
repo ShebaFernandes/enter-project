@@ -79,6 +79,8 @@ jobs:
         with: {node-version: "22", cache: npm, cache-dependency-path: app/package-lock.json}
       - run: npm ci && npx playwright install --with-deps chromium
         working-directory: app
+      - run: npm run build:all
+        working-directory: app
       - run: npm run test:browser
         working-directory: app
       - uses: actions/upload-artifact@v4

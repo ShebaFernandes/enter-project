@@ -423,7 +423,7 @@ with authenticated gates enabled, repository-wide typing and all quality/build g
 Search input → Search → Results is normal; uncertain interpretation stays inline and
 results owns applied-criteria adjustments. Standalone candidate management remains legacy
 under the shared FM7 route gate. All committed flags and the umbrella checklist remain off.
-FM7 is cleared but not started.
+At the FM6 checkpoint, FM7 was cleared but not started.
 
 ### FM7: Recruiter management and disclosure UI
 
@@ -439,6 +439,9 @@ only: all committed React flags remain default-off and same-URL legacy rollback 
 preserved. The umbrella checklist remains unchecked. FM8 is unstarted.
 
 ### FM8: Candidate comparison
+
+Requirement coverage: FR-019, FR-021, FR-032, ISR-005, AR-001–AR-010,
+PR-003–PR-004, SC-008–SC-011, SC-013–SC-014, and SC-037.
 
 - [ ] FM8-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM7-03.
 - [ ] FM8-02 Implement candidate comparison within the approved route/component/API boundaries; apply exclusive DOM ownership, semantic tokens and protected-state handling. Dependency: FM8-01.

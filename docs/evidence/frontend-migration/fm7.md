@@ -96,8 +96,9 @@ broader candidate endpoint is used to fill these gaps.
   environment gates enabled with fresh one-time bootstrap URLs (2.4 minutes).
   This includes Tenant Admin, candidate application, recruiter legacy/FM4/FM5/FM6,
   FM7 management, comparison, publication, rollback and style-isolation coverage.
-- No prior tests were deleted. The pre-existing `app/db.sqlite3` deletion was left
-  untouched; it is not part of FM7.
+- No prior tests were deleted. The local development `app/db.sqlite3` artifact is
+  intentionally untracked and covered by the repository ignore rules; PostgreSQL
+  remains the authoritative development and verification database.
 
 See [screenshot manifest](fm7/screenshot-manifest.md) for captures, intentional
 visual differences and accessibility-oriented checks.

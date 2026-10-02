@@ -22,10 +22,12 @@ build/
 *.egg-info/
 node_modules/
 app/static/dist/
+*.sqlite
+*.sqlite3
+*.db
 test-results/
 playwright-report/
 .terraform/
 *.tfstate*
 *.tfvars
 .terraform.lock.hcl
-

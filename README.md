@@ -4,7 +4,7 @@ Enter is an India-first recruiting platform for candidates, recruiters, hiring m
 
 ## Current status
 
-The specification, architecture, and implementation backlog are complete. Implementation Phases 1–3 are complete: the project foundation, shared security and tenancy layer, and the candidate profile/privacy-rights MVP are implemented and tested. The original HTML prototype remains unchanged as the regression baseline.
+The specification, architecture, and implementation backlog are complete. Backend implementation Phases 1–9 are complete. The React and Tailwind migration is complete through FM7 (recruiter candidate management and disclosure); FM8 candidate comparison is next. Phase 10 production hardening and FM8–FM14 remain incomplete. The original HTML prototype remains unchanged as the regression baseline.
 
 | Area | Status |
 |---|---|
@@ -19,9 +19,9 @@ The specification, architecture, and implementation backlog are complete. Implem
 | Application foundation | Complete |
 | Security, tenancy, identity, and opening foundation | Complete |
 | Candidate profile and privacy-rights MVP | Complete |
-| Recruiter search and intent review | Not started |
-| Applications and candidate progress | Not started |
-| Recruiter evaluation and shortlist workflows | Not started |
+| Recruiter search and intent review | Backend complete; React migration complete through results |
+| Applications and candidate progress | Backend and legacy UI complete; React migration pending |
+| Recruiter evaluation and shortlist workflows | Backend complete; React management complete; React comparison next |
 | Production deployment | Not started |
 
 ## Implemented so far
@@ -29,7 +29,7 @@ The specification, architecture, and implementation backlog are complete. Implem
 ### Project and development foundation
 
 - Django 5.2 modular-monolith backend with Django REST Framework.
-- Server-rendered HTML with framework-free TypeScript, Vite, and responsive CSS.
+- Coexisting server-rendered legacy pages and route-gated React 19/Tailwind pages built with Vite.
 - Reproducible Python and Node dependency locks, non-root web/worker containers, and environment validation.
 - Local PostgreSQL 16 with `pgvector`, Valkey, LocalStack S3, and Mailpit services through Docker Compose.
 - CI and local commands for linting, formatting, type checking, contract tests, browser/accessibility tests, security scanning, dependency auditing, and SBOM generation.
@@ -62,8 +62,8 @@ The specification, architecture, and implementation backlog are complete. Implem
 
 ### Verification completed
 
-- Full PostgreSQL/RLS/Valkey/local-S3 suite: **138 passed, 1 intentional skip**.
-- Playwright browser and original-mockup regression suite: **12 passed**.
+- Full PostgreSQL/RLS/Valkey/local-S3 suite at FM7: **353 passed, 1 intentional skip**.
+- Complete FM7 Playwright browser/accessibility regression: **90 passed** with authenticated environment gates enabled.
 - Ruff formatting/linting, mypy, TypeScript, ESLint, Prettier, Vite production build, Django system checks, and migration-drift checks passed.
 - Docker Compose validation confirmed healthy PostgreSQL and LocalStack services, quarantine-bucket creation, applied migrations, and running web/worker containers.
 
@@ -101,7 +101,7 @@ See [US1 implementation evidence](./docs/evidence/us1-candidate-profile-and-righ
 
 ## Architecture
 
-The application is a Django 5.2 modular monolith using server-rendered templates with small TypeScript modules and Vite. PostgreSQL 16 is the transactional source of truth, with row-level security and planned full-text, `pg_trgm`, and `pgvector` search. The architecture uses Cognito for identity, S3 quarantine/clean/export storage, SQS plus a transactional outbox for background work, Valkey for ephemeral caching and rate counters, and ECS Fargate for the planned AWS deployment.
+The application is a Django 5.2 modular monolith. Django templates retain same-URL legacy fallbacks while route-gated React 19 and Tailwind pages are migrated incrementally through Vite. PostgreSQL 16 is the transactional source of truth, with row-level security, full-text, `pg_trgm`, and `pgvector` search. The architecture uses Cognito for identity, S3 quarantine/clean/export storage, SQS plus a transactional outbox for background work, Valkey for ephemeral caching and rate counters, and ECS Fargate for the planned AWS deployment.
 
 Production is planned for Mumbai (`ap-south-1`) with warm recovery infrastructure in Hyderabad (`ap-south-2`). Targets include 99.9% monthly availability, a 15-minute recovery point, a four-hour recovery time, encrypted 35-day backups, and normal search performance of three seconds or less at p95 for the expected launch load.
 
@@ -111,7 +111,7 @@ AI is intentionally bounded and advisory. It may suggest resume fields, interpre
 
 - [UX prototype](./enter_recruiter_recruiter_candidate_ux.html) — original recruiter and candidate experience used as the preservation baseline.
 - [Project constitution](./.specify/memory/constitution.md) — accessibility, privacy, responsive design, testing, simplicity, and compatibility principles.
-- [Approved feature specification](./specs/001-recruiter-candidate-workflows/spec.md) — seven independently testable user stories, 61 acceptance scenarios, 65 functional requirements, edge cases, and 37 measurable outcomes.
+- [Approved feature specification](./specs/001-recruiter-candidate-workflows/spec.md) — seven independently testable user stories, 68 functional requirements, edge cases, and 37 measurable outcomes.
 - [Requirements checklist](./specs/001-recruiter-candidate-workflows/checklists/requirements.md) — completed specification-quality review with no unresolved clarification markers.
 - [Architecture research](./specs/001-recruiter-candidate-workflows/research.md) — decisions covering the application shape, storage, identity, files, asynchronous processing, AI, AWS, security, concurrency, delivery, candidate rights, visibility, statuses, and tenant governance.
 - [Implementation plan](./specs/001-recruiter-candidate-workflows/plan.md) — technical architecture, module boundaries, rollout order, security strategy, and production topology.
@@ -121,18 +121,19 @@ AI is intentionally bounded and advisory. It may suggest resume fields, interpre
 - [Event contract](./specs/001-recruiter-candidate-workflows/contracts/events.md) — asynchronous event and delivery expectations.
 - [AI boundary contract](./specs/001-recruiter-candidate-workflows/contracts/ai-boundaries.md) — permitted uses, prohibited decisions, RAG sequence, model controls, and evaluation gates.
 - [Planning quickstart](./specs/001-recruiter-candidate-workflows/quickstart.md) — intended local services, configuration, developer commands, test fixtures, release gates, and production-readiness criteria.
-- [Implementation tasks](./specs/001-recruiter-candidate-workflows/tasks.md) — dependency-ordered backlog of 206 setup, implementation, testing, governance, and production-hardening tasks; 77 are complete through Phase 3.
+- [Implementation tasks](./specs/001-recruiter-candidate-workflows/tasks.md) — dependency-ordered backend, frontend-migration, testing, governance, and production-hardening backlog; 191 of 248 task IDs are complete through FM7.
 
 ## Delivery roadmap
 
 1. ✅ Establish the repository structure, tooling, and immutable UX baseline.
 2. ✅ Build identity, tenancy, authorization, auditing, shared data, and opening foundations.
 3. ✅ Deliver the candidate-controlled profile and privacy-rights MVP using synthetic data.
-4. Add deterministic recruiter search and search-intent review.
-5. Add applications and candidate progress tracking.
-6. Add recruiter candidate management, disclosures, and shortlist comparison.
-7. Add saved searches, tenant governance, audit access, and access reviews.
-8. Complete accessibility, privacy, security, incident-response, recovery, load, AI, and production-release evidence.
+4. ✅ Add deterministic recruiter search and search-intent review.
+5. ✅ Add applications and candidate progress tracking.
+6. ✅ Add recruiter candidate management, disclosures, and shortlist comparison backend/legacy workflows.
+7. ✅ Add saved searches, tenant governance, audit access, and access reviews.
+8. Migrate the remaining user-facing routes from FM8 through FM14.
+9. Complete accessibility, privacy, security, incident-response, recovery, load, AI, and production-release evidence.
 
 ## Local development
 
