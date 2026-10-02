@@ -1,0 +1,88 @@
+body[data-frontend-renderer="react"]:has(
+    .fm11-application-list,
+    .fm11-rights-list
+  ) {
+  margin: 0;
+  background: var(--fm-color-paper);
+}
+.enter-ui .fm11-kicker {
+  color: var(--fm-color-sage);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.enter-ui .fm11-application-list,
+.enter-ui .fm11-rights-list {
+  display: grid;
+  gap: var(--fm-spacing-panel);
+}
+.enter-ui .fm11-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--fm-spacing-field);
+}
+.enter-ui .fm11-timeline {
+  display: grid;
+  gap: 0;
+  list-style: none;
+  margin: var(--fm-spacing-panel) 0;
+  padding: 0;
+}
+.enter-ui .fm11-timeline li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+  min-width: 0;
+}
+.enter-ui .fm11-timeline li > span {
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--fm-color-sage);
+  box-shadow: 0 18px 0 -5px var(--fm-color-hairline);
+}
+.enter-ui .fm11-timeline li div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 18px;
+}
+.enter-ui .fm11-timeline time {
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm11-channels {
+  display: grid;
+  gap: 8px;
+  padding: var(--fm-spacing-field);
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-sage-soft);
+}
+.enter-ui .fm11-status-key {
+  padding: var(--fm-spacing-field);
+  border-inline-start: 4px solid var(--fm-color-gold);
+}
+.enter-ui .fm11-rights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .fm11-rights-grid .ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+@media (max-width: 680px) {
+  .enter-ui .fm11-rights-grid {
+    grid-template-columns: 1fr;
+  }
+  .enter-ui .fm11-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

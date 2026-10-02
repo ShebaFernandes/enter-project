@@ -1,0 +1,8 @@
+{{ page_bootstrap|json_script:"page-bootstrap" }}
+<div data-page-csrf hidden>{% csrf_token %}</div>
+<div data-react-page></div>
+<main data-page-fallback tabindex="-1" aria-label="Page recovery">
+  <h1>Privacy rights unavailable</h1>
+  <p>Reload to retry. No privacy request was submitted.</p>
+  <a href="/candidate/profile/">Return to candidate profile</a>
+</main>

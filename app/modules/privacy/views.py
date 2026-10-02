@@ -80,4 +80,17 @@ class RightsEscalationView(APIView):
 
 @ensure_csrf_cookie
 def rights_center_page(request):
-    return render(request, "candidate/rights-center.html")
+    response = render(
+        request,
+        "candidate/rights-center.html",
+        {
+            "page_bootstrap": {
+                "version": 1,
+                "page": "candidate-rights",
+                "requiresSession": True,
+            }
+        },
+    )
+    response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
+    return response

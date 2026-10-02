@@ -270,4 +270,17 @@ def public_application_page(request, opening_id):
 
 @ensure_csrf_cookie
 def candidate_progress_page(request):
-    return render(request, "candidate/progress.html")
+    response = render(
+        request,
+        "candidate/progress.html",
+        {
+            "page_bootstrap": {
+                "version": 1,
+                "page": "candidate-progress",
+                "requiresSession": True,
+            }
+        },
+    )
+    response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
+    return response

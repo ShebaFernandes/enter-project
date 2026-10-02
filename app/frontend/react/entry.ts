@@ -16,6 +16,9 @@ import { CandidateProfilePage } from "./candidate-profile";
 import "./candidate-profile.css";
 import { JobsDirectory, RolePage } from "./public-opportunities";
 import "./public-opportunities.css";
+import { CandidateProgress } from "./candidate-progress";
+import { CandidateRights } from "./candidate-rights";
+import "./candidate-control.css";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {
@@ -29,6 +32,8 @@ if (document.querySelector("[data-react-page]")) {
     "candidate-profile": CandidateProfilePage,
     "public-jobs": JobsDirectory,
     "public-role": RolePage,
+    "candidate-progress": CandidateProgress,
+    "candidate-rights": CandidateRights,
   }).catch(() => {
     document.querySelector<HTMLElement>("[data-page-fallback]")?.focus();
   });

@@ -7,6 +7,14 @@ from .frontend_assets import react_assets
 
 # Later slices register assets/template only after acceptance. WIP is excluded.
 VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
+    "candidate-progress-page": {
+        "manifest": "react",
+        "template": "candidate/react_progress.html",
+    },
+    "candidate-rights-page": {
+        "manifest": "react",
+        "template": "candidate/react_rights.html",
+    },
     "public-jobs-page": {
         "manifest": "react",
         "template": "public/react_jobs.html",
