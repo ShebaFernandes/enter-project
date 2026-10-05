@@ -4,10 +4,13 @@ import base64
 import binascii
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 from modules.operations.concurrency import strong_etag
@@ -16,7 +19,12 @@ from modules.recruiting.models import Application
 from modules.tenancy.models import TenantMembership
 
 from .audit import audit_result_view, audit_search, audit_search_denial
-from .eligibility import consent_allows_findings, eligible_profiles, validate_search_context
+from .eligibility import (
+    consent_allows_field,
+    consent_allows_findings,
+    eligible_profiles,
+    validate_search_context,
+)
 from .engine import evaluate_candidate, validate_criteria
 from .models import CriteriaGroup, Criterion, SavedSearch, SearchDefinition, SearchResultSnapshot
 from .projections import authorized_findings
@@ -43,7 +51,7 @@ def _membership(request, tenant_id):
     return membership
 
 
-def _candidate_values(profile):
+def _candidate_values(profile, membership=None):
     loc = (
         profile.location.get("normalized")
         or profile.location.get("display")
@@ -56,10 +64,31 @@ def _candidate_values(profile):
         "work_arrangements": profile.work_arrangements,
         "availability_date": profile.availability_date,
         "role_categories": profile.role_categories,
+        "notice_period": profile.notice_period or None,
+        "resume_keyword": [
+            profile.current_role,
+            profile.current_company,
+            profile.headline,
+            profile.meaningful_work,
+            *list(profile.skills.values_list("normalized_name", flat=True)),
+        ]
+        + (
+            list(
+                profile.resumes.filter(
+                    is_current=True,
+                    deleted_at__isnull=True,
+                    scan_status="CLEAN",
+                    parse_status="READY",
+                    facts__fact_type="resume_text",
+                ).values_list("facts__normalized_value", flat=True)
+            )
+            if membership and consent_allows_field(profile, membership.tenant_id, "resume")
+            else []
+        ),
     }
 
 
-def _result(profile, matched, membership):
+def _result(profile, matched, membership, search_id=None):
     try:
         name = (
             decrypt(bytes(profile.full_name_ciphertext))
@@ -69,11 +98,20 @@ def _result(profile, matched, membership):
     except Exception:
         name = "Candidate"
     history_allowed = consent_allows_findings(profile, membership.tenant_id)
+    work = (
+        profile.recruiter_work.filter(
+            tenant_id=membership.tenant_id, originating_search_id=search_id
+        ).first()
+        if search_id
+        else None
+    )
     return {
         "candidate_id": str(profile.id),
         "summary": {
             "name": name,
+            "internal_status": work.internal_status if work else "SOURCED",
             "headline": profile.headline,
+            "meaningful_work": profile.meaningful_work,
             "current_role": profile.current_role,
             "current_company": profile.current_company,
             "location": profile.location,
@@ -170,7 +208,7 @@ def execute_search(request, tenant_id):
         )
     ranked = []
     for profile in profiles:
-        matched = evaluate_candidate(_candidate_values(profile), groups)
+        matched = evaluate_candidate(_candidate_values(profile, membership), groups)
         if matched.eligible:
             ranked.append((profile, matched))
     ranked.sort(key=lambda pair: (-pair[1].score, str(pair[0].id)))
@@ -189,7 +227,7 @@ def execute_search(request, tenant_id):
     # Persist ordered references once so later page reads do not re-execute search.
     for ordinal, (profile, matched) in enumerate(ranked, 1):
         if offset < ordinal <= offset + data["limit"]:
-            items.append(_result(profile, matched, membership))
+            items.append(_result(profile, matched, membership, search.id))
         SearchResultSnapshot.objects.create(
             search=search,
             candidate_profile_id=profile.id,
@@ -331,7 +369,7 @@ def candidate_detail(request, tenant_id, candidate_id):
         trigger="VIEW",
     )
     matched = evaluate_candidate(
-        _candidate_values(profile),
+        _candidate_values(profile, membership),
         validate_criteria(
             _criteria(snapshot.search)["groups"], _criteria(snapshot.search)["criteria"]
         ),
@@ -343,7 +381,7 @@ def candidate_detail(request, tenant_id, candidate_id):
         candidate_id=candidate_id,
         outcome="ALLOWED",
     )
-    result = _result(profile, matched, membership)
+    result = _result(profile, matched, membership, snapshot.search_id)
     application = None
     if snapshot.search.derived_opening_id:
         application = Application.objects.filter(
@@ -351,8 +389,38 @@ def candidate_detail(request, tenant_id, candidate_id):
             opening_id=snapshot.search.derived_opening_id,
             candidate_profile_id=profile.id,
         ).first()
+    resume = (
+        profile.resumes.filter(
+            is_current=True, deleted_at__isnull=True, scan_status="CLEAN", parse_status="READY"
+        ).first()
+        if consent_allows_field(profile, tenant_id, "resume")
+        else None
+    )
+    if request.query_params.get("download") == "resume":
+        if resume is None or not resume.clean_key:
+            raise PermissionDenied("Resume unavailable")
+        from modules.candidate.resume_processing import storage_client
+
+        try:
+            stored = storage_client().get_object(
+                Bucket=settings.RESUME_QUARANTINE_BUCKET, Key=resume.clean_key
+            )
+        except Exception as exc:
+            raise APIException("Resume download is temporarily unavailable.") from exc
+        extension = {"application/pdf": "pdf", "application/msword": "doc"}.get(
+            resume.detected_mime, "docx"
+        )
+        response = FileResponse(
+            stored["Body"],
+            as_attachment=True,
+            filename=f"resume.{extension}",
+            content_type=resume.detected_mime,
+        )
+        response["Cache-Control"] = "no-store, private"
+        return response
     return Response(
         {
+            "resume_download_available": bool(resume and resume.clean_key),
             "candidate_id": result["candidate_id"],
             "permitted_fields": result["summary"],
             "evidence": result["evidence"],
@@ -362,6 +430,7 @@ def candidate_detail(request, tenant_id, candidate_id):
             "candidate_work": {
                 "id": str(candidate_work.id),
                 "version": candidate_work.version,
+                "etag": strong_etag(candidate_work.id, candidate_work.version),
                 "internal_status": candidate_work.internal_status,
                 "shortlisted": candidate_work.shortlisted,
             },

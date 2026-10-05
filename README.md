@@ -4,7 +4,7 @@ Enter is an India-first recruiting platform for candidates, recruiters, hiring m
 
 ## Current status
 
-The specification, architecture, and implementation backlog are complete. Backend implementation Phases 1–9 are complete. The React and Tailwind migration is complete through FM7 (recruiter candidate management and disclosure); FM8 candidate comparison is next. Phase 10 production hardening and FM8–FM14 remain incomplete. The original HTML prototype remains unchanged as the regression baseline.
+Backend implementation Phases 1–9 and the React/Tailwind migration FM1–FM14 are complete. The local full-stack verification and repairs are recorded in [the October 5 development check](./docs/evidence/fullstack-development-check.md). Phase 10 production hardening remains incomplete; local verification is not production launch approval. The original HTML prototype remains unchanged.
 
 | Area | Status |
 |---|---|
@@ -20,8 +20,8 @@ The specification, architecture, and implementation backlog are complete. Backen
 | Security, tenancy, identity, and opening foundation | Complete |
 | Candidate profile and privacy-rights MVP | Complete |
 | Recruiter search and intent review | Backend complete; React migration complete through results |
-| Applications and candidate progress | Backend and legacy UI complete; React migration pending |
-| Recruiter evaluation and shortlist workflows | Backend complete; React management complete; React comparison next |
+| Applications and candidate progress | Backend, legacy UI and React UI implemented |
+| Recruiter evaluation and shortlist workflows | Backend, React management and comparison implemented |
 | Production deployment | Not started |
 
 ## Implemented so far
@@ -60,7 +60,9 @@ The specification, architecture, and implementation backlog are complete. Backen
 - Deletion with recent subject-bound step-up, explicit consequence confirmation, immediate hiding, legal-hold and active-process retention exceptions, 30-day erasure handling, anonymized aggregates, and deletion evidence.
 - Consent-renewal scheduling and retention/expiry workers, with minimized audit events throughout candidate and rights workflows.
 
-### Verification completed
+### Recorded migration verification
+
+These are historical FM7 results. See [current full-stack verification](./docs/evidence/fullstack-development-check.md) for the latest checks and limitations.
 
 - Full PostgreSQL/RLS/Valkey/local-S3 suite at FM7: **353 passed, 1 intentional skip**.
 - Complete FM7 Playwright browser/accessibility regression: **90 passed** with authenticated environment gates enabled.
@@ -69,7 +71,7 @@ The specification, architecture, and implementation backlog are complete. Backen
 
 See [US1 implementation evidence](./docs/evidence/us1-candidate-profile-and-rights.md) for the recorded commands, results, and scope safeguards.
 
-## Planned product capabilities
+## Product capabilities
 
 ### Candidate experience
 
@@ -121,7 +123,7 @@ AI is intentionally bounded and advisory. It may suggest resume fields, interpre
 - [Event contract](./specs/001-recruiter-candidate-workflows/contracts/events.md) — asynchronous event and delivery expectations.
 - [AI boundary contract](./specs/001-recruiter-candidate-workflows/contracts/ai-boundaries.md) — permitted uses, prohibited decisions, RAG sequence, model controls, and evaluation gates.
 - [Planning quickstart](./specs/001-recruiter-candidate-workflows/quickstart.md) — intended local services, configuration, developer commands, test fixtures, release gates, and production-readiness criteria.
-- [Implementation tasks](./specs/001-recruiter-candidate-workflows/tasks.md) — dependency-ordered backend, frontend-migration, testing, governance, and production-hardening backlog; 191 of 248 task IDs are complete through FM7.
+- [Implementation tasks](./specs/001-recruiter-candidate-workflows/tasks.md) — dependency-ordered backend, frontend-migration, testing, governance, and production-hardening backlog; 224 of 260 checklist entries are complete; 36 production-hardening entries remain.
 
 ## Delivery roadmap
 
@@ -132,7 +134,7 @@ AI is intentionally bounded and advisory. It may suggest resume fields, interpre
 5. ✅ Add applications and candidate progress tracking.
 6. ✅ Add recruiter candidate management, disclosures, and shortlist comparison backend/legacy workflows.
 7. ✅ Add saved searches, tenant governance, audit access, and access reviews.
-8. Migrate the remaining user-facing routes from FM8 through FM14.
+8. ✅ Complete the user-facing React migration through FM14.
 9. Complete accessibility, privacy, security, incident-response, recovery, load, AI, and production-release evidence.
 
 ## Local development
@@ -156,7 +158,32 @@ make fixtures
 make dev
 ```
 
+`make bootstrap` creates `.env` from `.env.example` only when it is missing and builds
+all frontend bundles. `make migrate` and `make fixtures` run inside the web container,
+using the Docker service names from `.env`. `make dev` starts both web and worker.
+Local sign-in uses synthetic identities; logout returns to the platform chooser.
+
 The web application is served at `http://localhost:8000`. Mailpit is available at `http://localhost:8025`, and the health check is at `http://localhost:8000/health/`.
+
+Candidate resume uploads use the authenticated same-origin content endpoint. The worker
+scans bytes with the private ClamAV service before extracting PDF/DOC/DOCX text;
+image-only PDF pages use local Tesseract OCR. Run `docker compose up -d --build`
+after changing the runtime dependencies, and wait for `resume-scanner` to become
+healthy. No resume content is sent to an external AI provider. The extraction limit
+is 10 MB and 30 PDF pages; password-protected or unreadable documents require another
+copy or manual review. Extracted facts remain suggestions until the candidate saves.
+
+
+The local worker processes resume jobs, employment findings, privacy exports, confirmed
+deletion requests after their deadline (respecting legal holds), and queued email with
+retry backoff. Email is restricted to the local Mailpit sink. Production requires a
+separate approved worker/delivery configuration. A failed export is visible in the rights
+center and can be escalated to support.
+
+Backend validation requires the local PostgreSQL service. Tests create a separate
+`test_enter` database and use an isolated in-memory cache. Do not point a test process
+at the development Redis database. The Compose `.env` uses container hostnames; host
+commands use the PostgreSQL defaults in `config.settings.test` unless overridden.
 
 To run validation:
 

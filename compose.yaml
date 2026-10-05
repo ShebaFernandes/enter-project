@@ -27,6 +27,10 @@ services:
   mail:
     image: axllent/mailpit:v1.27.8@sha256:6abc8e633df15eaf785cfcf38bae48e66f64beecdc03121e249d0f9ec15f0707
     ports: ["1025:1025", "8025:8025"]
+  resume-scanner:
+    image: clamav/clamav:stable@sha256:ebec5bc138401b36ae987caa1a3fa3c3b2a21ed3d51f0bfa5852825e663e67b0
+    platform: linux/amd64
+    volumes: ["clamav_data:/var/lib/clamav"]
   web:
     build: {context: ./app, target: runtime}
     env_file:
@@ -39,6 +43,8 @@ services:
       AWS_DEFAULT_REGION: ap-south-1
       S3_ENDPOINT_URL: http://localhost:4566
       RESUME_QUARANTINE_BUCKET: enter-resume-quarantine
+      S3_INTERNAL_ENDPOINT_URL: http://s3-local:4566
+      CLAMAV_HOST: resume-scanner
       FRONTEND_REACT_ROUTES: ${FRONTEND_REACT_ROUTES:-}
     command: ["web"]
     volumes:
@@ -61,11 +67,17 @@ services:
       AWS_DEFAULT_REGION: ap-south-1
       S3_ENDPOINT_URL: http://s3-local:4566
       RESUME_QUARANTINE_BUCKET: enter-resume-quarantine
+      S3_INTERNAL_ENDPOINT_URL: http://s3-local:4566
+      CLAMAV_HOST: resume-scanner
     command: ["worker"]
     volumes: ["./app:/workspace/app"]
     depends_on:
+      mail: {condition: service_started}
+      valkey: {condition: service_started}
+      resume-scanner: {condition: service_healthy}
       postgres: {condition: service_healthy}
       s3-local: {condition: service_started}
 volumes:
   postgres_data:
   s3_data:
+  clamav_data:

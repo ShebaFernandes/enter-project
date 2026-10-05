@@ -444,7 +444,7 @@ export function CandidateManagement({ bootstrap, request }: PageProps) {
                 .then((response) => {
                   if (!response.ok) throw new ApiError(response.status, null);
                   clear();
-                  location.replace("/api/v1/auth/login");
+                  location.replace("/");
                 })
                 .catch(() => setError("Sign-out failed. Try again."))
                 .finally(() => setBusy(false));

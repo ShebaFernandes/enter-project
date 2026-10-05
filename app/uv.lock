@@ -485,6 +485,7 @@ source = { editable = "." }
 dependencies = [
     { name = "boto3" },
     { name = "cryptography" },
+    { name = "defusedxml" },
     { name = "django" },
     { name = "djangorestframework" },
     { name = "gunicorn" },
@@ -520,6 +521,7 @@ dev = [
 requires-dist = [
     { name = "boto3", specifier = "==1.40.45" },
     { name = "cryptography", specifier = "==50.0.0" },
+    { name = "defusedxml", specifier = "==0.7.1" },
     { name = "django", specifier = "==5.2.17" },
     { name = "djangorestframework", specifier = "==3.17.2" },
     { name = "gunicorn", specifier = "==23.0.0" },

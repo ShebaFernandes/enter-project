@@ -61,6 +61,7 @@ class EmploymentRecordInputSerializer(serializers.Serializer):
 
 
 class CandidateProfilePatchSerializer(serializers.Serializer):
+    reviewed_resume_id = serializers.UUIDField(required=False)
     full_name = serializers.CharField(max_length=200, required=False, allow_blank=False)
     location = serializers.DictField(required=False)
     headline = serializers.CharField(

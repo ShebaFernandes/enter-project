@@ -16,11 +16,15 @@ test("FM9 authenticated candidate edits, consents, publishes and keeps protected
     "react",
   );
   await expect(
-    page.getByRole("heading", { name: "Control your profile" }),
+    page.getByRole("heading", { name: "Right person. Right problem." }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Review my existing profile" })
+    .click();
   await expect(page.getByLabel("Full name")).toHaveValue(
     "Synthetic Search Candidate",
   );
+  await page.locator("summary").filter({ hasText: "Career history" }).click();
   await expect(
     page.getByRole("group", { name: "Employment record 1" }),
   ).toBeVisible();
@@ -28,6 +32,7 @@ test("FM9 authenticated candidate edits, consents, publishes and keeps protected
   await page
     .getByLabel("Meaningful work")
     .fill("Synthetic FM9 profile verification.");
+  await page.getByLabel("Notice period", { exact: true }).fill("30 days");
   const profileWrite = page.waitForResponse(
     (response) =>
       response.url().endsWith("/api/v1/candidate/profile") &&

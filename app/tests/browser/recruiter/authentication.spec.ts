@@ -9,7 +9,13 @@ test("signed-in recruiter navigation signs out completely and protects history",
   );
   await page.evaluate(() => sessionStorage.setItem("sensitive", "draft"));
   let signedOut = false;
+  let failLogout = true;
+  let loginRequested = false;
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/v1/auth/login")) loginRequested = true;
+  });
   await page.route("**/api/v1/session/sign-out", (route) => {
+    if (failLogout) return route.fulfill({ status: 503 });
     signedOut = true;
     return route.fulfill({ status: 204, body: "" });
   });
@@ -24,9 +30,19 @@ test("signed-in recruiter navigation signs out completely and protects history",
   await button.focus();
   await expect(button).toBeFocused();
   await button.click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Sign-out failed. Try again.",
+  );
+  expect(await page.evaluate(() => sessionStorage.getItem("sensitive"))).toBe(
+    "draft",
+  );
+  failLogout = false;
+  await button.click();
   await expect.poll(() => signedOut).toBe(true);
-  await expect(page).toHaveURL(/auth\/login/);
+  await expect(page).toHaveURL("http://127.0.0.1:4173/");
+  await expect(button).toHaveCount(0);
   expect(await page.evaluate(() => sessionStorage.length)).toBe(0);
+  expect(loginRequested).toBe(false);
 });
 
 test("recruiter entry does not expose identity eligibility details", async ({

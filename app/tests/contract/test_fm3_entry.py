@@ -21,6 +21,7 @@ def test_chooser_server_gate_and_rollback_preserve_urls_and_endpoints(client):
             assert b'data-frontend-renderer="legacy"' in jobs.content
 
 
+@override_settings(LOCAL_SYNTHETIC_AUTH_ENABLED=False)
 def test_recruiter_entry_is_existing_pkce_and_ignores_untrusted_return_url(client):
     response = client.get(
         "/api/v1/auth/login?next=https://untrusted.invalid/&email=private@example.test"

@@ -94,14 +94,14 @@ test("FM3 keyboard choices use fixed server endpoints without storage", async ({
   await expect(page.locator("#main")).toBeFocused();
   const recruiter = page.getByRole("link", { name: /Recruiter.*Search/ });
   const candidate = page.getByRole("link", {
-    name: /Candidate platform.*Explore/,
+    name: /Candidate platform.*Upload/,
   });
   await expect(recruiter).toHaveAttribute("href", "/api/v1/auth/login");
-  await expect(candidate).toHaveAttribute("href", "/jobs/");
+  await expect(candidate).toHaveAttribute("href", "/candidate/profile/");
   expect(
     await page.evaluate(() => [localStorage.length, sessionStorage.length]),
   ).toEqual([0, 0]);
   await candidate.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/jobs\/$/);
+  await expect(page).toHaveURL(/\/candidate\/profile\/$/);
 });

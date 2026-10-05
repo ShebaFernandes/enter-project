@@ -152,7 +152,16 @@ export async function mountPage(
   try {
     if (bootstrap.requiresSession) {
       const response = await request("/api/v1/session");
-      if (!response.ok) throw new Error("Current session unavailable");
+      if (!response.ok) {
+        if (
+          bootstrap.page === "candidate-profile" &&
+          [401, 403, 404].includes(response.status)
+        ) {
+          location.replace("/api/v1/auth/login?platform=candidate");
+          return dispose;
+        }
+        throw new Error("Current session unavailable");
+      }
       // Every subsequent API reauthorizes; no role/object policy is reproduced here.
     }
     abort.signal.throwIfAborted();

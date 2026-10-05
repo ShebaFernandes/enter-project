@@ -12,6 +12,17 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: {POSTGRES_DB: enter, POSTGRES_USER: enter, POSTGRES_PASSWORD: enter}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U enter -d enter"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DATABASE_URL: postgresql://enter:enter@127.0.0.1:5432/enter
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -22,13 +33,15 @@ jobs:
         working-directory: app
       - run: npm ci
         working-directory: app
-      - run: uv run ruff check . && uv run ruff format --check . && uv run mypy config modules
+      - run: uv run ruff check . && uv run ruff format --check . && uv run mypy .
         working-directory: app
       - run: npm run check
         working-directory: app
+      - run: npm run build:all
+        working-directory: app
       - run: uv run python manage.py makemigrations --check --dry-run
         working-directory: app
-      - run: uv run pytest -m "not postgres" --cov=config --cov=modules --cov-report=xml
+      - run: uv run pytest --cov=config --cov=modules --cov-report=xml
         working-directory: app
       - run: uv run bandit -q -r config modules && uv run pip-audit
         working-directory: app
@@ -62,6 +75,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with: {version: "0.8.22", enable-cache: true}
       - run: uv sync --all-groups --frozen
+        working-directory: app
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm, cache-dependency-path: app/package-lock.json}
+      - run: npm ci && npm run build:all
         working-directory: app
       - run: uv run python manage.py migrate --noinput
         working-directory: app

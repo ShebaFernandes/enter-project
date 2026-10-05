@@ -83,6 +83,7 @@ test("FM6 applied criteria edit stays inside results and never executes merely b
   );
   await page.goto(fixture);
   await page.getByRole("button", { name: "Show filters" }).click();
+  await page.locator("#results-criteria > summary").click();
   await expect(page.getByLabel("Applied deterministic criteria")).toContainText(
     "Python",
   );
@@ -132,7 +133,9 @@ test("FM6 results and authorized detail are accessible and responsive", async ({
     ).toEqual([]);
     await page.getByRole("button", { name: "View profile" }).click();
     await expect(page.getByRole("dialog")).toContainText("Unknown");
-    await expect(page.getByRole("dialog")).toContainText("Unavailable");
+    await expect(page.getByRole("dialog")).toContainText(
+      "No employment history",
+    );
     await expect(page).toHaveScreenshot(`detail-${width}-${zoom}.png`, {
       fullPage: true,
     });
@@ -234,6 +237,10 @@ test("FM6 selection preserves order, uses CSRF and rejects stale overwrite", asy
     "nothing was silently overwritten",
   );
   await page.getByRole("button", { name: "Show filters" }).click();
+  await page.locator("#results-criteria > summary").click();
+  await page
+    .locator("#results-criteria")
+    .evaluate((el) => el.setAttribute("open", ""));
   await page
     .getByRole("button", { name: "Refresh authorized results" })
     .click();
@@ -273,4 +280,146 @@ test("FM6 empty throttled and degraded states do not retain candidate cards", as
     );
     await expect(page.getByRole("article")).toHaveCount(0);
   }
+});
+
+test("Results navigation without a previous search offers a clear next step", async ({
+  page,
+}) => {
+  await page.route("**/recent-searches", (route) =>
+    route.fulfill({ json: [] }),
+  );
+  await page.goto("/app/tests/browser/fixtures/fm6.html");
+  await expect(
+    page.getByText("Your search results will appear here"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Start a search" }),
+  ).toBeVisible();
+});
+
+test("filters open beside results and Apply executes backend criteria", async ({
+  page,
+}) => {
+  let submitted: Record<string, unknown> | undefined;
+  await page.route("**/searches", (route) => {
+    submitted = route.request().postDataJSON();
+    return route.fulfill({ status: 503, json: {} });
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(fixture);
+  await page.getByRole("button", { name: "Show filters" }).click();
+  const panel = page.getByRole("complementary", {
+    name: "Filter results panel",
+  });
+  await expect(panel).toBeVisible();
+  const panelBox = await panel.boundingBox();
+  const cardsBox = await page.locator(".results-main-column").boundingBox();
+  expect(panelBox!.x).toBeGreaterThan(cardsBox!.x + cardsBox!.width);
+  await page
+    .getByLabel("Find in resume", { exact: true })
+    .fill("Python, Django");
+  await page.getByLabel("Minimum years").fill("2");
+  await page.getByLabel("Current locations").fill("Bengaluru");
+  await expect(page).toHaveScreenshot("results-filter-sidebar.png", {
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(panel.getByRole("alert")).toBeVisible();
+  expect(submitted).toMatchObject({
+    context: { type: "AD_HOC" },
+    criteria: expect.arrayContaining([
+      expect.objectContaining({ field: "resume_keyword", value: "Python" }),
+      expect.objectContaining({
+        field: "experience_years",
+        operator: "GTE",
+        value: 2,
+      }),
+      expect.objectContaining({ field: "location", value: "Bengaluru" }),
+    ]),
+  });
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(panel).toHaveCount(0);
+});
+
+test("profile modal saves notes and status through authorized APIs", async ({
+  page,
+}) => {
+  await page.route("**/candidates/*?search_id=*", (route) =>
+    route.fulfill({
+      json: {
+        ...item,
+        permitted_fields: {
+          ...item.summary,
+          meaningful_work: "Built a reliable service",
+        },
+        candidate_work: {
+          id: "work-1",
+          internal_status: "SOURCED",
+          shortlisted: false,
+          version: 1,
+          etag: '"work-v1"',
+        },
+      },
+    }),
+  );
+  const notes: { id: string; body: string; created_at: string }[] = [];
+  await page.route("**/candidate-work/work-1/notes", (route) => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON();
+      notes.push({
+        id: "note-1",
+        body: body.body,
+        created_at: "2026-10-05T10:00:00Z",
+      });
+      return route.fulfill({ status: 201, json: notes[0] });
+    }
+    return route.fulfill({ json: notes });
+  });
+  let savedStatus = "";
+  await page.route("**/candidate-work/work-1", (route) => {
+    expect(route.request().headers()["if-match"]).toBe('"work-v1"');
+    savedStatus = route.request().postDataJSON().internal_status;
+    return route.fulfill({
+      json: {
+        id: "work-1",
+        internal_status: savedStatus,
+        shortlisted: false,
+        version: 2,
+      },
+      headers: { ETag: '"work-v2"' },
+    });
+  });
+  await page.goto(fixture);
+  await page.getByRole("button", { name: "View profile" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("Built a reliable service");
+  await dialog.getByRole("button", { name: "Notes", exact: true }).click();
+  await dialog.getByLabel("Add a note").fill("Relevant systems experience");
+  await dialog.getByRole("button", { name: "Save note" }).click();
+  await expect(dialog).toContainText("Note saved.");
+  await page.keyboard.press("Escape");
+  await page.locator(".result-status-select").selectOption("CONTACTED");
+  await expect(dialog.getByLabel("Recruiting status")).toHaveValue("CONTACTED");
+  await dialog
+    .getByRole("button", { name: "Save status", exact: true })
+    .click();
+  await expect(dialog).toContainText("Candidate status saved.");
+  expect(savedStatus).toBe("CONTACTED");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".result-status-select")).toHaveValue("CONTACTED");
+});
+
+test("filters remain usable on a narrow screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(fixture);
+  await page.getByRole("button", { name: "Show filters" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Filter results panel" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+  await expect(page).toHaveScreenshot("results-filter-mobile.png", {
+    fullPage: true,
+  });
 });

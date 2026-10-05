@@ -23,6 +23,7 @@ import { OrganizationPage } from "./recruiter-organization";
 import "./recruiter-organization.css";
 import { GovernancePage } from "./tenant-governance";
 import "./tenant-governance.css";
+import "./platform-consistency.css";
 export * from "./foundation";
 
 if (document.querySelector("[data-react-page]")) {

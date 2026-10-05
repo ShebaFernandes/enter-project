@@ -57,7 +57,13 @@ def profile_data(profile: CandidateProfile) -> dict[str, object]:
         )
     except Exception:  # encrypted storage failure fails closed at the view boundary
         raise PermissionDenied("Profile unavailable") from None
+    current_resume = profile.resumes.filter(is_current=True, deleted_at__isnull=True).first()
     return {
+        "reviewable_resume_id": str(current_resume.id)
+        if current_resume
+        and current_resume.scan_status == "CLEAN"
+        and current_resume.parse_status in {"REVIEW_REQUIRED", "READY"}
+        else None,
         "id": profile.id,
         "full_name": full_name,
         "location": profile.location,
@@ -198,6 +204,31 @@ def update_profile(
         current=profile_data(profile),
         attempted=attempted,
     )
+    reviewed_resume_id = values.pop("reviewed_resume_id", None)
+    if reviewed_resume_id:
+        from .resume_service import mark_review_ready
+
+        resume = (
+            profile.resumes.select_for_update()
+            .filter(pk=str(reviewed_resume_id), is_current=True, deleted_at__isnull=True)
+            .first()
+        )
+        if (
+            resume is None
+            or resume.scan_status != "CLEAN"
+            or not resume.clean_key
+            or resume.parse_status not in {"REVIEW_REQUIRED", "READY"}
+        ):
+            raise ValidationError(
+                {
+                    "reviewed_resume_id": (
+                        "This resume is not ready for review. "
+                        "Wait for processing or reload the profile."
+                    )
+                }
+            )
+        if resume.parse_status == "REVIEW_REQUIRED":
+            mark_review_ready(resume=resume)
     employment_changes: list[dict[str, object]] = []
     if "full_name" in values:
         profile.full_name_ciphertext = encrypt(str(values.pop("full_name")))
@@ -278,6 +309,14 @@ def publish_profile(*, identity, if_match: str | None) -> CandidateProfile:
         missing.append("location")
     if not profile.skills.exists():
         missing.append("skills")
+    for field in ("current_role", "notice_period", "meaningful_work"):
+        if not (getattr(profile, field) or "").strip():
+            missing.append(field)
+    if profile.experience_years is None:
+        missing.append("experience_years")
+    for field in ("role_categories", "preferred_locations", "work_arrangements"):
+        if not getattr(profile, field):
+            missing.append(field)
     if not profile.resumes.filter(
         scan_status="CLEAN", parse_status="READY", is_current=True
     ).exists():

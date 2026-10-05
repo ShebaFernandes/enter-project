@@ -133,15 +133,27 @@ def eligible_profiles(membership: TenantMembership, context: dict) -> QuerySet[C
     )
 
 
-def consent_allows_findings(profile: CandidateProfile, tenant_id) -> bool:
-    now = timezone.now()
-    base = profile.consents.filter(
-        purpose="RECRUITING_DISCOVERY",
-        withdrawn_at__isnull=True,
-        expires_at__gt=now,
+def consent_allows_field(profile: CandidateProfile, tenant_id, field: str) -> bool:
+    rule = (
+        profile.visibility_rules.filter(superseded_at__isnull=True)
+        .select_related("consent_record")
+        .first()
     )
-    base = base.filter(_json_array_has("field_scope", "employment_history"))
-    return base.filter(
-        _json_array_has("audience_scope__approved_tenant_ids", str(tenant_id))
-        | Q(profile__visibility_rules__mode="MATCHING_ROLES")
-    ).exists()
+    if rule is None:
+        return False
+    consent = rule.consent_record
+    if (
+        consent.withdrawn_at is not None
+        or consent.expires_at <= timezone.now()
+        or field not in consent.field_scope
+    ):
+        return False
+    if rule.mode == VisibilityRule.Mode.APPROVED_RECRUITERS:
+        return str(tenant_id) in [str(value) for value in rule.approved_tenant_ids] and str(
+            tenant_id
+        ) in [str(value) for value in consent.audience_scope.get("approved_tenant_ids", [])]
+    return rule.mode == VisibilityRule.Mode.MATCHING_ROLES
+
+
+def consent_allows_findings(profile: CandidateProfile, tenant_id) -> bool:
+    return consent_allows_field(profile, tenant_id, "employment_history")

@@ -99,11 +99,8 @@ test("authenticated candidate applies, recruiter publishes, candidate tracks and
     applicationCard.getByText("Shortlisted", { exact: true }),
   ).toBeVisible();
   await expect(applicationCard.getByText("EMAIL: pending")).toBeVisible();
-  await candidatePage.route("**/api/v1/auth/login", (route) =>
-    route.fulfill({ status: 200, body: "Signed out" }),
-  );
   await candidatePage.getByRole("button", { name: "Sign out" }).click();
-  await expect(candidatePage).toHaveURL(/api\/v1\/auth\/login/);
+  await expect(candidatePage).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/);
   expect(await candidatePage.evaluate(() => sessionStorage.length)).toBe(0);
   const protectedResponse = await candidateContext.request.get(
     `${applicationOrigin}/api/v1/candidate/applications`,

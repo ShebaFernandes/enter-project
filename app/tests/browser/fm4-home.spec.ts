@@ -327,7 +327,7 @@ test("search reference controls support suggestions, reset, opening context and 
   ).toHaveAttribute("href", /view=results/);
   await expect(
     page.getByRole("link", { name: "Candidate Platform" }),
-  ).toHaveAttribute("href", "/");
+  ).toHaveAttribute("href", "/api/v1/auth/login?platform=candidate");
   await page
     .getByRole("button", { name: "Founding engineers", exact: true })
     .click();
@@ -414,5 +414,5 @@ test("search logout reports failures and can retry successfully", async ({
     route.fulfill({ body: "Login" }),
   );
   await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page).toHaveURL(/auth\/login$/);
+  await expect(page).toHaveURL("http://127.0.0.1:4173/");
 });

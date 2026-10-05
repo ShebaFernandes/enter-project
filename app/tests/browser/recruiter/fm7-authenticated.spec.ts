@@ -22,9 +22,12 @@ test("FM7 authenticated search, candidate work, stale write, refresh and rollbac
         exact: true,
       }),
     })
-    .getByRole("button", { name: "View authorized details" })
+    .getByRole("button", { name: "View profile", exact: true })
     .click();
-  await page.getByRole("link", { name: "Manage this candidate" }).click();
+  await page.getByRole("button", { name: "Action", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Open resume sharing and candidate workspace" })
+    .click();
   await expect(page.locator("body")).toHaveAttribute(
     "data-frontend-renderer",
     "react",
@@ -108,11 +111,8 @@ test("FM7 authenticated search, candidate work, stale write, refresh and rollbac
   await expect(
     page.getByLabel("Recruiter note", { exact: true }),
   ).toBeVisible();
-  await page.route("**/api/v1/auth/login", (route) =>
-    route.fulfill({ body: "Signed out" }),
-  );
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
-  await expect(page).toHaveURL(/api\/v1\/auth\/login/);
+  await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/);
   await page.goBack();
   await expect(page.getByLabel("Recruiter note", { exact: true })).toHaveCount(
     0,

@@ -40,10 +40,19 @@ def sign_out_view(request: HttpRequest) -> Response:
 @permission_classes([AllowAny])
 def login_start_view(request: HttpRequest):
     if settings.LOCAL_SYNTHETIC_AUTH_ENABLED and settings.ENV.app_env in {"local", "test"}:
-        from .local_auth import issue_local_recruiter_bootstrap
+        from .local_auth import issue_local_candidate_bootstrap, issue_local_recruiter_bootstrap
 
-        issued = issue_local_recruiter_bootstrap()
-        response = redirect(f"/api/v1/__local__/synthetic-recruiter-session?token={issued.token}")
+        if request.query_params.get("platform") == "candidate":
+            issued = issue_local_candidate_bootstrap()
+            response = redirect(
+                f"/api/v1/__local__/synthetic-candidate-session?token={issued.token}&profile=1"
+            )
+        else:
+            recruiter_bootstrap = issue_local_recruiter_bootstrap()
+            destination = "&view=results" if request.query_params.get("view") == "results" else ""
+            response = redirect(
+                f"/api/v1/__local__/synthetic-recruiter-session?token={recruiter_bootstrap.token}{destination}"
+            )
         response["Cache-Control"] = "no-store, private"
         response["Referrer-Policy"] = "no-referrer"
         return response

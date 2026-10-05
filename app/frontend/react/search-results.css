@@ -1,39 +1,4 @@
 /* Recruiter results: final compact rules from the HTML reference. */
-@font-face {
-  font-family: "Results Inter";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("./assets/inter-400.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Results Inter";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("./assets/inter-500.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Results Inter";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("./assets/inter-600.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Results Inter";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("./assets/inter-700.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Results Inter";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("./assets/inter-800.ttf") format("truetype");
-}
 body:has(.search-results-page) {
   margin: 0;
   background: #f4f5ef;

@@ -27,6 +27,8 @@ app/staticfiles/
 *.sqlite3
 *.db
 test-results/
+live-test-results/
+legacy-test-results/
 playwright-report/
 .terraform/
 *.tfstate*

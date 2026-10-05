@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.parse import urlparse
 
+from django.contrib.sessions.backends.signed_cookies import SessionStore
 from django.test import RequestFactory, override_settings
 
 from modules.identity.services import start_login
@@ -19,7 +20,7 @@ def test_oauth_login_uses_hosted_domain(settings):
 
 def test_local_login_uses_synthetic_bootstrap(settings):
     request = RequestFactory().get("/api/v1/auth/login")
-    request.session = {}
+    request.session = SessionStore()
     with (
         override_settings(
             ENV=replace(settings.ENV, app_env="local"), LOCAL_SYNTHETIC_AUTH_ENABLED=True
@@ -36,7 +37,7 @@ def test_local_login_uses_synthetic_bootstrap(settings):
 
 def test_production_never_uses_synthetic_login(settings):
     request = RequestFactory().get("/api/v1/auth/login")
-    request.session = {}
+    request.session = SessionStore()
     env = replace(settings.ENV, app_env="production", cognito_domain="https://signin.example.com")
     with (
         override_settings(ENV=env, LOCAL_SYNTHETIC_AUTH_ENABLED=True),

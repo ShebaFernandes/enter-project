@@ -13,6 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_PROJECT_ENVIRONMENT=/opt/enter-venv \
     PATH=/opt/enter-venv/bin:$PATH
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils tesseract-ocr antiword && rm -rf /var/lib/apt/lists/*
 RUN groupadd --gid 10001 enter && useradd --uid 10001 --gid enter --create-home enter
 WORKDIR /workspace/app
 COPY --from=ghcr.io/astral-sh/uv:0.8.22@sha256:9874eb7afe5ca16c363fe80b294fe700e460df29a55532bbfea234a0f12eddb1 /uv /usr/local/bin/uv

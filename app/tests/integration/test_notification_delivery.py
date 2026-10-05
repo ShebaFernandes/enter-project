@@ -132,3 +132,31 @@ def test_whatsapp_is_disabled_until_approved():
             template_key="synthetic",
             template_version="v1",
         )
+
+
+def test_delivery_rechecks_application_channel_consent(tenant, opening_factory, profile_factory):
+    from modules.recruiting.models import Application
+
+    profile = profile_factory()
+    application = Application.objects.create(
+        tenant=tenant,
+        opening=opening_factory(tenant=tenant),
+        candidate_profile_id=profile.id,
+        state="SUBMITTED",
+        notify_email=True,
+    )
+    notification, _ = queue_notification(
+        destination="synthetic@example.test",
+        channel="EMAIL",
+        template_key="application-status",
+        template_version="v1",
+        consent_basis="APPLICATION_STATUS_UPDATES",
+        idempotency_key="withdraw-before-delivery",
+        tenant_id=tenant.id,
+        application_id=application.id,
+    )
+    application.notify_email = False
+    application.save()
+    delivered = deliver(notification.id, adapter=SuccessfulAdapter())
+    assert delivered.state == Notification.State.CANCELLED
+    assert delivered.attempts == 0

@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import DatabaseError
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
@@ -68,6 +68,8 @@ class PublicOpeningCollectionView(APIView):
 
 
 def platform_chooser(request):
+    if request.GET.get("view") == "results":
+        return redirect("/api/v1/auth/login?view=results")
     return render(
         request,
         "public/chooser.html",

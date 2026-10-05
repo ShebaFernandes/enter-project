@@ -12,8 +12,9 @@ test("FM6 real search review results detail selection comparison and safe return
     .fill("Python Bengaluru");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page).toHaveURL(/view=results#handoff=/);
+  await page.getByText("Applied criteria", { exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Applied deterministic criteria" }),
+    page.getByRole("group", { name: "Applied deterministic criteria" }),
   ).toContainText("Python");
   await page
     .getByRole("button", { name: "Adjust criteria", exact: true })
@@ -41,18 +42,19 @@ test("FM6 real search review results detail selection comparison and safe return
   await page.goForward();
   await expect(page.getByRole("article")).toHaveCount(2);
   await page
-    .getByRole("button", { name: "View authorized details" })
+    .getByRole("button", { name: "View profile", exact: true })
     .first()
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Current authorized candidate details loaded",
+    "Synthetic Search Candidate",
   );
+  await page.getByRole("button", { name: "Action", exact: true }).click();
   const management = await page
-    .getByRole("link", { name: "Manage this candidate" })
+    .getByRole("link", { name: "Open resume sharing and candidate workspace" })
     .getAttribute("href");
   await page.keyboard.press("Escape");
   await expect(
-    page.getByRole("button", { name: "View authorized details" }).first(),
+    page.getByRole("button", { name: "View profile", exact: true }).first(),
   ).toBeFocused();
   await page.getByLabel("Compare Synthetic Search Candidate").check();
   await page.getByLabel("Compare Synthetic Comparison Candidate").check();
@@ -77,12 +79,10 @@ test("FM6 real search review results detail selection comparison and safe return
       fullPage: true,
     });
   }
-  await page
-    .getByRole("button", { name: "Compare selected candidates" })
-    .click();
+  await page.getByRole("button", { name: /^Compare \(\d+\)$/ }).click();
   await expect(page.locator("body")).toHaveAttribute(
     "data-frontend-renderer",
-    "legacy",
+    "react",
   );
   await expect(
     page.getByText("2 currently authorized candidates loaded."),
@@ -101,7 +101,9 @@ test("FM6 real search review results detail selection comparison and safe return
   await page.goto(new URL(management!, page.url()).href);
   await expect(page.locator("body")).toHaveAttribute(
     "data-frontend-renderer",
-    "legacy",
+    "react",
   );
-  await expect(page.getByText("Candidate context loaded.")).toBeVisible();
+  await expect(
+    page.getByLabel("Recruiter note", { exact: true }),
+  ).toBeVisible();
 });

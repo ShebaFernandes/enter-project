@@ -22,17 +22,16 @@ test("local synthetic profile matches the full engineer query with authorized de
     }),
   });
   await expect(candidate).toBeVisible();
+  await page.getByText("Applied criteria", { exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Applied deterministic criteria" }),
+    page.getByRole("group", { name: "Applied deterministic criteria" }),
   ).toContainText("engineer");
-  await expect(candidate).toContainText(
-    "does not change eligibility, score, rank or hiring status",
-  );
   await candidate
-    .getByRole("button", { name: "View authorized details" })
+    .getByRole("button", { name: "View profile", exact: true })
     .click();
+  await expect(page.getByRole("dialog")).toContainText("Matching evidence");
   await expect(page.getByRole("dialog")).toContainText(
-    "Current authorized candidate details loaded",
+    "does not change eligibility, score, rank or hiring status",
   );
   await expect(page.getByRole("dialog")).toContainText(
     "Synthetic Search Candidate",

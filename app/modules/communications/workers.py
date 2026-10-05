@@ -24,6 +24,28 @@ def deliver(notification_id, *, adapter: DeliveryAdapter) -> Notification:
         Notification.State.FAILED,
     }:
         return notification
+    if notification.application_id:
+        from modules.recruiting.models import Application
+
+        application = (
+            Application.objects.select_for_update()
+            .filter(pk=notification.application_id, tenant_id=str(notification.tenant_id))
+            .first()
+            if notification.tenant_id is not None
+            else None
+        )
+        allowed = application is not None and application.state != Application.State.WITHDRAWN
+        if application is not None:
+            allowed = allowed and (
+                application.notify_email
+                if notification.channel == "EMAIL"
+                else application.notify_whatsapp
+            )
+        if not allowed:
+            notification.state = Notification.State.CANCELLED
+            notification.next_attempt_at = None
+            notification.save(update_fields=("state", "next_attempt_at", "updated_at"))
+            return notification
     now = timezone.now()
     if now - notification.created_at >= MAX_DELIVERY_AGE or notification.attempts >= MAX_ATTEMPTS:
         return _dead_letter(notification, "DELIVERY_WINDOW_EXHAUSTED")

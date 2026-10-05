@@ -58,6 +58,7 @@ def quarantine_upload_grant(resume: ResumeAsset) -> dict[str, object]:
     )
     return {
         "resume_id": resume.id,
+        "content_url": f"/api/v1/candidate/resumes/{resume.id}/content",
         "upload_url": upload_url,
         "required_headers": required_headers,
         "expires_at": resume.created_at + timedelta(minutes=10),

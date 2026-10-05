@@ -65,11 +65,8 @@ test("authenticated local recruiter searches, views evidence, and signs out safe
   );
   await resultPage.getByRole("button", { name: "Close" }).click();
 
-  await resultPage.route("**/api/v1/auth/login", (route) =>
-    route.fulfill({ status: 200, body: "Signed out" }),
-  );
   await resultPage.getByRole("button", { name: "Sign out" }).click();
-  await expect(resultPage).toHaveURL(/api\/v1\/auth\/login/);
+  await expect(resultPage).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/);
   expect(await resultPage.evaluate(() => sessionStorage.length)).toBe(0);
 
   await resultPage.goBack();

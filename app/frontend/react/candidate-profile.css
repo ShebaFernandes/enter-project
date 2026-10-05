@@ -96,3 +96,682 @@
     width: 100%;
   }
 }
+
+/* Candidate workspace: focused entry, then guided review. */
+body:has(.candidate-profile-page) {
+  margin: 0;
+  background: #f5f6f1;
+}
+.enter-ui .candidate-profile-page {
+  --candidate-muted: #5c6970;
+  color: #14163e;
+  background: #f5f6f1;
+  min-height: 100vh;
+  font-family: "Results Inter", Inter, system-ui, sans-serif;
+}
+.enter-ui .candidate-profile-page h1,
+.enter-ui .candidate-profile-page h2,
+.enter-ui .candidate-profile-page h3 {
+  font-family: inherit;
+  font-weight: 750;
+}
+.enter-ui .candidate-profile-page .ui-header {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 32px;
+  border-bottom: 1px solid #e2e5dd;
+}
+.enter-ui .candidate-brand-label {
+  color: #546070;
+  font-size: 13px;
+}
+.enter-ui .candidate-platform-nav {
+  display: flex;
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid #dde1d8;
+  border-radius: 40px;
+}
+.enter-ui .candidate-platform-nav a {
+  padding: 10px 18px;
+  text-decoration: none;
+  color: #546070;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.enter-ui .candidate-platform-nav a[aria-current] {
+  background: #14163e;
+  color: #fff;
+}
+.enter-ui .candidate-profile-page main .ui-container {
+  max-width: 1120px;
+  padding: 64px 24px 80px;
+}
+.enter-ui .candidate-profile-page main > .ui-container > .ui-stack {
+  gap: 24px;
+  position: relative;
+}
+.enter-ui .candidate-profile-page main h1 {
+  text-align: center;
+  font-size: clamp(28px, 3.3vw, 44px);
+  line-height: 1.15;
+  letter-spacing: -1.6px;
+  margin: 12px 0 0;
+}
+.enter-ui .candidate-intro {
+  text-align: center;
+}
+.enter-ui .candidate-intro > .candidate-eyebrow {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  right: 0;
+}
+.enter-ui .candidate-eyebrow {
+  color: #34745f;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  font-weight: 750;
+}
+.enter-ui .candidate-intro > p {
+  color: var(--candidate-muted);
+  font-size: 15px;
+  margin: -8px 0 26px;
+}
+.enter-ui .candidate-steps {
+  display: flex;
+  justify-content: center;
+  gap: 38px;
+  padding: 0;
+  margin: 0 0 10px;
+  list-style: none;
+}
+.enter-ui .candidate-steps li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: #626c70;
+}
+.enter-ui .candidate-steps li > span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  background: #e9ece4;
+  border: 1px solid #d4d9cf;
+  border-radius: 50%;
+  font-size: 11px;
+}
+.enter-ui .candidate-steps .is-current {
+  color: #14163e;
+  font-weight: 700;
+}
+.enter-ui .candidate-steps .is-current > span {
+  background: #14163e;
+  color: #fff;
+  border-color: #14163e;
+}
+.enter-ui .candidate-steps .is-done > span {
+  background: #dfede4;
+  color: #24614f;
+  border-color: #bdd4c7;
+}
+.enter-ui .profile-upload-card,
+.enter-ui .candidate-start-actions {
+  width: min(100%, 820px);
+  margin-inline: auto;
+}
+.enter-ui .profile-upload-card {
+  background: #fff;
+  border: 1px solid #dfe3d9;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 10px 36px #27392308;
+}
+.enter-ui .profile-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 38px 24px 32px;
+  min-height: 320px;
+  text-align: center;
+  background: #f9fbf7;
+  border: 1.5px dashed #b7cbb9;
+  border-radius: 12px;
+  transition:
+    background 150ms,
+    border-color 150ms;
+}
+.enter-ui .profile-drop-zone.is-dragging {
+  background: #e2f0e6;
+  border-color: #2c7359;
+}
+.enter-ui .resume-cv {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 76px;
+  background: #e3eee4;
+  color: #39765f;
+  border-radius: 18px;
+  transform: rotate(-5deg);
+}
+.enter-ui .resume-cv svg {
+  transform: rotate(5deg);
+}
+.enter-ui .profile-drop-zone-title {
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  margin: 0 0 8px;
+}
+.enter-ui .resume-invitation {
+  color: var(--candidate-muted);
+  font-size: 14px;
+  margin: 0;
+}
+.enter-ui .resume-file-control {
+  position: relative;
+}
+.enter-ui .resume-file-control > .ui-button {
+  padding: 13px 24px;
+  border-radius: 9px;
+  font-size: 13px;
+  min-height: 46px;
+}
+.enter-ui .resume-file-control > .ui-button > span {
+  margin-left: 14px;
+}
+.enter-ui .resume-file-help {
+  font-size: 11px;
+  color: #626f70;
+  margin: 10px 0 0;
+}
+.enter-ui .resume-native-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.enter-ui .resume-filename {
+  color: #34745f;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+.enter-ui .resume-promises {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding: 24px 12px 10px;
+}
+.enter-ui .resume-promises > div {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 0 14px;
+}
+.enter-ui .resume-promises > div + div {
+  border-left: 1px solid #e3e7df;
+}
+.enter-ui .resume-promises span {
+  font-size: 10px;
+  color: #34745f;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.enter-ui .resume-promises strong {
+  font-weight: 500;
+  font-size: 12px;
+  color: #546168;
+  line-height: 1.7;
+}
+.enter-ui .candidate-start-actions {
+  text-align: center;
+}
+.enter-ui .candidate-start-actions .ui-button {
+  background: transparent;
+  border: 0;
+  color: #4f5e61;
+  font-size: 12px;
+  padding: 4px 12px;
+  box-shadow: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.enter-ui .resume-processing-details {
+  margin: 16px 8px 4px;
+  font-size: 13px;
+}
+.enter-ui .resume-processing-details > summary {
+  color: #2f6c56;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.enter-ui .resume-processing-details .profile-suggestion-list {
+  max-height: 380px;
+  overflow: auto;
+}
+.enter-ui .profile-suggestion p {
+  overflow-wrap: anywhere;
+}
+.enter-ui .is-reviewing main .ui-container {
+  padding-top: 52px;
+}
+.enter-ui .is-reviewing main h1 {
+  font-size: 32px;
+}
+.enter-ui .is-reviewing .profile-upload-card {
+  width: 100%;
+}
+.enter-ui .profile-upload-card.is-compact {
+  border-radius: 14px;
+  padding: 12px 20px;
+  box-shadow: none;
+}
+.enter-ui .is-compact .profile-drop-zone {
+  flex-direction: row;
+  justify-content: start;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+  padding: 4px 0;
+  text-align: left;
+  gap: 16px;
+}
+.enter-ui .is-compact .resume-cv {
+  flex-shrink: 0;
+  width: 42px;
+  height: 48px;
+  border-radius: 10px;
+  transform: none;
+}
+.enter-ui .is-compact .resume-cv svg {
+  width: 22px;
+  height: 26px;
+  transform: none;
+}
+.enter-ui .is-compact .resume-drop-copy {
+  flex: 1;
+  min-width: 0;
+}
+.enter-ui .is-compact .profile-drop-zone-title {
+  font-size: 14px;
+  letter-spacing: 0;
+  margin: 0;
+}
+.enter-ui .is-compact .resume-invitation {
+  display: none;
+}
+.enter-ui .is-compact .resume-file-control .ui-button {
+  background: #fff;
+  color: #14163e;
+  border: 1px solid #d5ddd2;
+  padding: 9px 14px;
+  min-height: 38px;
+}
+.enter-ui .is-compact .resume-file-help {
+  display: none;
+}
+.enter-ui .candidate-feedback {
+  width: 100%;
+  background: #e6f0e8;
+  border: 1px solid #c9ddce;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #245e49;
+  font-size: 13px;
+}
+.enter-ui .candidate-review-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.enter-ui .candidate-preview {
+  position: sticky;
+  top: 24px;
+  background: #fff;
+  border: 1px solid #dde3d9;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+}
+.enter-ui .preview-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #52655c;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+}
+.enter-ui .preview-eyebrow .ui-chip {
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.enter-ui .candidate-preview-avatar {
+  width: 62px;
+  height: 62px;
+  background: #e0eadc;
+  color: #355b45;
+  border: 1px solid #cbdac7;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 28px 0 18px;
+}
+.enter-ui .candidate-preview h2 {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.enter-ui .candidate-preview p {
+  font-size: 12px;
+  color: #5a686a;
+  line-height: 1.75;
+  margin: 0 0 16px;
+}
+.enter-ui .preview-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0;
+}
+.enter-ui .preview-chips .ui-chip {
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+.enter-ui .preview-edit-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 20px;
+}
+.enter-ui .preview-privacy-note {
+  border-top: 1px solid #e4e8df;
+  padding-top: 16px;
+  margin-top: 22px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #5c6d60;
+}
+.enter-ui .preview-privacy-note > span {
+  margin-right: 5px;
+}
+.enter-ui .profile-form {
+  min-width: 0;
+  gap: 12px;
+}
+.enter-ui .profile-review-heading {
+  padding: 8px 2px 10px;
+}
+.enter-ui .profile-review-heading h2 {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  margin: 8px 0;
+}
+.enter-ui .profile-review-heading p {
+  font-size: 12px;
+  color: #5c6970;
+  margin: 0;
+}
+.enter-ui .profile-conversation {
+  background: #fff;
+  border: 1px solid #dce2d7;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 120ms;
+}
+.enter-ui .profile-conversation:hover {
+  border-color: #aabfab;
+}
+.enter-ui .profile-conversation > summary {
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 650;
+  padding: 22px 42px 22px 20px;
+}
+.enter-ui .profile-conversation > summary::-webkit-details-marker {
+  display: none;
+}
+.enter-ui .profile-conversation > summary::after {
+  content: "+";
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  font-size: 18px;
+  font-weight: 400;
+  color: #51745d;
+}
+.enter-ui .profile-conversation[open] > summary::after {
+  content: "−";
+}
+.enter-ui .profile-conversation[open] > summary {
+  background: #f8faf6;
+  border-bottom: 1px solid #e6eade;
+}
+.enter-ui .profile-conversation > summary > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4f775b;
+  margin-right: 12px;
+}
+.enter-ui .profile-conversation small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+  margin: 7px 0 0 30px;
+  color: #63716e;
+}
+.enter-ui .profile-conversation .ui-card {
+  border: 0;
+  box-shadow: none;
+  padding: 22px;
+  background: #fff;
+}
+.enter-ui .profile-conversation .ui-card > h2 {
+  display: none;
+}
+.enter-ui .profile-conversation .ui-control {
+  background: #fcfdfb;
+  border-color: #cfd8ca;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.enter-ui .profile-conversation .ui-field label {
+  font-size: 12px;
+}
+.enter-ui .profile-conversation .ui-help {
+  font-size: 11px;
+}
+.enter-ui .profile-choice-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.enter-ui .profile-choice-grid label,
+.enter-ui .profile-visibility-list > div {
+  padding: 12px;
+  border: 1px solid #d7dfd0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.enter-ui .profile-choice-grid label:has(:checked),
+.enter-ui .profile-visibility-list > div:has(:checked),
+.enter-ui .notice-conversation [aria-pressed="true"] {
+  background: #e2eee5;
+  color: #285d46;
+  border-color: #8fbaa1;
+}
+.enter-ui .notice-conversation {
+  grid-column: 1/-1;
+}
+.enter-ui .notice-conversation .ui-button {
+  font-size: 11px;
+  padding: 8px 12px;
+  min-height: 36px;
+}
+.enter-ui .profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 18px 0 0;
+  gap: 10px;
+}
+.enter-ui .profile-save-note {
+  width: 100%;
+  font-size: 12px;
+  color: #344d41;
+  margin: 0 0 4px;
+}
+.enter-ui .profile-save-note small {
+  display: block;
+  color: #626e68;
+  margin-top: 4px;
+  font-size: 11px;
+}
+.enter-ui .profile-actions .ui-button {
+  font-size: 12px;
+  padding: 12px 16px;
+}
+@media (max-width: 800px) {
+  .enter-ui .candidate-review-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enter-ui .candidate-preview {
+    position: static;
+  }
+  .enter-ui .candidate-preview-avatar {
+    float: left;
+    margin: 18px 16px 12px 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+  }
+  .enter-ui .candidate-preview h2 {
+    margin-top: 18px;
+  }
+  .enter-ui .candidate-preview .preview-chips {
+    clear: both;
+  }
+}
+@media (max-width: 680px) {
+  .enter-ui .candidate-profile-page .ui-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .enter-ui .candidate-profile-page .ui-header > .ui-wordmark {
+    max-width: 80px;
+  }
+  .enter-ui .candidate-brand-label {
+    display: none;
+  }
+  .enter-ui .candidate-profile-page .ui-header > a[href="/candidate/rights/"] {
+    margin-left: auto;
+    font-size: 12px;
+  }
+  .enter-ui .candidate-profile-page .ui-header > .ui-button {
+    padding: 8px 10px;
+    min-height: 34px;
+    font-size: 12px;
+  }
+  .enter-ui .candidate-platform-nav {
+    order: 5;
+    width: 100%;
+    justify-content: center;
+  }
+  .enter-ui .candidate-platform-nav a {
+    padding: 8px 11px;
+    font-size: 11px;
+  }
+  .enter-ui .candidate-profile-page main .ui-container {
+    padding: 44px 16px;
+  }
+  .enter-ui .candidate-profile-page main h1 {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+  .enter-ui .candidate-intro > p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .enter-ui .candidate-steps {
+    gap: 12px;
+    align-items: start;
+  }
+  .enter-ui .candidate-steps li {
+    flex: 1;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .enter-ui .profile-upload-card {
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .enter-ui .profile-drop-zone {
+    padding: 28px 14px;
+    min-height: 300px;
+  }
+  .enter-ui .resume-promises {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 20px 10px 12px;
+  }
+  .enter-ui .resume-promises > div {
+    padding: 0;
+    gap: 2px;
+  }
+  .enter-ui .resume-promises > div + div {
+    border: 0;
+  }
+  .enter-ui .profile-upload-card.is-compact {
+    padding: 12px;
+  }
+  .enter-ui .is-compact .profile-drop-zone {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .enter-ui .is-compact .resume-file-control {
+    width: 100%;
+  }
+  .enter-ui .is-compact .resume-file-control > .ui-button {
+    width: 100%;
+  }
+  .enter-ui .candidate-preview {
+    padding: 20px;
+  }
+  .enter-ui .profile-conversation > summary {
+    padding: 18px 40px 18px 16px;
+  }
+  .enter-ui .profile-conversation .ui-card {
+    padding: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .enter-ui .profile-drop-zone,
+  .enter-ui .profile-conversation {
+    transition: none;
+  }
+}

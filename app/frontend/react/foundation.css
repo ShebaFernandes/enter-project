@@ -2,6 +2,42 @@
 @import "tailwindcss/theme.css" layer(theme) prefix(fm);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(fm) source(none);
 
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/inter-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/inter-500.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/inter-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/inter-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./assets/inter-800.ttf") format("truetype");
+}
+
 @theme static {
   --color-paper: #f4f5ef;
   --color-raised: #ffffff;
@@ -19,8 +55,9 @@
   --color-unknown: #6f756c;
   --color-unknown-text: #565b54;
   --font-sans:
-    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: Georgia, "Times New Roman", serif;
+    "Results Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-display: "Results Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
   --spacing: 4px;
   --spacing-tight: 6px;
@@ -35,9 +72,9 @@
     0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 24px rgba(17, 24, 39, 0.06);
   --shadow-dialog:
     0 1px 2px rgba(17, 24, 39, 0.06), 0 16px 42px rgba(17, 24, 39, 0.08);
-  --container-search: 1360px;
-  --container-profile: 1180px;
-  --container-public: 1080px;
+  --container-search: 1120px;
+  --container-profile: 1120px;
+  --container-public: 1120px;
   --breakpoint-workspace: 860px;
 }
 

@@ -16,9 +16,7 @@ test("FM8 authenticated React search comparison reauthorizes, removes and return
   await expect(page).toHaveURL(/view=results#handoff=/);
   await page.getByLabel("Compare Synthetic Search Candidate").check();
   await page.getByLabel("Compare Synthetic Comparison Candidate").check();
-  await page
-    .getByRole("button", { name: "Compare selected candidates" })
-    .click();
+  await page.getByRole("button", { name: /^Compare \(\d+\)$/ }).click();
 
   await expect(page).toHaveURL(/\/recruiter\/comparison\/#handoff=/);
   await expect(page.locator("body")).toHaveAttribute(
@@ -58,6 +56,6 @@ test("FM8 authenticated React search comparison reauthorizes, removes and return
   await page.getByRole("button", { name: "Return to results" }).click();
   await expect(page).toHaveURL(/view=results#handoff=/);
   await expect(
-    page.getByRole("heading", { name: "Candidates for your search" }),
+    page.getByRole("heading", { name: "Search results", exact: true }),
   ).toBeVisible();
 });

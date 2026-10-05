@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from config.environment import Environment
@@ -114,3 +115,9 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "INFO"},
 }
+
+# Private storage and scanner endpoints; resume bytes never leave these services.
+
+S3_INTERNAL_ENDPOINT_URL = os.environ.get("S3_INTERNAL_ENDPOINT_URL", S3_ENDPOINT_URL)
+CLAMAV_HOST = os.environ.get("CLAMAV_HOST", "")
+CLAMAV_PORT = int(os.environ.get("CLAMAV_PORT", "3310"))

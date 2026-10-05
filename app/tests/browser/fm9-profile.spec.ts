@@ -108,8 +108,16 @@ test("FM9 loads candidate-owned facts and saves with CSRF, ETag and explicit con
   });
 
   await page.goto(fixture);
+  await page
+    .getByRole("button", { name: "Review my existing profile" })
+    .click();
+  await page
+    .locator(".profile-conversation:not([open]) > summary")
+    .evaluateAll((elements) =>
+      elements.forEach((element) => (element as HTMLElement).click()),
+    );
   await expect(
-    page.getByRole("heading", { name: "Control your profile" }),
+    page.getByRole("heading", { name: "Right person. Right problem." }),
   ).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "Full name", exact: true }),
@@ -157,6 +165,9 @@ test("FM9 exposes stale-write reconciliation and never overwrites automatically"
     });
   });
   await page.goto(fixture);
+  await page
+    .getByRole("button", { name: "Review my existing profile" })
+    .click();
   await page.getByLabel("Full name").fill("Attempted Name");
   await page
     .getByRole("button", { name: "Save profile and visibility" })
@@ -287,12 +298,13 @@ test("FM9 resume drop fills only candidate-approved profile suggestions", async 
     );
   });
 
+  await page.getByText("Resume processing details", { exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Review resume suggestions" }),
   ).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "Full name", exact: true }),
-  ).toHaveValue("Synthetic Candidate");
+  ).toHaveValue("Resume Candidate");
   await expect(page.getByLabel("Use suggested full name")).not.toBeChecked();
   await expect(page.getByText("Manual review required")).toBeVisible();
   await expect(page.getByLabel("Use suggested employment type")).toHaveCount(0);
@@ -311,7 +323,7 @@ test("FM9 resume drop fills only candidate-approved profile suggestions", async 
   ).toHaveValue("Python, Django, PostgreSQL");
   await expect(
     page.getByRole("status").filter({
-      hasText: "3 resume suggestions added to your editable profile",
+      hasText: "Your profile preview is ready",
     }),
   ).toBeVisible();
 });
@@ -326,9 +338,9 @@ test("FM9 profile responsive and accessibility baselines", async ({ page }) => {
   ]) {
     await page.setViewportSize({ width, height });
     await page.goto(fixture);
-    await expect(page.getByLabel("Full name")).toHaveValue(
-      "Synthetic Candidate",
-    );
+    await expect(
+      page.getByText("Drop your resume", { exact: true }),
+    ).toBeVisible();
     await page.evaluate((value) => {
       document.documentElement.style.zoom = String(value);
     }, zoom);

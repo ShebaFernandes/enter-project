@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Button, Header, SkipLink, StatusMessage, Alert } from "./components";
+import {
+  Button,
+  Header,
+  SkipLink,
+  StatusMessage,
+  Alert,
+  PlatformNavigation,
+} from "./components";
 import type { PageProps } from "./mount";
 import type { Recognition } from "../recruiter/speech-search";
 import { workflowTransport } from "../shared/workflow-handoff";
@@ -240,20 +247,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
     <div className="ui-search-home">
       <SkipLink />
       <Header>
-        <span className="ui-search-brand">Talent Platform</span>
-        <nav className="ui-search-navigation" aria-label="Platform">
-          <a href={`/tenants/${tenant}/recruiter/search/`} aria-current="page">
-            Search
-          </a>
-          <a href={`/tenants/${tenant}/recruiter/search/?view=results`}>
-            Results
-          </a>
-          <a href="/">Candidate Platform</a>
-        </nav>
-        <span className="ui-search-recruiter">
-          <span aria-hidden="true" />
-          Recruiter
-        </span>
+        <PlatformNavigation active="search" tenantId={tenant} />
         <Button
           variant="secondary"
           onClick={async () => {
@@ -266,7 +260,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
                 setPrompt("");
                 setRecents([]);
                 setSaved([]);
-                location.replace("/api/v1/auth/login");
+                location.replace("/");
               } else {
                 setError("Sign-out failed. Try again.");
                 setBusy(false);

@@ -14,6 +14,8 @@ ALLOWED_FIELDS = {
     "work_arrangement",
     "availability_date",
     "role_category",
+    "resume_keyword",
+    "notice_period",
 }
 ALLOWED_OPERATORS = {"EQ", "NE", "LT", "LTE", "GT", "GTE", "IN", "NOT_IN", "CONTAINS", "EXISTS"}
 
@@ -73,7 +75,9 @@ def _matches(candidate, item):
     values = actual if isinstance(actual, list) else [actual]
     normalized = [str(v).casefold() for v in values]
     target = str(expected).casefold()
-    if op in {"EQ", "CONTAINS"}:
+    if item["field"] == "resume_keyword" and op == "CONTAINS":
+        result = bool(target.strip()) and any(target in value for value in normalized)
+    elif op in {"EQ", "CONTAINS"}:
         result = target in normalized
     elif op == "NE":
         result = target not in normalized

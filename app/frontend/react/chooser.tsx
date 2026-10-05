@@ -37,7 +37,7 @@ export function PlatformChooser({ bootstrap }: PageProps) {
         <h1 id="platform-title">Choose your kingdom platform</h1>
         <p>
           Recruiters search and contact matching candidates. Candidates manage
-          their profile, explore published openings and apply.
+          their profile and decide who can discover them.
         </p>
         <div className="ui-secure-entry">
           <strong>Secure recruiter access</strong>
@@ -58,11 +58,13 @@ export function PlatformChooser({ bootstrap }: PageProps) {
             <span>Search, review and contact candidates.</span>
           </a>
           <a
-            href="/jobs/"
-            onClick={(event) => announce(event, "Opening published roles…")}
+            href="/candidate/profile/"
+            onClick={(event) =>
+              announce(event, "Opening your candidate profile…")
+            }
           >
             <strong>Candidate platform</strong>
-            <span>Explore open roles and apply.</span>
+            <span>Upload your resume and shape your profile.</span>
           </a>
         </nav>
         <div className="ui-entry-feedback">

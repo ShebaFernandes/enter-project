@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { PageProps } from "./mount";
+import { ResultsFilters } from "./results-filters";
 import { ResultIcon } from "./result-icon";
 import { CareerJourney } from "./career-journey";
 import { CriteriaReview, type Criteria } from "./criteria-review";
@@ -7,6 +8,7 @@ import { workflowTransport } from "../shared/workflow-handoff";
 import {
   Alert,
   AppShell,
+  PlatformNavigation,
   Button,
   Checkbox,
   Chip,
@@ -40,7 +42,11 @@ export function ResultsToolbar({
   setFilter,
   compare,
   busy,
+  filtersOpen,
+  toggleFilters,
 }: {
+  filtersOpen: boolean;
+  toggleFilters: () => void;
   count: number;
   total?: number;
   selected: number;
@@ -77,9 +83,9 @@ export function ResultsToolbar({
           variant="secondary"
           className="results-filter-toggle"
           aria-label="Show filters"
-          onClick={() =>
-            document.getElementById("results-criteria")?.toggleAttribute("open")
-          }
+          aria-expanded={filtersOpen}
+          aria-controls="results-filter-panel"
+          onClick={toggleFilters}
         >
           <ResultIcon name="filters" />
         </Button>
@@ -94,6 +100,7 @@ export function ResultCard({
   toggle,
   detail,
   viewed = false,
+  changeStatus,
 }: {
   item: SearchItem;
   selected: boolean;
@@ -101,6 +108,7 @@ export function ResultCard({
   toggle: (checked: boolean) => void;
   detail: () => void;
   viewed?: boolean;
+  changeStatus?: (status: string) => void;
 }) {
   const summary = item.summary;
   const name = fieldText(summary.name);
@@ -183,8 +191,9 @@ export function ResultCard({
               ? summary.internal_status
               : ""
           }
-          disabled
-          title="Status editing is available in the candidate workspace"
+          disabled={busy || !changeStatus}
+          onChange={(event) => changeStatus?.(event.target.value)}
+          title="Choose a status to review and save in the profile"
         >
           <option value="">Unavailable</option>
           {[
@@ -259,12 +268,15 @@ export function SearchResults({ bootstrap, request }: PageProps) {
   const [editToken, setEditToken] = useState<string | null>(null);
   const editRetry = useRef(crypto.randomUUID());
   const [loading, setLoading] = useState(true);
+  const [noSearch, setNoSearch] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewedIds, setViewedIds] = useState<string[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [requestedStatus, setRequestedStatus] = useState<string | undefined>();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pendingSelection, setPendingSelection] = useState<string[] | null>(
     null,
@@ -296,8 +308,27 @@ export function SearchResults({ bootstrap, request }: PageProps) {
     setError("");
     setNotice("");
     setSelectionBlocked(false);
+    setNoSearch(false);
     try {
-      if (!token) throw new ApiError(404, null);
+      if (!token) {
+        const { data: recents } = await responseJson<
+          Array<{ search_id: string }>
+        >(await request(`/api/v1/tenants/${tenant}/recent-searches`));
+        if (current !== generation.current) return;
+        if (!recents.length) {
+          setNoSearch(true);
+          return;
+        }
+        const restoredToken = await workflowTransport(tenant).create(
+          "search-results",
+          { search_id: recents[0].search_id },
+        );
+        if (current !== generation.current) return;
+        location.replace(
+          `/tenants/${tenant}/recruiter/search/?view=results#handoff=${restoredToken}`,
+        );
+        return;
+      }
       const metadata = await read<{ criteria?: Criteria }>(
         `${base}/search-results`,
         token,
@@ -470,7 +501,7 @@ export function SearchResults({ bootstrap, request }: PageProps) {
     data?.items.filter((item) => !filter || item.findings.length > 0) ?? [];
   return (
     <div
-      className="search-results-page"
+      className={`search-results-page${filtersOpen ? " has-filters" : ""}`}
       onClickCapture={(event) => {
         if ((event.target as HTMLElement).closest('a[href="#main"]')) {
           event.preventDefault();
@@ -482,18 +513,7 @@ export function SearchResults({ bootstrap, request }: PageProps) {
         title="Search results"
         navigation={
           <>
-            <span className="results-brand-label">Talent Platform</span>
-            <nav className="results-navigation" aria-label="Platform">
-              <a href={`/tenants/${tenant}/recruiter/search/`}>Search</a>
-              <a aria-current="page" href="#main">
-                Results
-              </a>
-              <a href="/">Candidate Platform</a>
-            </nav>
-            <span className="results-recruiter">
-              <span aria-hidden="true" />
-              Recruiter
-            </span>
+            <PlatformNavigation active="results" tenantId={tenant} />
             <Button
               variant="secondary"
               onClick={async () => {
@@ -501,7 +521,7 @@ export function SearchResults({ bootstrap, request }: PageProps) {
                   const response = await request("/api/v1/session/sign-out", {
                     method: "DELETE",
                   });
-                  if (response.ok) location.replace("/api/v1/auth/login");
+                  if (response.ok) location.replace("/");
                   else setNotice("Sign-out failed. Try again.");
                 } catch {
                   setNotice("Sign-out failed. Try again.");
@@ -521,6 +541,20 @@ export function SearchResults({ bootstrap, request }: PageProps) {
               Retry authorized results
             </Button>
           </Alert>
+        )}
+        {noSearch && (
+          <EmptyState title="Your search results will appear here">
+            <p>
+              Start a search to find candidates. You can return here to your
+              latest results.
+            </p>
+            <a
+              className="ui-button"
+              href={`/tenants/${tenant}/recruiter/search/`}
+            >
+              Start a search
+            </a>
+          </EmptyState>
         )}
         {notice && <Alert tone="gold">{notice}</Alert>}
         {data && (
@@ -605,61 +639,91 @@ export function SearchResults({ bootstrap, request }: PageProps) {
                 />
               )}
             </Dialog>
-            <ResultsToolbar
-              count={shown.length}
-              total={data.items.length}
-              selected={selection?.candidate_ids.length ?? 0}
-              filter={filter}
-              setFilter={setFilter}
-              busy={busy}
-              compare={() => {
-                if (selectionToken.current)
-                  location.assign(
-                    `/tenants/${tenant}/recruiter/comparison/#handoff=${selectionToken.current}`,
-                  );
-              }}
-            />
-            {!data.items.length ? (
-              <EmptyState title="No authorized candidates matched">
-                Broaden deterministic criteria or choose another active opening.
-              </EmptyState>
-            ) : !shown.length ? (
-              <EmptyState title="No cards in this display filter">
-                Choose All candidates to see the unchanged result set.
-              </EmptyState>
-            ) : (
-              <div className="results-grid">
-                {shown.map((item) => (
-                  <ResultCard
-                    key={item.candidate_id}
-                    item={item}
-                    selected={
-                      (pendingSelection ?? selection?.candidate_ids)?.includes(
-                        item.candidate_id,
-                      ) ?? false
-                    }
-                    busy={busy || selectionBlocked}
-                    toggle={(checked) =>
-                      void toggle(item.candidate_id, checked)
-                    }
-                    viewed={viewedIds.includes(item.candidate_id)}
-                    detail={() => {
-                      setDetailId(item.candidate_id);
-                      setViewedIds((current) =>
-                        current.includes(item.candidate_id)
-                          ? current
-                          : [...current, item.candidate_id],
+            <div className="results-workspace">
+              <div className="results-main-column">
+                <ResultsToolbar
+                  filtersOpen={filtersOpen}
+                  toggleFilters={() => setFiltersOpen((value) => !value)}
+                  count={shown.length}
+                  total={data.items.length}
+                  selected={selection?.candidate_ids.length ?? 0}
+                  filter={filter}
+                  setFilter={setFilter}
+                  busy={busy}
+                  compare={() => {
+                    if (selectionToken.current)
+                      location.assign(
+                        `/tenants/${tenant}/recruiter/comparison/#handoff=${selectionToken.current}`,
                       );
-                    }}
-                  />
-                ))}
+                  }}
+                />
+                {!data.items.length ? (
+                  <EmptyState title="No authorized candidates matched">
+                    Broaden deterministic criteria or choose another active
+                    opening.
+                  </EmptyState>
+                ) : !shown.length ? (
+                  <EmptyState title="No cards in this display filter">
+                    Choose All candidates to see the unchanged result set.
+                  </EmptyState>
+                ) : (
+                  <div className="results-grid">
+                    {shown.map((item) => (
+                      <ResultCard
+                        key={item.candidate_id}
+                        item={item}
+                        selected={
+                          (
+                            pendingSelection ?? selection?.candidate_ids
+                          )?.includes(item.candidate_id) ?? false
+                        }
+                        busy={busy || selectionBlocked}
+                        toggle={(checked) =>
+                          void toggle(item.candidate_id, checked)
+                        }
+                        viewed={viewedIds.includes(item.candidate_id)}
+                        changeStatus={(status) => {
+                          setRequestedStatus(status);
+                          setDetailId(item.candidate_id);
+                        }}
+                        detail={() => {
+                          setRequestedStatus(undefined);
+                          setDetailId(item.candidate_id);
+                          setViewedIds((current) =>
+                            current.includes(item.candidate_id)
+                              ? current
+                              : [...current, item.candidate_id],
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {data.next_cursor && (
+                  <Button busy={busy} onClick={() => void more()}>
+                    Load more
+                  </Button>
+                )}
               </div>
-            )}
-            {data.next_cursor && (
-              <Button busy={busy} onClick={() => void more()}>
-                Load more
-              </Button>
-            )}
+              {filtersOpen && (
+                <ResultsFilters
+                  criteria={criteria}
+                  tenant={tenant}
+                  request={request}
+                  count={data.items.length}
+                  onClose={() => {
+                    setFiltersOpen(false);
+                    requestAnimationFrame(() =>
+                      document
+                        .querySelector<HTMLButtonElement>(
+                          ".results-filter-toggle",
+                        )
+                        ?.focus(),
+                    );
+                  }}
+                />
+              )}
+            </div>
             <Dialog
               open={Boolean(detailId)}
               title="Authorized candidate details"
@@ -673,6 +737,28 @@ export function SearchResults({ bootstrap, request }: PageProps) {
             >
               {detailId && (
                 <CandidateDetail
+                  key={detailId}
+                  initialStatus={requestedStatus}
+                  onWorkUpdated={(status) =>
+                    setData((current) =>
+                      current
+                        ? {
+                            ...current,
+                            items: current.items.map((item) =>
+                              item.candidate_id === detailId
+                                ? {
+                                    ...item,
+                                    summary: {
+                                      ...item.summary,
+                                      internal_status: status,
+                                    },
+                                  }
+                                : item,
+                            ),
+                          }
+                        : current,
+                    )
+                  }
                   tenantId={tenant}
                   candidateId={detailId}
                   searchId={data.search_id}

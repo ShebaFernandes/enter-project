@@ -37,6 +37,49 @@ export function Header({ children }: { children?: ReactNode }) {
     </header>
   );
 }
+export function PlatformNavigation({
+  active,
+  tenantId,
+}: {
+  active: "search" | "results" | "candidate";
+  tenantId?: string;
+}) {
+  const search = tenantId
+    ? `/tenants/${tenantId}/recruiter/search/`
+    : "/api/v1/auth/login";
+  return (
+    <>
+      <span className="platform-brand-label">Talent Platform</span>
+      <nav className="platform-navigation" aria-label="Platform">
+        <a
+          href={search}
+          aria-current={active === "search" ? "page" : undefined}
+        >
+          Search
+        </a>
+        <a
+          href={`${search}?view=results`}
+          aria-current={active === "results" ? "page" : undefined}
+        >
+          Results
+        </a>
+        <a
+          href={
+            active === "candidate"
+              ? "/candidate/profile/"
+              : "/api/v1/auth/login?platform=candidate"
+          }
+          aria-current={active === "candidate" ? "page" : undefined}
+        >
+          Candidate Platform
+        </a>
+      </nav>
+      <a className="platform-privacy-link" href="/candidate/rights/">
+        Privacy
+      </a>
+    </>
+  );
+}
 export function WorkspaceNavigation({
   label,
   items,

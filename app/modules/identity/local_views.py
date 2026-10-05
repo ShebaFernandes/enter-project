@@ -31,7 +31,10 @@ def local_recruiter_session_view(request: HttpRequest) -> HttpResponse:
         },
         workforce=True,
     )
-    response = HttpResponseRedirect(f"/tenants/{membership.tenant_id}/recruiter/search/")
+    destination = "?view=results" if request.query_params.get("view") == "results" else ""
+    response = HttpResponseRedirect(
+        f"/tenants/{membership.tenant_id}/recruiter/search/{destination}"
+    )
     response["Cache-Control"] = "no-store, private"
     response["Referrer-Policy"] = "no-referrer"
     return response
@@ -57,7 +60,11 @@ def local_candidate_session_view(request: HttpRequest) -> HttpResponse:
         },
         workforce=False,
     )
-    response = HttpResponseRedirect(f"/roles/{opening.openingpublicationlink.public_id}/")
+    response = HttpResponseRedirect(
+        "/candidate/profile/"
+        if request.query_params.get("profile") == "1"
+        else f"/roles/{opening.openingpublicationlink.public_id}/"
+    )
     response["Cache-Control"] = "no-store, private"
     response["Referrer-Policy"] = "no-referrer"
     return response
