@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PageProps } from "./mount";
+import { ResultIcon } from "./result-icon";
+import { CareerJourney } from "./career-journey";
 import { CriteriaReview, type Criteria } from "./criteria-review";
 import { workflowTransport } from "../shared/workflow-handoff";
 import {
@@ -11,14 +13,11 @@ import {
   Dialog,
   EmptyState,
   Loading,
-  StatusMessage,
 } from "./components";
 import { ApiError, responseJson } from "../shared/api-client";
 import { handoffToken } from "../shared/workflow-handoff";
 import {
   CandidateDetail,
-  Evidence,
-  Finding,
   fieldText,
   type SearchItem,
 } from "./candidate-detail";
@@ -35,65 +34,56 @@ function fragmentSelection() {
 }
 export function ResultsToolbar({
   count,
+  total,
   selected,
   filter,
   setFilter,
-  refresh,
   compare,
   busy,
 }: {
   count: number;
+  total?: number;
   selected: number;
   filter: boolean;
   setFilter: (value: boolean) => void;
-  refresh: () => void;
   compare: () => void;
   busy: boolean;
 }) {
   return (
     <section className="results-toolbar" aria-label="Result controls">
-      <div>
-        <h2>Search results</h2>
-        <p>
-          {count} currently authorized result(s). Server ordering is preserved.
-        </p>
-      </div>
-      <div className="ui-row">
-        <Button
-          variant="secondary"
-          aria-pressed={!filter}
-          onClick={() => setFilter(false)}
-        >
-          All candidates
-        </Button>
-        <Button
-          variant="secondary"
-          aria-pressed={filter}
-          onClick={() => setFilter(true)}
-        >
-          With employment information
-        </Button>
-      </div>
-      <p className="ui-help">
-        Display filter only; informational findings never change search scores
-        or order.
-      </p>
-      <div className="ui-row">
-        <Button
-          id="refresh-results"
-          variant="secondary"
-          disabled={busy}
-          onClick={refresh}
-        >
-          Refresh authorized results
-        </Button>
-        <Button disabled={busy || selected < 2} onClick={compare}>
-          Compare selected candidates
-        </Button>
-      </div>
-      <StatusMessage>
+      <span className="ui-visually-hidden" role="status" aria-live="polite">
         {selected} candidates selected for comparison.
-      </StatusMessage>
+      </span>
+      <h2>
+        Showing {count} of {total ?? count} results
+      </h2>
+      <div className="results-controls">
+        <Button
+          variant="secondary"
+          disabled={busy || selected < 2}
+          onClick={compare}
+        >
+          Compare ({selected})
+        </Button>
+        <select
+          aria-label="Filter results"
+          value={filter ? "employment" : "all"}
+          onChange={(event) => setFilter(event.target.value === "employment")}
+        >
+          <option value="all">All</option>
+          <option value="employment">With employment information</option>
+        </select>
+        <Button
+          variant="secondary"
+          className="results-filter-toggle"
+          aria-label="Show filters"
+          onClick={() =>
+            document.getElementById("results-criteria")?.toggleAttribute("open")
+          }
+        >
+          <ResultIcon name="filters" />
+        </Button>
+      </div>
     </section>
   );
 }
@@ -103,51 +93,158 @@ export function ResultCard({
   busy,
   toggle,
   detail,
+  viewed = false,
 }: {
   item: SearchItem;
   selected: boolean;
   busy: boolean;
   toggle: (checked: boolean) => void;
   detail: () => void;
+  viewed?: boolean;
 }) {
+  const summary = item.summary;
+  const name = fieldText(summary.name);
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
   return (
     <article className="result-card">
-      <div className="result-card-heading">
-        <div>
-          <h3>{fieldText(item.summary.name)}</h3>
-          <p>{fieldText(item.summary.current_role ?? item.summary.headline)}</p>
+      <div className="candidate-avatar" aria-hidden="true">
+        {initials}
+      </div>
+      <div className="result-card-main">
+        <div className="candidate-title-line">
+          <h3>{name}</h3>
+          {viewed && <span className="viewed-mark">Viewed</span>}
+          {typeof summary.updated_at === "string" && (
+            <span className="freshness-pill">
+              Updated {new Date(summary.updated_at).toLocaleDateString("en-IN")}
+            </span>
+          )}
         </div>
-        <Chip>{fieldText(item.summary.location)}</Chip>
-      </div>
-      <p>Experience: {fieldText(item.summary.experience_years)}</p>
-      <div className="ui-row">
-        {Array.isArray(item.summary.skills) &&
-          item.summary.skills.map((skill, index) => (
-            <Chip key={index} tone="sage">
-              {fieldText(skill)}
-            </Chip>
-          ))}
-      </div>
-      <Evidence items={item.evidence} />
-      {item.unknowns.length > 0 && (
-        <p>
-          Unknown:{" "}
-          {item.unknowns.map((field) => field.replaceAll("_", " ")).join(", ")}
+        <p className="candidate-headline">
+          {fieldText(summary.current_role ?? summary.headline)}
+          {summary.current_company
+            ? ` at ${fieldText(summary.current_company)}`
+            : ""}
         </p>
-      )}
-      {item.findings.map((finding, index) => (
-        <Finding key={index} finding={finding} />
-      ))}
+        {summary.education ? (
+          <p className="candidate-alias">{fieldText(summary.education)}</p>
+        ) : null}
+        <div className="result-facts">
+          <div>
+            <ResultIcon name="location" /> Location:{" "}
+            <b>{fieldText(summary.location)}</b>
+          </div>
+          <div>
+            <ResultIcon name="calendar" /> Notice period:{" "}
+            <b>{fieldText(summary.notice_period)}</b>
+          </div>
+          <div>
+            <ResultIcon name="briefcase" /> Experience:{" "}
+            <b>{fieldText(summary.experience_years)} years</b>
+          </div>
+          <div>
+            <ResultIcon name="rupee" /> Current salary:{" "}
+            <b>{fieldText(summary.current_salary)}</b>
+          </div>
+        </div>
+        <CareerJourney history={summary.employment_history} />
+        <div className="result-skills">
+          <strong>Skills</strong>
+          <div className="skill-chip-list">
+            {Array.isArray(summary.skills) &&
+              summary.skills.map((skill, index) => (
+                <Chip key={index} tone="sage">
+                  ✓ {fieldText(skill)}
+                </Chip>
+              ))}
+          </div>
+        </div>
+      </div>
       <div className="result-card-actions">
         <Checkbox
-          label={`Compare ${fieldText(item.summary.name)}`}
+          label="Compare"
+          aria-label={`Compare ${name}`}
           checked={selected}
           disabled={busy}
           onChange={(event) => toggle(event.target.checked)}
         />
-        <Button variant="secondary" onClick={detail}>
-          View authorized details
-        </Button>
+        <label className="side-label" htmlFor={`status-${item.candidate_id}`}>
+          Status
+        </label>
+        <select
+          id={`status-${item.candidate_id}`}
+          className="result-status-select"
+          value={
+            typeof summary.internal_status === "string"
+              ? summary.internal_status
+              : ""
+          }
+          disabled
+          title="Status editing is available in the candidate workspace"
+        >
+          <option value="">Unavailable</option>
+          {[
+            "SOURCED",
+            "SHORTLISTED",
+            "CONTACTED",
+            "SCREENING",
+            "INTERVIEWING",
+            "OFFERED",
+            "REJECTED",
+            "NOT_RELEVANT",
+            "HIRED",
+          ].map((status) => (
+            <option key={status} value={status}>
+              {status
+                .replaceAll("_", " ")
+                .toLowerCase()
+                .replace(/^./, (character) => character.toUpperCase())}
+            </option>
+          ))}
+        </select>
+        <div className="candidate-contact-actions">
+          <Button
+            variant="secondary"
+            aria-label={`WhatsApp ${name}`}
+            disabled
+            title="Contact information is not available in search results"
+          >
+            <ResultIcon name="whatsapp" />
+          </Button>
+          <Button
+            variant="secondary"
+            aria-label={`Email ${name}`}
+            disabled
+            title="Contact information is not available in search results"
+          >
+            <ResultIcon name="mail" />
+          </Button>
+          <Button
+            variant="secondary"
+            aria-label={`Share ${name}`}
+            disabled
+            title="Sharing is available in the candidate workspace"
+          >
+            <ResultIcon name="share" />
+          </Button>
+          <Button className="view-profile-button" onClick={detail}>
+            View profile
+          </Button>
+        </div>
+        {item.findings.length > 0 && (
+          <div className="side-signals">
+            <strong>Employment information</strong>
+            {item.findings.map((finding, index) => (
+              <Chip key={index} tone="gold">
+                {finding.message}
+              </Chip>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );
@@ -166,6 +263,7 @@ export function SearchResults({ bootstrap, request }: PageProps) {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState(false);
+  const [viewedIds, setViewedIds] = useState<string[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pendingSelection, setPendingSelection] = useState<string[] | null>(
@@ -381,9 +479,38 @@ export function SearchResults({ bootstrap, request }: PageProps) {
       }}
     >
       <AppShell
-        title="Candidates for your search"
+        title="Search results"
         navigation={
-          <a href={`/tenants/${tenant}/recruiter/search/`}>Return to search</a>
+          <>
+            <span className="results-brand-label">Talent Platform</span>
+            <nav className="results-navigation" aria-label="Platform">
+              <a href={`/tenants/${tenant}/recruiter/search/`}>Search</a>
+              <a aria-current="page" href="#main">
+                Results
+              </a>
+              <a href="/">Candidate Platform</a>
+            </nav>
+            <span className="results-recruiter">
+              <span aria-hidden="true" />
+              Recruiter
+            </span>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                try {
+                  const response = await request("/api/v1/session/sign-out", {
+                    method: "DELETE",
+                  });
+                  if (response.ok) location.replace("/api/v1/auth/login");
+                  else setNotice("Sign-out failed. Try again.");
+                } catch {
+                  setNotice("Sign-out failed. Try again.");
+                }
+              }}
+            >
+              Logout
+            </Button>
+          </>
         }
       >
         {loading && <Loading label="Restoring current authorized results…" />}
@@ -398,8 +525,19 @@ export function SearchResults({ bootstrap, request }: PageProps) {
         {notice && <Alert tone="gold">{notice}</Alert>}
         {data && (
           <>
-            <section aria-label="Applied deterministic criteria">
-              <h2>Applied criteria</h2>
+            <details
+              id="results-criteria"
+              aria-label="Applied deterministic criteria"
+            >
+              <summary>Applied criteria</summary>
+              <Button
+                id="refresh-results"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void load()}
+              >
+                Refresh authorized results
+              </Button>
               {criteria ? (
                 criteria.groups.map((group) => (
                   <div key={group.id}>
@@ -447,7 +585,7 @@ export function SearchResults({ bootstrap, request }: PageProps) {
               >
                 Adjust criteria
               </Button>
-            </section>
+            </details>
             <Dialog
               open={Boolean(editToken)}
               title="Adjust applied criteria"
@@ -468,11 +606,11 @@ export function SearchResults({ bootstrap, request }: PageProps) {
               )}
             </Dialog>
             <ResultsToolbar
-              count={data.items.length}
+              count={shown.length}
+              total={data.items.length}
               selected={selection?.candidate_ids.length ?? 0}
               filter={filter}
               setFilter={setFilter}
-              refresh={() => void load()}
               busy={busy}
               compare={() => {
                 if (selectionToken.current)
@@ -504,7 +642,15 @@ export function SearchResults({ bootstrap, request }: PageProps) {
                     toggle={(checked) =>
                       void toggle(item.candidate_id, checked)
                     }
-                    detail={() => setDetailId(item.candidate_id)}
+                    viewed={viewedIds.includes(item.candidate_id)}
+                    detail={() => {
+                      setDetailId(item.candidate_id);
+                      setViewedIds((current) =>
+                        current.includes(item.candidate_id)
+                          ? current
+                          : [...current, item.candidate_id],
+                      );
+                    }}
                   />
                 ))}
               </div>

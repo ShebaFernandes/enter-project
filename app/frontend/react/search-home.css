@@ -1,66 +1,221 @@
+body[data-frontend-renderer="react"]:has(.ui-search-home) {
+  margin: 0;
+}
 .enter-ui .ui-search-home {
   min-height: 100vh;
   background: #fafaf8;
-  color: var(--fm-color-ink);
+  color: #111342;
+  font-family: "Results Inter", system-ui, sans-serif;
+}
+.enter-ui .ui-search-home .ui-header {
+  height: 64px;
+  padding: 0 32px 14px 42px;
+  gap: 10px;
+  flex-wrap: nowrap;
+  position: relative;
+}
+.enter-ui .ui-search-home .ui-logo-frame {
+  width: 72px;
+  height: 28px;
+}
+.enter-ui .ui-search-home .ui-logo-frame img {
+  width: 96px;
+  left: -12px;
+  top: -9px;
+}
+.enter-ui .ui-search-brand {
+  margin-left: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #596273;
+}
+.enter-ui .ui-search-navigation {
+  position: absolute;
+  left: 52%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid #d7dbd2;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: #535d6c;
+}
+.enter-ui .ui-search-navigation a {
+  padding: 8px 17px;
+  text-decoration: none;
+  border-radius: 999px;
+}
+.enter-ui .ui-search-navigation a[aria-current] {
+  background: #111342;
+  color: white;
+}
+.enter-ui .ui-search-recruiter {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #596273;
+  font-size: 14px;
+}
+.enter-ui .ui-search-recruiter > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #276955;
+}
+.enter-ui .ui-search-home .ui-header > button {
+  min-height: 31px;
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #596273;
 }
 .enter-ui .ui-search-tools {
+  position: absolute;
+  top: 86px;
+  left: 28px;
+  right: 28px;
   display: flex;
   justify-content: space-between;
-  padding: 1.5rem;
+}
+.enter-ui .ui-search-tools button {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 11px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px #11182714;
+}
+.enter-ui .ui-search-home svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .enter-ui .ui-search-stage {
-  max-width: 720px;
+  width: min(720px, 100%);
   margin: 0 auto;
-  padding: clamp(3rem, 23.5vh, 15rem) 1.25rem 3rem;
+  padding: 346px 20px 48px;
 }
 .enter-ui .ui-search-stage h1 {
   text-align: center;
-  font-family: var(--fm-font-sans);
-  font-size: clamp(1.4rem, 3vw, 1.5rem);
-  font-weight: 500;
-  color: #6f756c;
-  margin-bottom: 2rem;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #080908;
+  margin: 0 0 14px;
 }
 .enter-ui .ui-search-composer {
-  background: var(--fm-color-raised, white);
-  border: 1px solid var(--fm-color-hairline);
-  border-radius: 17px;
-  padding: 1.5rem;
-  box-shadow: var(--fm-shadow-card);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 58px;
+  background: white;
+  border: 1px solid #d9d6d1;
+  border-radius: 18px;
+  padding: 10px 12px 10px 18px;
+  box-shadow:
+    0 1px 2px #11182714,
+    0 20px 50px #1118270f;
 }
-.enter-ui .ui-search-composer textarea {
+.enter-ui .ui-search-composer input {
+  flex: 1;
   width: 100%;
-  min-height: 5rem;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0;
   border: none;
-  resize: vertical;
-  font: inherit;
+  font-size: 15px;
+  color: #2e2f2b;
   background: transparent;
+}
+.enter-ui .ui-search-composer input::placeholder {
+  color: #94958f;
+  opacity: 1;
 }
 .enter-ui .ui-composer-bottom {
   display: flex;
-  align-items: end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
-.enter-ui .ui-composer-bottom label {
-  flex: 1;
+.enter-ui .ui-search-voice[data-variant="secondary"] {
+  border: 0;
+  padding: 7px;
+  min-height: 36px;
+  color: #6f756c;
+}
+.enter-ui .ui-search-voice:disabled {
+  opacity: 0.8;
+}
+.enter-ui .ui-search-voice[aria-pressed="true"] {
+  background: #ddede6;
+  color: #276955;
+}
+.enter-ui .ui-search-submit {
+  width: 64px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border-color: #d9d6d1;
+  box-shadow: 0 1px 2px #11182714;
   display: grid;
-  gap: 0.4rem;
-  min-width: 10rem;
+  place-items: center;
 }
-.enter-ui .ui-composer-bottom select {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  font: inherit;
-  padding: 0.5rem;
+.enter-ui .ui-search-submit-logo {
+  display: block;
+  width: 40px;
+  height: 20px;
+  overflow: hidden;
+  position: relative;
+}
+.enter-ui .ui-search-submit-logo img {
+  position: absolute;
+  width: 52px;
+  max-width: none;
+  left: -6px;
+  top: -3.8px;
 }
 .enter-ui .ui-suggested {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: 8px;
+  margin-top: 42px;
+}
+.enter-ui .ui-suggested .ui-button[data-variant="secondary"] {
+  min-height: 34px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 650;
+  color: #56665a;
+  box-shadow: 0 1px 2px #1118270a;
+}
+.enter-ui .ui-search-speech-status,
+.enter-ui #search-feedback:not(:empty) {
+  margin-top: 12px;
+}
+.enter-ui #search-feedback:has(.ui-status:empty):not(:has(.ui-alert)) {
+  margin: 0;
+}
+.enter-ui .ui-search-sidebar > label {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+.enter-ui .ui-search-sidebar select {
+  width: 100%;
+  min-height: 44px;
 }
 .enter-ui .ui-search-sidebar {
   position: fixed;
@@ -100,11 +255,56 @@
   width: 100%;
   text-align: left;
 }
+
 @media (max-width: 860px) {
+  .enter-ui .ui-search-home .ui-header {
+    height: auto;
+    min-height: 112px;
+    padding: 12px 16px 60px;
+    flex-wrap: wrap;
+  }
+  .enter-ui .ui-search-brand {
+    margin-left: 2px;
+    font-size: 12px;
+  }
+  .enter-ui .ui-search-navigation {
+    left: 50%;
+    bottom: 10px;
+    font-size: 12px;
+  }
+  .enter-ui .ui-search-navigation a {
+    padding: 8px 12px;
+  }
+  .enter-ui .ui-search-recruiter {
+    font-size: 12px;
+  }
+  .enter-ui .ui-search-tools {
+    top: 134px;
+    left: 16px;
+    right: 16px;
+  }
   .enter-ui .ui-search-stage {
-    padding-top: 3rem;
+    padding-top: clamp(140px, 28vh, 250px);
+  }
+  .enter-ui .ui-search-stage h1 {
+    font-size: 22px;
   }
   .enter-ui .ui-search-composer {
-    padding: 1rem;
+    padding-left: 12px;
+  }
+  .enter-ui .ui-composer-bottom {
+    gap: 2px;
+  }
+  .enter-ui .ui-search-submit {
+    width: 54px;
+  }
+  .enter-ui .ui-suggested {
+    gap: 8px;
+    margin-top: 28px;
+  }
+}
+@media (max-width: 380px) {
+  .enter-ui .ui-search-brand {
+    display: none;
   }
 }

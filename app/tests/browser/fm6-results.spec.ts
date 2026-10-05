@@ -82,9 +82,10 @@ test("FM6 applied criteria edit stays inside results and never executes merely b
     }),
   );
   await page.goto(fixture);
-  await expect(
-    page.getByRole("region", { name: "Applied deterministic criteria" }),
-  ).toContainText("Python");
+  await page.getByRole("button", { name: "Show filters" }).click();
+  await expect(page.getByLabel("Applied deterministic criteria")).toContainText(
+    "Python",
+  );
   await page
     .getByRole("button", { name: "Adjust criteria", exact: true })
     .click();
@@ -129,7 +130,7 @@ test("FM6 results and authorized detail are accessible and responsive", async ({
         ["serious", "critical"].includes(v.impact ?? ""),
       ),
     ).toEqual([]);
-    await page.getByRole("button", { name: "View authorized details" }).click();
+    await page.getByRole("button", { name: "View profile" }).click();
     await expect(page.getByRole("dialog")).toContainText("Unknown");
     await expect(page.getByRole("dialog")).toContainText("Unavailable");
     await expect(page).toHaveScreenshot(`detail-${width}-${zoom}.png`, {
@@ -149,7 +150,7 @@ test("FM6 results and authorized detail are accessible and responsive", async ({
     ).toBe(true);
     await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("button", { name: "View authorized details" }),
+      page.getByRole("button", { name: "View profile" }),
     ).toBeFocused();
   }
   expect(
@@ -163,7 +164,7 @@ test("FM6 expired results and revoked candidate reads fail closed", async ({
   await page.route("**/candidates/*?search_id=*", (route) =>
     route.fulfill({ status: 403, json: {} }),
   );
-  await page.getByRole("button", { name: "View authorized details" }).click();
+  await page.getByRole("button", { name: "View profile" }).click();
   await expect(page.getByRole("dialog")).toContainText("unavailable");
   await expect(
     page.getByRole("dialog").getByText("Software engineer"),
@@ -232,17 +233,18 @@ test("FM6 selection preserves order, uses CSRF and rejects stale overwrite", asy
   await expect(page.getByRole("alert")).toContainText(
     "nothing was silently overwritten",
   );
+  await page.getByRole("button", { name: "Show filters" }).click();
   await page
     .getByRole("button", { name: "Refresh authorized results" })
     .click();
   await expect(page.getByLabel("Compare Second Candidate")).toBeChecked();
   await page
-    .getByRole("button", { name: "With employment information" })
-    .click();
+    .getByRole("combobox", { name: "Filter results" })
+    .selectOption("employment");
   await expect(page.getByRole("article")).toHaveCount(1);
   await page
-    .getByRole("button", { name: "All candidates", exact: true })
-    .click();
+    .getByRole("combobox", { name: "Filter results" })
+    .selectOption("all");
   await expect(page.getByRole("article")).toHaveCount(2);
   expect(
     await page.evaluate(() => [localStorage.length, sessionStorage.length]),

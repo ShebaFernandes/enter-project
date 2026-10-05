@@ -7,6 +7,8 @@ import {
 } from "react";
 import type { ConflictPayload } from "../shared/conflict-resolution";
 
+const enterLogo = new URL("./assets/enter-logo.jpeg", import.meta.url).href;
+
 type Children = { children: ReactNode };
 export function VisuallyHidden({ children }: Children) {
   return <span className="ui-visually-hidden">{children}</span>;
@@ -21,7 +23,9 @@ export function SkipLink({ target = "main" }: { target?: string }) {
 export function Wordmark({ href = "/" }: { href?: string }) {
   return (
     <a href={href} className="ui-wordmark" aria-label="enter home">
-      enter
+      <span className="ui-logo-frame">
+        <img src={enterLogo} alt="enter" />
+      </span>
     </a>
   );
 }

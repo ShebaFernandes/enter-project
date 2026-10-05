@@ -302,3 +302,117 @@ test("FM4 rate limit and sidebar errors retain typed input without storage", asy
     })),
   ).toEqual({ local: {}, session: {} });
 });
+
+test("search reference controls support suggestions, reset, opening context and Enter", async ({
+  page,
+}) => {
+  const openingId = "00000000-0000-4000-8000-000000000009";
+  await page.route("**/openings", (route) =>
+    route.fulfill({
+      json: [{ id: openingId, title: "Backend engineer", state: "OPEN" }],
+    }),
+  );
+  let payload:
+    | { prompt: string; context: { type: string; opening_id?: string } }
+    | undefined;
+  await page.route("**/searches/interpret", (route) => {
+    payload = route.request().postDataJSON();
+    return route.fulfill({ status: 503, json: {} });
+  });
+  await page.goto(fixture);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Platform" })
+      .getByRole("link", { name: "Results", exact: true }),
+  ).toHaveAttribute("href", /view=results/);
+  await expect(
+    page.getByRole("link", { name: "Candidate Platform" }),
+  ).toHaveAttribute("href", "/");
+  await page
+    .getByRole("button", { name: "Founding engineers", exact: true })
+    .click();
+  await expect(page.getByLabel("Describe the candidate you need")).toHaveValue(
+    "Founding engineers",
+  );
+  await page.getByRole("button", { name: "New search", exact: true }).click();
+  await expect(page.getByLabel("Describe the candidate you need")).toHaveValue(
+    "",
+  );
+  await expect(
+    page.getByLabel("Describe the candidate you need"),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Projects and recents" }).click();
+  await page.getByLabel("Search context").selectOption(openingId);
+  await page.getByRole("button", { name: "Close panel" }).click();
+  await page
+    .getByLabel("Describe the candidate you need")
+    .fill("Python engineers");
+  await page.getByLabel("Describe the candidate you need").press("Enter");
+  await expect(page.getByRole("alert")).toContainText(
+    "Interpretation is unavailable",
+  );
+  expect(payload).toEqual({
+    prompt: "Python engineers",
+    context: { type: "OPENING", opening_id: openingId },
+  });
+  await page.getByRole("button", { name: "New search", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await page.getByRole("button", { name: "Projects and recents" }).click();
+  await expect(page.getByLabel("Search context")).toHaveValue("");
+});
+
+for (const kind of ["recent", "saved"] as const) {
+  test(`search panel restores ${kind} searches`, async ({ page }) => {
+    const searchId = "00000000-0000-4000-8000-000000000005";
+    await page.route(`**/${kind}-searches`, (route) =>
+      route.fulfill({
+        json: [
+          {
+            search_id: searchId,
+            name: "Backend hiring",
+            created_at: "2026-10-05",
+          },
+        ],
+      }),
+    );
+    await page.route(`**/${kind}-searches/${searchId}`, (route) =>
+      route.fulfill({ json: {} }),
+    );
+    await page.route("**/search-handoffs/search-results", (route) =>
+      route.fulfill({ status: 201, json: { token: "a".repeat(43) } }),
+    );
+    await page.route("**/recruiter/search/?view=results", (route) =>
+      route.fulfill({ body: "Results" }),
+    );
+    await page.goto(fixture);
+    await page.getByRole("button", { name: "Projects and recents" }).click();
+    if (kind === "saved")
+      await page.getByText("Saved searches", { exact: true }).click();
+    await page
+      .getByRole("button", {
+        name: kind === "recent" ? "Recent search 1" : "Backend hiring",
+        exact: true,
+      })
+      .click();
+    await expect(page).toHaveURL(/view=results#handoff=/);
+  });
+}
+
+test("search logout reports failures and can retry successfully", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/session/sign-out", (route) =>
+    route.fulfill({ status: 503, json: {} }),
+  );
+  await page.goto(fixture);
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page.getByRole("alert")).toContainText("Sign-out failed");
+  await page.route("**/api/v1/session/sign-out", (route) =>
+    route.fulfill({ status: 204 }),
+  );
+  await page.route("**/api/v1/auth/login", (route) =>
+    route.fulfill({ body: "Login" }),
+  );
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page).toHaveURL(/auth\/login$/);
+});

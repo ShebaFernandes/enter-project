@@ -1,82 +1,656 @@
-.enter-ui .results-toolbar,
-.enter-ui .result-card {
-  background: var(--fm-color-raised);
-  border: 1px solid var(--fm-color-hairline);
-  border-radius: var(--fm-radius-card);
-  padding: var(--fm-spacing-roomy);
-  display: grid;
-  gap: var(--fm-spacing-panel);
-  min-width: 0;
+/* Recruiter results: final compact rules from the HTML reference. */
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/inter-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/inter-500.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/inter-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/inter-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Results Inter";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./assets/inter-800.ttf") format("truetype");
+}
+body:has(.search-results-page) {
+  margin: 0;
+  background: #f4f5ef;
+}
+.enter-ui .search-results-page {
+  --results-ink: #111342;
+  --results-soft: #4b5563;
+  --results-faint: #687382;
+  --results-border: #d7dbd2;
+  font-family: "Results Inter", system-ui, sans-serif;
+  color: var(--results-ink);
+  background: #f4f5ef;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.enter-ui .search-results-page .ui-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 32px;
+  min-height: 64px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--results-border);
+  backdrop-filter: blur(16px);
+}
+.enter-ui .search-results-page .ui-wordmark {
+  font-family: inherit;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.enter-ui .results-brand-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--results-soft);
+}
+.enter-ui .results-navigation {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--results-border);
+  border-radius: 999px;
+  padding: 3px;
+  margin: 0 auto;
+  background: white;
+}
+.enter-ui .results-navigation a {
+  font:
+    500 13px "Results Inter",
+    sans-serif;
+  color: var(--results-soft);
+  padding: 9px 17px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.enter-ui .results-navigation a[aria-current] {
+  background: var(--results-ink);
+  color: #f4f5ef;
+}
+.enter-ui .results-recruiter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--results-soft);
+}
+.enter-ui .results-recruiter > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #276955;
+}
+.enter-ui .search-results-page .ui-header .ui-button {
+  border: 1px solid var(--results-border);
+  border-radius: 6px;
+  color: var(--results-soft);
+  padding: 7px 10px;
+  min-height: 0;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.enter-ui .search-results-page .ui-container {
+  width: 100%;
+  max-width: 940px;
+  padding: 18px 20px 32px;
+  margin: 0 auto;
+}
+.enter-ui .search-results-page .ui-stack {
+  gap: 0;
+}
+.enter-ui .search-results-page .ui-stack > h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.enter-ui .results-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border: 1px solid var(--results-border);
+  border-radius: 8px;
   box-shadow: var(--fm-shadow-card);
+  padding: 12px 16px;
+  margin: 0 0 8px;
+  position: sticky;
+  top: 78px;
+  z-index: 18;
+}
+.enter-ui .results-toolbar h2 {
+  font:
+    800 22px/1.18 "Results Inter",
+    sans-serif;
+  margin: 0;
+}
+.enter-ui .results-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.enter-ui .results-controls .ui-button {
+  font:
+    700 13px "Results Inter",
+    sans-serif;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border-color: var(--results-border);
+}
+.enter-ui .results-controls select {
+  width: 220px;
+  min-height: 36px;
+  border: 1px solid var(--results-border);
+  border-radius: 8px;
+  padding: 5px 7px;
+  color: var(--results-ink);
+  background: white;
+  font:
+    600 12.5px "Results Inter",
+    sans-serif;
+}
+.enter-ui .results-controls .results-filter-toggle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  min-height: 36px;
+  box-shadow: var(--fm-shadow-card);
+}
+.enter-ui .results-filter-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+.enter-ui #results-criteria:not([open]) {
+  display: none;
+}
+.enter-ui #results-criteria {
+  background: white;
+  padding: 16px;
+  border: 1px solid var(--results-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 .enter-ui .results-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--fm-spacing-section);
-}
-.enter-ui .search-results-page .ui-container {
-  max-width: var(--fm-container-public);
+  gap: 7px;
 }
 .enter-ui .result-card {
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.3fr);
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 170px;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--results-border);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 2px #1118270d,
+    0 12px 30px #1118270f;
 }
-.enter-ui .result-card > * {
-  grid-column: 1;
+.enter-ui .candidate-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ebe4d2, #d7e6dd);
+  border: 1px solid var(--results-border);
+  font-size: 14px;
+  font-weight: 800;
 }
-.enter-ui .result-card > .result-card-actions {
-  grid-column: 2;
-  grid-row: 1 / span 8;
-  align-content: start;
-  justify-content: start;
-  border-left: 1px solid var(--fm-color-hairline);
-  padding-left: var(--fm-spacing-panel);
-}
-.enter-ui .result-card-heading,
-.enter-ui .result-card-actions {
+.enter-ui .candidate-title-line {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--fm-spacing-field);
+  flex-wrap: wrap;
+  gap: 5px;
 }
 .enter-ui .result-card h3 {
-  font-family: var(--fm-font-display);
-  font-size: 1.35rem;
+  font:
+    800 15px/1.2 "Results Inter",
+    sans-serif;
+  margin: 0 0 1px;
+}
+.enter-ui .candidate-headline {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--results-soft);
+  line-height: 1.12;
+}
+.enter-ui .candidate-alias {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--results-soft);
+  line-height: 1.12;
+}
+.enter-ui .viewed-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #276955;
+}
+.enter-ui .viewed-mark::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  border-radius: 50%;
+  background: #276955;
+  color: white;
+}
+.enter-ui .freshness-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #276955;
+}
+.enter-ui .freshness-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #276955;
+}
+.enter-ui .result-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(210px, max-content));
+  gap: 6px 34px;
+  margin-top: 5px;
+  color: var(--results-soft);
+  font-size: 11px;
+  font-weight: 650;
+}
+.enter-ui .result-facts > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.enter-ui .result-facts svg {
+  width: 12px;
+  height: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.enter-ui .result-facts b {
+  color: var(--results-ink);
+  font-weight: 700;
+}
+.enter-ui .result-timeline {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+  min-height: 34px;
+  margin: 6px 0 0;
+  padding: 0 2px 5px;
+}
+.enter-ui .career-journey-label {
+  color: var(--results-faint);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding-top: 2px;
+  white-space: nowrap;
+  line-height: 1;
+}
+.enter-ui .career-map {
+  position: relative;
+  height: 30px;
+  width: 100%;
+  max-width: 520px;
   margin: 0;
 }
-.enter-ui .result-finding {
-  padding: var(--fm-spacing-field);
-  border: 1px solid var(--fm-color-hairline);
-  border-radius: var(--fm-radius-card);
+.enter-ui .career-map-line,
+.enter-ui .career-map-gap {
+  position: absolute;
+  top: 10px;
+  height: 12px;
+  border-radius: 999px;
+}
+.enter-ui .career-map-line {
+  background: linear-gradient(#20b176, #20b176) center/100% 3px no-repeat;
+}
+.enter-ui .career-map-gap {
+  background: radial-gradient(circle, #c59b3d 1.9px, transparent 2.5px) 0
+    50%/8px 6px repeat-x;
+}
+.enter-ui .career-map-node {
+  position: absolute;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #20b176;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #20b1764d;
+  transform: translateX(-50%);
+}
+.enter-ui .career-map-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--results-ink);
+  font:
+    800 7.5px/1.5 "Results Inter",
+    sans-serif;
+  cursor: help;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.enter-ui .career-map-gap-label {
+  color: #80520d;
+}
+.enter-ui .career-map-year {
+  position: absolute;
+  top: 22px;
+  transform: translateX(-50%);
+  color: var(--results-faint);
+  font: 7.5px monospace;
+}
+.enter-ui .career-map-year.end {
+  right: 0;
+  transform: none;
+}
+.enter-ui .career-tooltip {
+  position: fixed;
+  z-index: 999;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  background: #111342;
+  color: #f4f5ef;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px #0003;
+  font:
+    12px/1.45 "Results Inter",
+    sans-serif;
+  pointer-events: none;
+}
+.enter-ui .career-tooltip strong {
+  font-weight: 800;
+}
+.enter-ui .career-tooltip ul {
+  margin: 5px 0 0;
+  padding-left: 16px;
+}
+.enter-ui .career-tooltip li {
+  margin: 2px 0;
+}
+.enter-ui .career-unavailable,
+.enter-ui .career-undated {
+  font-size: 11px;
+  color: var(--results-faint);
+}
+.enter-ui .result-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 5px;
+  align-items: flex-start;
+  margin-top: 10px;
+  color: var(--results-soft);
+}
+.enter-ui .result-skills > strong {
+  font-size: 10px;
+  padding-top: 2px;
+}
+.enter-ui .skill-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.enter-ui .result-skills .ui-chip {
+  padding: 1px 6px;
+  font:
+    700 9.5px/1.3 "Results Inter",
+    sans-serif;
+  border: 1px solid #27695533;
+  border-radius: 999px;
+  color: #276955;
+  background: #ddede6;
+}
+.enter-ui .result-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  border-left: 1px solid var(--results-border);
+  padding-left: 12px;
+}
+.enter-ui .result-card-actions .ui-choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b4541;
+  font:
+    700 11px "Results Inter",
+    sans-serif;
+  min-height: 0;
+}
+.enter-ui .result-card-actions .ui-choice input {
+  width: 14px;
+  height: 14px;
+  accent-color: #276955;
+  margin: 0;
+}
+.enter-ui .side-label {
+  font:
+    800 10.5px/1 "Results Inter",
+    sans-serif;
+  color: var(--results-faint);
+}
+.enter-ui .result-status-select {
+  border: 1px solid var(--results-border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  min-height: 28px;
+  background: white;
+  color: var(--results-ink);
+  font:
+    600 10.5px "Results Inter",
+    sans-serif;
+}
+.enter-ui .candidate-contact-actions {
   display: grid;
-  gap: var(--fm-spacing-control);
+  grid-template-columns: 30px 30px 30px;
+  gap: 6px;
+  margin-top: 2px;
+}
+.enter-ui .candidate-contact-actions .ui-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-radius: 6px;
+  border-color: var(--results-border);
+  padding: 0;
+}
+.enter-ui .candidate-contact-actions svg {
+  width: 16px;
+  height: 16px;
+}
+.enter-ui .candidate-contact-actions .view-profile-button {
+  grid-column: 1/-1;
+  width: 100%;
+  height: auto;
+  min-height: 38px;
+  padding: 4px 10px;
+  font:
+    650 12px/1.1 "Results Inter",
+    sans-serif;
+  border-radius: 8px;
+  background: var(--results-ink);
+  color: #f4f5ef;
+}
+.enter-ui .side-signals {
+  padding-top: 3px;
+  margin-top: auto;
+  border-top: 1px solid var(--results-border);
+  display: grid;
+  gap: 3px;
+}
+.enter-ui .side-signals strong {
+  color: var(--results-faint);
+  font-size: 9.5px;
+}
+.enter-ui .side-signals .ui-chip {
+  font-size: 9.5px;
+  padding: 1px 6px;
 }
 .enter-ui .detail-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--fm-spacing-panel);
+  gap: 18px;
+}
+.enter-ui .detail-fields dd {
+  margin: 0;
 }
 .enter-ui .detail-fields dt {
   font-weight: 600;
 }
-.enter-ui .detail-fields dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+.enter-ui .result-finding {
+  padding: 14px;
+  border: 1px solid var(--results-border);
+  border-radius: 8px;
 }
 @media (max-width: 860px) {
-  .enter-ui .results-grid,
-  .enter-ui .detail-fields,
-  .enter-ui .result-card {
-    grid-template-columns: minmax(0, 1fr);
+  .enter-ui .search-results-page .ui-header {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 10px;
   }
-  .enter-ui .result-card > .result-card-actions {
-    grid-column: 1;
-    grid-row: auto;
-    border-left: 0;
-    padding-left: 0;
+  .enter-ui .results-navigation {
+    order: 5;
+    width: 100%;
+    justify-content: center;
   }
-  .enter-ui .results-toolbar,
+  .enter-ui .results-recruiter {
+    margin-left: auto;
+  }
+  .enter-ui .results-brand-label {
+    display: none;
+  }
+  .enter-ui .results-toolbar {
+    position: static;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .enter-ui .results-toolbar h2 {
+    font-size: 20px;
+  }
+  .enter-ui .results-controls {
+    width: 100%;
+    gap: 8px;
+  }
+  .enter-ui .results-controls select {
+    width: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .enter-ui .search-results-page .ui-container {
+    padding: 16px 10px;
+  }
   .enter-ui .result-card {
-    padding: var(--fm-spacing-field);
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  .enter-ui .candidate-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  .enter-ui .result-facts {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    font-size: 12px;
+  }
+  .enter-ui .result-timeline {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 14px 0 0;
+  }
+  .enter-ui .career-map {
+    margin: 0 8px 0 4px;
+    width: calc(100% - 12px);
+  }
+  .enter-ui .career-map-label {
+    font-size: 9px;
+    max-width: 75px;
+  }
+  .enter-ui .career-map-year {
+    font-size: 9px;
+  }
+  .enter-ui .result-skills .ui-chip {
+    font-size: 11px;
+  }
+  .enter-ui .result-card-actions {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border: 0;
+    padding: 0;
+    margin-top: 8px;
+  }
+  .enter-ui .side-label {
+    align-self: center;
+  }
+  .enter-ui .result-status-select {
+    flex: 1;
+  }
+  .enter-ui .candidate-contact-actions {
+    grid-template-columns: 30px 30px 30px minmax(0, 1fr);
+    width: 100%;
+  }
+  .enter-ui .candidate-contact-actions .view-profile-button {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .enter-ui .side-signals {
+    width: 100%;
+  }
+  .enter-ui .detail-fields {
+    grid-template-columns: 1fr;
   }
 }

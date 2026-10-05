@@ -322,3 +322,20 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Display the supplied logo without changing the original image. */
+.enter-ui .ui-logo-frame {
+  display: block;
+  position: relative;
+  width: 92px;
+  height: 27px;
+  overflow: hidden;
+}
+.enter-ui .ui-logo-frame img {
+  position: absolute;
+  width: 118px;
+  max-width: none;
+  height: auto;
+  left: -13px;
+  top: -12.6px;
+}

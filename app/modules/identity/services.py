@@ -47,7 +47,7 @@ def start_login() -> LoginStart:
         "code_challenge_method": "S256",
     }
     return LoginStart(
-        f"{settings.ENV.cognito_issuer.rstrip('/')}/oauth2/authorize?{urlencode(params)}",
+        f"{settings.ENV.cognito_domain.rstrip('/')}/oauth2/authorize?{urlencode(params)}",
         state,
         nonce,
         verifier,
@@ -58,7 +58,7 @@ def exchange_code(code: str, verifier: str) -> dict[str, object]:
     if settings.ENV.app_env in {"local", "test"}:
         raise PermissionDenied("External identity exchange is unavailable in local/test mode")
     response = httpx.post(
-        f"{settings.ENV.cognito_issuer.rstrip('/')}/oauth2/token",
+        f"{settings.ENV.cognito_domain.rstrip('/')}/oauth2/token",
         data={
             "grant_type": "authorization_code",
             "client_id": settings.ENV.cognito_client_id,
@@ -195,7 +195,7 @@ def _revoke_provider_token(credential: SessionCredential) -> None:
     if not credential.refresh_token_ciphertext or settings.ENV.app_env in {"local", "test"}:
         return
     response = httpx.post(
-        f"{settings.ENV.cognito_issuer.rstrip('/')}/oauth2/revoke",
+        f"{settings.ENV.cognito_domain.rstrip('/')}/oauth2/revoke",
         data={
             "token": decrypt(bytes(credential.refresh_token_ciphertext)),
             "client_id": settings.ENV.cognito_client_id,

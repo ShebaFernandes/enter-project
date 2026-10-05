@@ -68,6 +68,7 @@ def _result(profile, matched, membership):
         )
     except Exception:
         name = "Candidate"
+    history_allowed = consent_allows_findings(profile, membership.tenant_id)
     return {
         "candidate_id": str(profile.id),
         "summary": {
@@ -80,12 +81,27 @@ def _result(profile, matched, membership):
             "skills": list(profile.skills.values_list("display_name", flat=True)),
             "work_arrangements": profile.work_arrangements,
             "availability_date": profile.availability_date,
+            "notice_period": profile.notice_period,
+            "employment_history": [
+                {
+                    "company": record.company,
+                    "role_title": record.role_title,
+                    "start_date": record.start_date
+                    if record.start_date_state == "CONFIRMED"
+                    else None,
+                    "end_date": record.end_date if record.end_date_state == "CONFIRMED" else None,
+                    "is_current": record.is_current,
+                    "employment_type": record.employment_type,
+                    "provenance": record.provenance,
+                }
+                for record in profile.employment_history.all()
+            ]
+            if history_allowed
+            else [],
         },
         "score": str(matched.score),
         "evidence": matched.evidence,
-        "findings": authorized_findings(
-            profile, allow=consent_allows_findings(profile, membership.tenant_id)
-        ),
+        "findings": authorized_findings(profile, allow=history_allowed),
         "unknowns": matched.unknowns,
         "explanation": None,
     }

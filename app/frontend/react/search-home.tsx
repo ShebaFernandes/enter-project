@@ -30,7 +30,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
   const recognition = useRef<Recognition | null>(null);
   const panelToggle = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLDialogElement>(null);
-  const composer = useRef<HTMLTextAreaElement>(null);
+  const composer = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (panel) sidebar.current?.showModal();
   }, [panel]);
@@ -240,7 +240,20 @@ export function SearchHome({ bootstrap, request }: PageProps) {
     <div className="ui-search-home">
       <SkipLink />
       <Header>
-        <span>Recruiter workspace</span>
+        <span className="ui-search-brand">Talent Platform</span>
+        <nav className="ui-search-navigation" aria-label="Platform">
+          <a href={`/tenants/${tenant}/recruiter/search/`} aria-current="page">
+            Search
+          </a>
+          <a href={`/tenants/${tenant}/recruiter/search/?view=results`}>
+            Results
+          </a>
+          <a href="/">Candidate Platform</a>
+        </nav>
+        <span className="ui-search-recruiter">
+          <span aria-hidden="true" />
+          Recruiter
+        </span>
         <Button
           variant="secondary"
           onClick={async () => {
@@ -264,28 +277,41 @@ export function SearchHome({ bootstrap, request }: PageProps) {
             }
           }}
         >
-          Sign out
+          Logout
         </Button>
       </Header>
       <div className="ui-search-tools">
         <Button
           variant="secondary"
+          aria-label="New search"
+          title="New search"
+          disabled={busy || uncertain}
           onClick={() => {
+            setError("");
+            setStatus("");
+            completedSearch.current = null;
+            executionRetry.current = crypto.randomUUID();
             setPrompt("");
             setOpening("");
             composer.current?.focus();
           }}
         >
-          New search
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4v16M4 12h16" />
+          </svg>
         </Button>
         <Button
+          aria-label="Projects and recents"
+          title="Projects and recents"
           ref={panelToggle}
           variant="secondary"
           aria-expanded={panel}
           aria-controls="search-sidebar"
           onClick={() => setPanel(!panel)}
         >
-          Projects and recents
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 3 8 4-8 4-8-4 8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4" />
+          </svg>
         </Button>
       </div>
       <main id="main" tabIndex={-1} className="ui-search-stage">
@@ -294,36 +320,29 @@ export function SearchHome({ bootstrap, request }: PageProps) {
           <label className="ui-visually-hidden" htmlFor="hiring-prompt">
             Describe the candidate you need
           </label>
-          <textarea
+          <input
             id="hiring-prompt"
             ref={composer}
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
+            type="text"
+            disabled={busy || uncertain}
             maxLength={4000}
-            placeholder="Example: Backend engineers in Bengaluru, 4–7 years, Java, Kafka"
+            placeholder="Example: Backend engineers in Bengaluru, 4–7 yrs, Java, Kafka, 0-to-1 or ex"
             aria-describedby="search-feedback"
           />
           <div className="ui-composer-bottom">
-            <label>
-              Search context
-              <select
-                value={opening}
-                onChange={(event) => setOpening(event.target.value)}
-              >
-                <option value="">Ad-hoc search</option>
-                {openings
-                  .filter((item) => item.state === "OPEN")
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
             <Button
               type="button"
               variant="secondary"
-              disabled={!speechAvailable || busy}
+              className="ui-search-voice"
+              aria-label="Use speech"
+              title={
+                speechAvailable
+                  ? "Use speech"
+                  : "Speech input is unavailable in this browser"
+              }
+              disabled={!speechAvailable || busy || uncertain}
               aria-pressed={listening}
               onClick={() => {
                 try {
@@ -334,26 +353,53 @@ export function SearchHome({ bootstrap, request }: PageProps) {
                 }
               }}
             >
-              Use speech
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="12" rx="3" />
+                <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3" />
+              </svg>
             </Button>
-            <Button type="submit" busy={busy} disabled={busy || uncertain}>
-              Search
+            <Button
+              type="submit"
+              className="ui-search-submit"
+              variant="secondary"
+              aria-label="Search"
+              busy={busy}
+              disabled={busy || uncertain}
+            >
+              <span className="ui-search-submit-logo" aria-hidden="true">
+                <img
+                  src={
+                    new URL("./assets/enter-logo.jpeg", import.meta.url).href
+                  }
+                  alt=""
+                />
+              </span>
             </Button>
           </div>
         </form>
-        <StatusMessage>{speechStatus}</StatusMessage>
+        <div
+          className={
+            speechStatus === "Typed search is ready." ||
+            speechStatus.startsWith("Speech input is unavailable.")
+              ? "ui-visually-hidden"
+              : "ui-search-speech-status"
+          }
+        >
+          <StatusMessage>{speechStatus}</StatusMessage>
+        </div>
         <div id="search-feedback">
           <StatusMessage>{status}</StatusMessage>
           {error && <Alert>{error}</Alert>}
         </div>
         <nav className="ui-suggested" aria-label="Suggested searches">
           {[
-            "0-to-1 backend builders",
+            "0→1 backend builders",
             "Production ML engineers",
             "Founding engineers",
           ].map((text) => (
             <Button
               key={text}
+              disabled={busy || uncertain}
               variant="secondary"
               onClick={() => {
                 setPrompt(text);
@@ -379,6 +425,22 @@ export function SearchHome({ bootstrap, request }: PageProps) {
           <Button variant="secondary" onClick={closePanel}>
             Close panel
           </Button>
+          <label>
+            Search context
+            <select
+              value={opening}
+              onChange={(event) => setOpening(event.target.value)}
+            >
+              <option value="">Ad-hoc search</option>
+              {openings
+                .filter((item) => item.state === "OPEN")
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+            </select>
+          </label>
           {loading ? (
             <StatusMessage>Loading authorized searches…</StatusMessage>
           ) : sidebarError ? (

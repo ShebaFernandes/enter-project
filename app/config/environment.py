@@ -33,6 +33,7 @@ class Environment:
     s3_endpoint_url: str | None
     resume_quarantine_bucket: str
     cognito_issuer: str
+    cognito_domain: str
     cognito_client_id: str
     cognito_client_secret: str
     cognito_callback_url: str
@@ -82,6 +83,9 @@ class Environment:
                 "RESUME_QUARANTINE_BUCKET", "enter-resume-quarantine"
             ),
             cognito_issuer=os.getenv("COGNITO_ISSUER", "https://example.invalid/local"),
+            cognito_domain=_required(
+                "COGNITO_DOMAIN", None if production else "https://example.invalid"
+            ).rstrip("/"),
             cognito_client_id=os.getenv("COGNITO_CLIENT_ID", "local-client"),
             cognito_client_secret=os.getenv("COGNITO_CLIENT_SECRET", "local-secret"),
             cognito_callback_url=os.getenv(

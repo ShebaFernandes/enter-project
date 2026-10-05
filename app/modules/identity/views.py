@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
@@ -38,6 +39,14 @@ def sign_out_view(request: HttpRequest) -> Response:
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def login_start_view(request: HttpRequest):
+    if settings.LOCAL_SYNTHETIC_AUTH_ENABLED and settings.ENV.app_env in {"local", "test"}:
+        from .local_auth import issue_local_recruiter_bootstrap
+
+        issued = issue_local_recruiter_bootstrap()
+        response = redirect(f"/api/v1/__local__/synthetic-recruiter-session?token={issued.token}")
+        response["Cache-Control"] = "no-store, private"
+        response["Referrer-Policy"] = "no-referrer"
+        return response
     started = start_login()
     request.session["oidc_state"] = started.state
     request.session["oidc_nonce"] = started.nonce
