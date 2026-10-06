@@ -8,6 +8,7 @@ from .local_auth import (
     consume_local_recruiter_bootstrap,
     consume_local_tenant_admin_bootstrap,
 )
+from .redirects import safe_candidate_return_to
 from .services import sign_in
 
 
@@ -60,10 +61,14 @@ def local_candidate_session_view(request: HttpRequest) -> HttpResponse:
         },
         workforce=False,
     )
+    return_to = safe_candidate_return_to(request)
     response = HttpResponseRedirect(
-        "/candidate/profile/"
-        if request.query_params.get("profile") == "1"
-        else f"/roles/{opening.openingpublicationlink.public_id}/"
+        return_to
+        or (
+            "/candidate/profile/"
+            if request.query_params.get("profile") == "1"
+            else f"/roles/{opening.openingpublicationlink.public_id}/"
+        )
     )
     response["Cache-Control"] = "no-store, private"
     response["Referrer-Policy"] = "no-referrer"
@@ -90,7 +95,7 @@ def local_tenant_admin_session_view(request: HttpRequest) -> HttpResponse:
         },
         workforce=True,
     )
-    response = HttpResponseRedirect(f"/tenants/{membership.tenant_id}/admin/governance/")
+    response = HttpResponseRedirect(f"/tenants/{membership.tenant_id}/admin/jobs/")
     response["Cache-Control"] = "no-store, private"
     response["Referrer-Policy"] = "no-referrer"
     return response

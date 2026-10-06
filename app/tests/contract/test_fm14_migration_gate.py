@@ -32,6 +32,10 @@ MIGRATED_ROUTES = {
         "recruiter/organization.html",
         "recruiter/react_organization.html",
     ),
+    "admin-jobs-page": (
+        "recruiter/organization.html",
+        "recruiter/react_organization.html",
+    ),
     "tenant-governance-page": (
         "admin/access-review.html",
         "admin/react_governance.html",

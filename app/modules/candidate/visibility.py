@@ -51,7 +51,7 @@ def replace_visibility(
             id=consent_id,
             profile=profile,
             purpose="RECRUITING_DISCOVERY",
-            field_scope=["profile", "employment_history", "skills"],
+            field_scope=["profile", "employment_history", "skills", "resume"],
             audience_scope={
                 "approved_tenant_ids": approved,
                 "matching_preferences": preferences,

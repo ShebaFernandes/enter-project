@@ -27,11 +27,24 @@ SUPPORTED_FIELDS = {
     "work_arrangement",
     "availability_date",
     "role_category",
+    "current_role",
+    "current_company",
+    "education",
+    "resume_keyword",
+    "notice_period",
 }
 
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class ClarificationQuestion(StrictModel):
+    id: Literal["skills", "location", "work_arrangement", "experience_rule"]
+    question: str
+    kind: Literal["TEXT", "CHOICE"]
+    options: list[str] = Field(default_factory=list)
+    allow_any: bool = True
 
 
 class AdHocContext(StrictModel):
@@ -63,6 +76,11 @@ class CriterionInput(StrictModel):
         "work_arrangement",
         "availability_date",
         "role_category",
+        "current_role",
+        "current_company",
+        "education",
+        "resume_keyword",
+        "notice_period",
     ]
     operator: Literal["EQ", "NE", "LT", "LTE", "GT", "GTE", "IN", "NOT_IN", "CONTAINS", "EXISTS"]
     value: str | int | float | bool | list[str]
@@ -97,6 +115,7 @@ class SearchIntent(StrictModel):
     criteria: SearchCriteriaInput
     requires_review: bool
     ambiguities: list[str] = Field(default_factory=list)
+    clarifications: list[ClarificationQuestion] = Field(default_factory=list)
     ai_status: Literal["USED", "NOT_NEEDED", "UNAVAILABLE", "INVALID_OUTPUT"]
 
 
@@ -131,10 +150,22 @@ def deterministic_fallback(prompt: str, context: dict[str, object]) -> SearchInt
                     "value": "Bengaluru" if location == "bangalore" else location.title(),
                 }
             )
-    experience = re.search(r"\b(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b", folded)
+    experience = re.search(r"\b(\d{1,2})\s*(\+)?\s*(?:years?|yrs?|exp(?:erience)?)\b", folded)
+    experience_rule_is_explicit = bool(
+        experience
+        and (
+            experience.group(2)
+            or re.search(r"\b(?:at least|minimum|min\.?|exactly|exact)\b", folded)
+        )
+    )
     if experience:
+        operator = "EQ" if re.search(r"\b(?:exactly|exact)\b", folded) else "GTE"
         specs.append(
-            {"field": "experience_years", "operator": "GTE", "value": int(experience.group(1))}
+            {
+                "field": "experience_years",
+                "operator": operator,
+                "value": int(experience.group(1)),
+            }
         )
     arrangement = next((item for item in ("remote", "hybrid", "onsite") if item in folded), None)
     if arrangement:
@@ -149,6 +180,26 @@ def deterministic_fallback(prompt: str, context: dict[str, object]) -> SearchInt
     )
     if role:
         specs.append({"field": "role_category", "operator": "CONTAINS", "value": role})
+    specialty = next(
+        (
+            item
+            for item in (
+                "backend",
+                "frontend",
+                "full stack",
+                "fullstack",
+                "platform",
+                "mobile",
+                "data",
+                "machine learning",
+                "devops",
+            )
+            if item in folded
+        ),
+        None,
+    )
+    if specialty:
+        specs.append({"field": "resume_keyword", "operator": "CONTAINS", "value": specialty})
     if not specs:
         specs.append(
             {
@@ -175,6 +226,43 @@ def deterministic_fallback(prompt: str, context: dict[str, object]) -> SearchInt
         )
         for index, spec in enumerate(specs)
     ]
+    fields = {str(spec["field"]) for spec in specs}
+    clarifications: list[ClarificationQuestion] = []
+    if "skill" not in fields:
+        clarifications.append(
+            ClarificationQuestion(
+                id="skills",
+                question="Which skills or technologies are essential?",
+                kind="TEXT",
+            )
+        )
+    if "location" not in fields:
+        clarifications.append(
+            ClarificationQuestion(
+                id="location",
+                question="Where can this person be based?",
+                kind="TEXT",
+            )
+        )
+    if "work_arrangement" not in fields:
+        clarifications.append(
+            ClarificationQuestion(
+                id="work_arrangement",
+                question="What work arrangement should the search use?",
+                kind="CHOICE",
+                options=["REMOTE", "HYBRID", "ON_SITE", "FLEXIBLE"],
+            )
+        )
+    if "experience_years" in fields and not experience_rule_is_explicit:
+        clarifications.append(
+            ClarificationQuestion(
+                id="experience_rule",
+                question="Should the experience number be a minimum or an exact match?",
+                kind="CHOICE",
+                options=["AT_LEAST", "EXACT"],
+                allow_any=False,
+            )
+        )
     ambiguities: list[str] = []
     if len(specs) < 2 or any(term in folded for term in ("maybe", "suitable", "good fit", "etc")):
         ambiguities.append("The hiring need is materially incomplete; review the visible criteria.")
@@ -186,7 +274,8 @@ def deterministic_fallback(prompt: str, context: dict[str, object]) -> SearchInt
         criteria=SearchCriteriaInput.model_validate(
             {"context": context, "groups": [group], "criteria": criteria, "limit": 25}
         ),
-        requires_review=bool(ambiguities),
+        requires_review=bool(ambiguities or clarifications),
         ambiguities=ambiguities,
+        clarifications=clarifications,
         ai_status="NOT_NEEDED",
     )

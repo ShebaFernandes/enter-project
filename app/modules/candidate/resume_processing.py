@@ -304,6 +304,33 @@ def extract_facts(text: str) -> list[dict]:
             links[-1].end(),
             0.95,
         )
+    education_lines = [
+        (line, start, end)
+        for line, start, end in lines
+        if len(line) <= 220
+        and re.search(
+            r"\b(?:university|institute|college|b\.?tech|b\.?e\.?|bachelor|m\.?tech|master)\b",
+            line,
+            re.I,
+        )
+    ][:5]
+    if education_lines:
+        add(
+            "education",
+            [
+                {
+                    "school": line,
+                    "degree": "",
+                    "field_of_study": "",
+                    "start_year": None,
+                    "end_year": None,
+                }
+                for line, _, _ in education_lines
+            ],
+            education_lines[0][1],
+            education_lines[-1][2],
+            0.7,
+        )
     # Keep full readable text as a reviewable source; no invented dates or employers.
     if text.strip():
         add("resume_text", text.strip(), 0, len(text), 1)

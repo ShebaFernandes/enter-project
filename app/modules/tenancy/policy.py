@@ -36,7 +36,6 @@ ROLE_ACTIONS: dict[str, frozenset[str]] = {
             "business_unit.read",
             "business_unit.write",
             "opening.read",
-            "opening.write",
             "candidate.search",
             "candidate.read",
             "candidate.field.read",

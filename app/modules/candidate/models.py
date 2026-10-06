@@ -31,6 +31,7 @@ class CandidateProfile(models.Model):
     role_categories = models.JSONField(default=list, blank=True)
     preferred_locations = models.JSONField(default=list, blank=True)
     work_arrangements = models.JSONField(default=list, blank=True)
+    education = models.JSONField(default=list, blank=True)
     meaningful_work = models.CharField(max_length=300, blank=True)
     notice_period = models.CharField(max_length=100, blank=True)
     availability_date = models.DateField(null=True, blank=True)

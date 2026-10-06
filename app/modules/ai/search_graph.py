@@ -15,7 +15,12 @@ from modules.operations.crypto import encrypt, safe_json
 from modules.operations.models import WorkflowRun
 
 from .bedrock import BedrockSearchIntentGateway, BedrockUnavailable, ModelResponse
-from .intent_schema import PROTECTED_TERMS, SearchIntent, deterministic_fallback
+from .intent_schema import (
+    PROTECTED_TERMS,
+    ClarificationQuestion,
+    SearchIntent,
+    deterministic_fallback,
+)
 
 
 class GraphState(TypedDict, total=False):
@@ -29,6 +34,37 @@ class SearchIntentGateway(Protocol):
     def interpret(
         self, prompt: str, context: dict[str, object], *, repair: bool = False
     ) -> ModelResponse: ...
+
+
+def _clarifications(intent: SearchIntent) -> list[ClarificationQuestion]:
+    fields = {item.field for item in intent.criteria.criteria}
+    questions: list[ClarificationQuestion] = []
+    if "skill" not in fields:
+        questions.append(
+            ClarificationQuestion(
+                id="skills",
+                question="Which skills or technologies are essential?",
+                kind="TEXT",
+            )
+        )
+    if "location" not in fields:
+        questions.append(
+            ClarificationQuestion(
+                id="location",
+                question="Where can this person be based?",
+                kind="TEXT",
+            )
+        )
+    if "work_arrangement" not in fields:
+        questions.append(
+            ClarificationQuestion(
+                id="work_arrangement",
+                question="What work arrangement should the search use?",
+                kind="CHOICE",
+                options=["REMOTE", "HYBRID", "ON_SITE", "FLEXIBLE"],
+            )
+        )
+    return questions
 
 
 def _safe_fallback(prompt: str, context: dict[str, object], status: str) -> SearchIntent:
@@ -77,11 +113,15 @@ def interpret_search(
                         "Protected-attribute language requires review and cannot become "
                         "a criterion."
                     )
+                clarifications = _clarifications(parsed)
                 parsed = parsed.model_copy(
                     update={
                         "ai_status": "USED",
                         "ambiguities": list(dict.fromkeys(ambiguities)),
-                        "requires_review": parsed.requires_review or bool(ambiguities),
+                        "clarifications": clarifications,
+                        "requires_review": (
+                            parsed.requires_review or bool(ambiguities) or bool(clarifications)
+                        ),
                     }
                 )
                 return {"parsed": parsed}

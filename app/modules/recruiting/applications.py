@@ -7,8 +7,9 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from modules.audit.service import record_audit_event
 from modules.candidate.models import CandidateProfile, ConsentRecord, ResumeAsset
-from modules.candidate.services import profile_for
+from modules.candidate.services import profile_data, profile_for
 from modules.operations.concurrency import require_match
 from modules.operations.idempotency import IdempotencyConflict
 from modules.operations.outbox import enqueue
@@ -23,6 +24,127 @@ from .application_models import (
 )
 from .models import Opening
 from .statuses import candidate_status_suggestion
+
+
+def _public_application_link(public_opening_id):
+    from .public_openings import application_publication_link, available_publications, public_reader
+
+    with public_reader():
+        published = available_publications().filter(pk=str(public_opening_id)).exists()
+    if not published:
+        raise PermissionDenied("Application unavailable")
+    return application_publication_link(str(public_opening_id))
+
+
+def application_readiness(*, identity, public_opening_id) -> dict[str, object]:
+    """Return only candidate-owned state needed to continue a public application."""
+    profile = profile_for(identity)
+    resume = (
+        profile.resumes.filter(is_current=True, deleted_at__isnull=True)
+        .order_by("-created_at")
+        .first()
+    )
+    link = _public_application_link(public_opening_id)
+    from modules.tenancy.context import tenant_context
+    from modules.tenancy.rls import tenant_transaction
+
+    token = tenant_context.set(link.tenant_id)
+    try:
+        with tenant_transaction():
+            application = Application.objects.filter(
+                opening_id=link.opening_id,
+                candidate_profile_id=profile.id,
+            ).first()
+    finally:
+        tenant_context.reset(token)
+    return {
+        "profile_name": profile_data(profile)["full_name"],
+        "profile_state": profile.profile_state,
+        "resume": (
+            {
+                "id": str(resume.id),
+                "scan_status": resume.scan_status,
+                "parse_status": resume.parse_status,
+                "ready": resume.scan_status == ResumeAsset.ScanStatus.CLEAN
+                and resume.parse_status == ResumeAsset.ParseStatus.READY,
+            }
+            if resume
+            else None
+        ),
+        "already_applied": application is not None,
+        "application_id": str(application.id) if application else None,
+    }
+
+
+@transaction.atomic
+def prepare_application_consent(
+    *, identity, public_opening_id, confirmed: bool, request_key: str
+) -> dict[str, object]:
+    if confirmed is not True:
+        raise ValidationError({"confirmed": "Explicit application consent is required."})
+    profile = profile_for(identity)
+    resume = (
+        profile.resumes.select_for_update()
+        .filter(
+            is_current=True,
+            deleted_at__isnull=True,
+            scan_status=ResumeAsset.ScanStatus.CLEAN,
+            parse_status=ResumeAsset.ParseStatus.READY,
+        )
+        .first()
+    )
+    if resume is None:
+        raise ValidationError(
+            {"resume": "Review a clean, processed resume before confirming this application."}
+        )
+    link = _public_application_link(public_opening_id)
+    from modules.tenancy.context import tenant_context
+    from modules.tenancy.rls import tenant_transaction
+
+    token = tenant_context.set(link.tenant_id)
+    try:
+        with tenant_transaction():
+            if Application.objects.filter(
+                opening_id=link.opening_id,
+                candidate_profile_id=profile.id,
+            ).exists():
+                raise IdempotencyConflict("An application already exists for this role")
+    finally:
+        tenant_context.reset(token)
+    consent = ConsentRecord.objects.create(
+        profile=profile,
+        purpose="APPLICATION_SUBMISSION",
+        field_scope=[
+            "application",
+            "profile",
+            "resume",
+            "employment_history",
+            "professional_links",
+            "notifications",
+        ],
+        audience_scope={
+            "tenant_id": str(link.tenant_id),
+            "opening_id": str(link.opening_id),
+        },
+        notice_version="application-v1",
+        affirmative_action="APPLICATION_FORM_CHECKBOX",
+        source_request_id=f"application-consent:{request_key}"[:100],
+        expires_at=timezone.now() + timedelta(days=365),
+    )
+    record_audit_event(
+        actor=identity,
+        action="APPLICATION_CONSENT_CAPTURED",
+        target_type="consent_record",
+        target_id=str(consent.id),
+        tenant_id=link.tenant_id,
+        purpose_code="APPLICATION_SUBMISSION",
+        outcome="ALLOWED",
+        metadata={
+            "opening_id": str(link.opening_id),
+            "notice_version": consent.notice_version,
+        },
+    )
+    return {"resume_id": str(resume.id), "consent_record_id": str(consent.id)}
 
 
 def _validate_submission_consent(

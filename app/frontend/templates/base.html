@@ -4,10 +4,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Enter</title>
+    <title>{{ page_title|default:"Enter — find work that fits" }}</title>
+    <meta
+      name="description"
+      content="{{ page_description|default:'Candidate-controlled profiles, open roles and human-led recruiting.' }}"
+    />
+    {% if page_url %}
+    <link rel="canonical" href="{{ page_url }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Enter" />
+    <meta property="og:title" content="{{ page_title }}" />
+    <meta property="og:description" content="{{ page_description }}" />
+    <meta property="og:url" content="{{ page_url }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {% if page_image %}
+    <meta property="og:image" content="{{ page_image }}" />
+    <meta name="twitter:image" content="{{ page_image }}" />
+    {% endif %} {% endif %}
     <link
       rel="stylesheet"
-      href="{% static frontend_style|default:'dist/assets/app.css' %}"
+      href="{% static frontend_style|default:'dist/assets/app.css' %}{% if frontend_asset_version %}?v={{ frontend_asset_version }}{% endif %}"
     />
   </head>
   <!-- prettier-ignore -->
@@ -29,7 +45,7 @@
     {% endif %}
     <script
       type="module"
-      src="{% static frontend_script|default:'dist/assets/app.js' %}"
+      src="{% static frontend_script|default:'dist/assets/app.js' %}{% if frontend_asset_version %}?v={{ frontend_asset_version }}{% endif %}"
     ></script>
   </body>
 </html>

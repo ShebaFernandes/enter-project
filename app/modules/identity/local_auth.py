@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import uuid
 from contextlib import contextmanager
@@ -19,6 +20,7 @@ from modules.candidate.models import (
     CandidateSkill,
     ConsentRecord,
     EmploymentRecord,
+    ProfileLink,
     ResumeAsset,
     VisibilityRule,
 )
@@ -35,6 +37,39 @@ CANDIDATE_SUBJECT = "local-synthetic-candidate"
 COMPARISON_CANDIDATE_SUBJECT = "local-synthetic-comparison-candidate"
 TENANT_ADMIN_SUBJECT = "local-synthetic-tenant-admin"
 BASE_OPENING_ID = uuid.UUID("00000000-0000-4000-8000-000000000106")
+logger = logging.getLogger(__name__)
+
+
+def _synthetic_resume_pdf() -> bytes:
+    stream = (
+        b"BT /F1 18 Tf 72 740 Td (Synthetic Search Candidate) Tj "
+        b"0 -30 Td /F1 11 Tf (Senior Backend Engineer - Python, Django, PostgreSQL) Tj "
+        b"0 -22 Td (Education: B.Tech Computer Science, Bengaluru Institute of Technology) Tj ET"
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+        ),
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    document = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for index, body in enumerate(objects, 1):
+        offsets.append(len(document))
+        document.extend(f"{index} 0 obj\n".encode() + body + b"\nendobj\n")
+    xref = len(document)
+    document.extend(f"xref\n0 {len(objects) + 1}\n".encode())
+    document.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        document.extend(f"{offset:010d} 00000 n \n".encode())
+    document.extend(
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+    )
+    return bytes(document)
 
 
 @dataclass(frozen=True)
@@ -98,6 +133,11 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
         email="recruiter@local-synthetic.invalid",
         workforce=True,
     )
+    admin = _synthetic_identity(
+        subject="synthetic-tenant-admin",
+        email="admin@local-synthetic.invalid",
+        workforce=True,
+    )
     tenant, _ = Tenant.objects.update_or_create(
         slug="local-synthetic-recruiting",
         defaults={
@@ -116,10 +156,19 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "scope": {},
             },
         )
+        TenantMembership.objects.update_or_create(
+            tenant=tenant,
+            identity=admin,
+            defaults={
+                "role": TenantMembership.Role.TENANT_ADMIN,
+                "status": TenantMembership.Status.ACTIVE,
+                "scope": {},
+            },
+        )
         unit, _ = BusinessUnit.objects.update_or_create(
             tenant=tenant,
             name="Synthetic Engineering",
-            defaults={"created_by": recruiter, "status": BusinessUnit.Status.ACTIVE},
+            defaults={"created_by": admin, "status": BusinessUnit.Status.ACTIVE},
         )
         opening, _ = Opening.objects.update_or_create(
             id=BASE_OPENING_ID,
@@ -131,7 +180,7 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "work_mode": Opening.WorkMode.REMOTE,
                 "employment_type": "PERMANENT",
                 "state": Opening.State.OPEN,
-                "created_by": recruiter,
+                "created_by": admin,
             },
         )
 
@@ -155,6 +204,15 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "role_categories": ["engineer", "software engineer"],
                 "preferred_locations": ["bengaluru"],
                 "work_arrangements": ["REMOTE"],
+                "education": [
+                    {
+                        "school": "Bengaluru Institute of Technology",
+                        "degree": "B.Tech",
+                        "field_of_study": "Computer Science",
+                        "start_year": 2016,
+                        "end_year": 2020,
+                    }
+                ],
                 "profile_state": CandidateProfile.State.PUBLISHED,
                 "consent_expires_at": timezone.now() + timedelta(days=365),
             },
@@ -164,12 +222,22 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
             normalized_name="python",
             defaults={"display_name": "Python", "ordering": 0},
         )
+        ProfileLink.objects.update_or_create(
+            profile=profile,
+            normalized_url="https://www.linkedin.com/in/synthetic-search-candidate",
+            defaults={"display_label": "LinkedIn", "ordering": 0},
+        )
+        ProfileLink.objects.update_or_create(
+            profile=profile,
+            normalized_url="https://github.com/synthetic-search-candidate",
+            defaults={"display_label": "GitHub", "ordering": 1},
+        )
         consent, _ = ConsentRecord.objects.update_or_create(
             profile=profile,
             source_request_id="local-synthetic-recruiter-verification",
             defaults={
                 "purpose": "RECRUITING_DISCOVERY",
-                "field_scope": ["profile", "employment_history", "skills"],
+                "field_scope": ["profile", "employment_history", "skills", "resume"],
                 "audience_scope": {"approved_tenant_ids": [str(tenant.id)]},
                 "notice_version": "candidate-discovery-v1",
                 "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
@@ -209,7 +277,12 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "version": 1,
             },
         )
+        profile.findings.filter(code="SHORT_TENURE", superseded_at__isnull=True).exclude(
+            source_record_id=employment.id
+        ).update(superseded_at=timezone.now())
         evaluate_employment_record(employment)
+        synthetic_resume = _synthetic_resume_pdf()
+        synthetic_resume_sha256 = hashlib.sha256(synthetic_resume).hexdigest()
         resume = ResumeAsset.objects.filter(profile=profile, is_current=True).first()
         if resume is None:
             resume = ResumeAsset.objects.create(
@@ -219,8 +292,8 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 original_filename_ciphertext=encrypt("synthetic-resume.pdf"),
                 declared_mime="application/pdf",
                 detected_mime="application/pdf",
-                size_bytes=1024,
-                sha256="a" * 64,
+                size_bytes=len(synthetic_resume),
+                sha256=synthetic_resume_sha256,
                 scan_status=ResumeAsset.ScanStatus.CLEAN,
                 parse_status=ResumeAsset.ParseStatus.READY,
             )
@@ -230,7 +303,33 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
             resume.scan_status = ResumeAsset.ScanStatus.CLEAN
             resume.parse_status = ResumeAsset.ParseStatus.READY
             resume.deleted_at = None
-            resume.save(update_fields=["scan_status", "parse_status", "deleted_at"])
+            resume.size_bytes = len(synthetic_resume)
+            resume.sha256 = synthetic_resume_sha256
+            resume.save(
+                update_fields=[
+                    "scan_status",
+                    "parse_status",
+                    "deleted_at",
+                    "size_bytes",
+                    "sha256",
+                ]
+            )
+        try:
+            from modules.candidate.resume_processing import storage_client
+
+            storage_client().put_object(
+                Bucket=settings.RESUME_QUARANTINE_BUCKET,
+                Key=resume.clean_key,
+                Body=synthetic_resume,
+                ContentType="application/pdf",
+            )
+        except Exception as exc:
+            # LocalStack may still be starting. The profile remains usable and the
+            # next synthetic bootstrap retries the deterministic upload.
+            logger.warning(
+                "Synthetic resume upload deferred",
+                extra={"error_type": type(exc).__name__},
+            )
         ConsentRecord.objects.update_or_create(
             profile=profile,
             source_request_id=f"local-application-{opening.id}",
@@ -266,6 +365,15 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
                 "role_categories": ["software engineer"],
                 "preferred_locations": ["bengaluru"],
                 "work_arrangements": ["REMOTE"],
+                "education": [
+                    {
+                        "school": "National Institute of Technology Karnataka",
+                        "degree": "B.E.",
+                        "field_of_study": "Information Technology",
+                        "start_year": 2015,
+                        "end_year": 2019,
+                    }
+                ],
                 "notice_period": "Unknown",
                 "profile_state": CandidateProfile.State.PUBLISHED,
                 "consent_expires_at": timezone.now() + timedelta(days=365),
@@ -276,12 +384,22 @@ def seed_local_recruiter_verification() -> tuple[Identity, Tenant, CandidateProf
             normalized_name="python",
             defaults={"display_name": "Python", "ordering": 0},
         )
+        ProfileLink.objects.update_or_create(
+            profile=comparison_profile,
+            normalized_url="https://www.linkedin.com/in/synthetic-comparison-candidate",
+            defaults={"display_label": "LinkedIn", "ordering": 0},
+        )
+        ProfileLink.objects.update_or_create(
+            profile=comparison_profile,
+            normalized_url="https://github.com/synthetic-comparison-candidate",
+            defaults={"display_label": "GitHub", "ordering": 1},
+        )
         comparison_consent, _ = ConsentRecord.objects.update_or_create(
             profile=comparison_profile,
             source_request_id="local-synthetic-comparison-verification",
             defaults={
                 "purpose": "RECRUITING_DISCOVERY",
-                "field_scope": ["profile", "employment_history", "skills"],
+                "field_scope": ["profile", "employment_history", "skills", "resume"],
                 "audience_scope": {"approved_tenant_ids": [str(tenant.id)]},
                 "notice_version": "candidate-discovery-v1",
                 "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
@@ -409,45 +527,53 @@ def consume_local_tenant_admin_bootstrap(token: str) -> tuple[Identity, TenantMe
 
 def issue_local_candidate_bootstrap() -> LocalCandidateBootstrap:
     recruiter, tenant, profile = seed_local_recruiter_verification()
+    admin = Identity.objects.get(cognito_subject="synthetic-tenant-admin")
     with _rls_context(tenant_id=tenant.id):
         unit = BusinessUnit.objects.filter(tenant=tenant, status=BusinessUnit.Status.ACTIVE).first()
         if unit is None:
             raise PermissionDenied("Synthetic session unavailable")
-        opening = Opening.objects.create(
-            tenant=tenant,
-            business_unit=unit,
-            title="Software Engineer",
-            location={"normalized": "bengaluru", "display": "Bengaluru"},
-            work_mode=Opening.WorkMode.REMOTE,
-            employment_type="PERMANENT",
-            state=Opening.State.OPEN,
-            created_by=recruiter,
-        )
+        opening = Opening.objects.get(pk=BASE_OPENING_ID, tenant=tenant)
         from modules.recruiting.public_openings import publication_preview, synchronize_publication
 
-        membership = TenantMembership.objects.get(tenant=tenant, identity=recruiter)
-        preview = publication_preview(opening)
-        synchronize_publication(
-            opening=opening,
-            membership=membership,
-            confirmed=True,
-            if_match=preview["source_etag"],
-            preview_digest=preview["preview_digest"],
+        membership = TenantMembership.objects.get(
+            tenant=tenant,
+            identity=admin,
+            role=TenantMembership.Role.TENANT_ADMIN,
+            status=TenantMembership.Status.ACTIVE,
         )
+        preview = publication_preview(opening)
+        if preview["publication_state"] != "PUBLISHED":
+            synchronize_publication(
+                opening=opening,
+                membership=membership,
+                confirmed=True,
+                if_match=preview["source_etag"],
+                preview_digest=preview["preview_digest"],
+            )
         public_id = opening.openingpublicationlink.public_id
     with _rls_context(identity_id=profile.identity_id):
-        ConsentRecord.objects.create(
+        ConsentRecord.objects.update_or_create(
             profile=profile,
             purpose="APPLICATION_SUBMISSION",
-            field_scope=["application", "resume", "notifications"],
-            audience_scope={
-                "tenant_id": str(tenant.id),
-                "opening_id": str(opening.id),
-            },
-            notice_version="application-v1",
-            affirmative_action="LOCAL_SYNTHETIC_FIXTURE",
             source_request_id=f"local-application-{opening.id}",
-            expires_at=timezone.now() + timedelta(days=365),
+            defaults={
+                "field_scope": [
+                    "application",
+                    "profile",
+                    "resume",
+                    "employment_history",
+                    "professional_links",
+                    "notifications",
+                ],
+                "audience_scope": {
+                    "tenant_id": str(tenant.id),
+                    "opening_id": str(opening.id),
+                },
+                "notice_version": "application-v1",
+                "affirmative_action": "LOCAL_SYNTHETIC_FIXTURE",
+                "expires_at": timezone.now() + timedelta(days=365),
+                "withdrawn_at": None,
+            },
         )
     token = secrets.token_urlsafe(32)
     cache.set(

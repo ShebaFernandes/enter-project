@@ -44,6 +44,13 @@ type Detail = {
   findings: CandidateFinding[];
   unknowns: string[];
 };
+type EducationRecord = {
+  school?: unknown;
+  degree?: unknown;
+  field_of_study?: unknown;
+  start_year?: unknown;
+  end_year?: unknown;
+};
 export function fieldText(value: unknown): string {
   if (value === null || value === undefined || value === "" || value === "None")
     return "Unknown";
@@ -151,6 +158,8 @@ export function CandidateDetail({
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumeError, setResumeError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [tab, setTab] = useState(initialStatus ? "Action" : "Overview");
   const [notes, setNotes] = useState<Note[]>([]);
@@ -302,7 +311,58 @@ export function CandidateDetail({
   const history = Array.isArray(fields.employment_history)
     ? (fields.employment_history as Record<string, unknown>[])
     : [];
+  const education = Array.isArray(fields.education)
+    ? (fields.education as EducationRecord[])
+    : [];
+  const links = Array.isArray(fields.professional_links)
+    ? fields.professional_links.filter(
+        (value): value is string => typeof value === "string",
+      )
+    : [];
   const workspace = `/tenants/${tenantId}/recruiter/candidates/${candidateId}/?search_id=${encodeURIComponent(searchId)}`;
+  const loadResume = async (download: boolean) => {
+    if (resumeBusy) return;
+    const previewWindow = download
+      ? null
+      : window.open("about:blank", "_blank");
+    if (!download && !previewWindow) {
+      setResumeError(
+        "The resume preview was blocked by the browser. Allow pop-ups for this site and try again.",
+      );
+      return;
+    }
+    if (previewWindow) {
+      previewWindow.opener = null;
+      previewWindow.document.title = `${name} resume`;
+      previewWindow.document.body.textContent = "Loading authorized resume…";
+    }
+    setResumeBusy(true);
+    setResumeError("");
+    try {
+      const response = await request(
+        `/api/v1/tenants/${tenantId}/candidates/${candidateId}?search_id=${encodeURIComponent(searchId)}&${download ? "download" : "view"}=resume`,
+      );
+      if (!response.ok) throw new Error("Resume unavailable");
+      const url = URL.createObjectURL(await response.blob());
+      if (download) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${name.replaceAll(/[^a-z0-9]+/gi, "-").toLowerCase()}-resume.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        previewWindow?.location.replace(url);
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+    } catch {
+      previewWindow?.close();
+      setResumeError(
+        "The resume could not be opened. Access may have changed; reload the candidate profile and try again.",
+      );
+    } finally {
+      setResumeBusy(false);
+    }
+  };
   return (
     <div className="candidate-profile-modal">
       <header className="profile-modal-heading">
@@ -326,12 +386,22 @@ export function CandidateDetail({
               Send resume
             </a>
             {detail.resume_download_available ? (
-              <a
-                className="ui-button"
-                href={`/api/v1/tenants/${tenantId}/candidates/${candidateId}?search_id=${encodeURIComponent(searchId)}&download=resume`}
-              >
-                Download resume
-              </a>
+              <>
+                <Button
+                  variant="secondary"
+                  busy={resumeBusy}
+                  onClick={() => void loadResume(false)}
+                >
+                  View resume
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={resumeBusy}
+                  onClick={() => void loadResume(true)}
+                >
+                  Download resume
+                </Button>
+              </>
             ) : (
               <span className="ui-help">
                 Resume download unavailable for this audience.
@@ -345,6 +415,7 @@ export function CandidateDetail({
               </Chip>
             ))}
           </div>
+          {resumeError && <Alert>{resumeError}</Alert>}
         </div>
       </header>
       <div className="profile-modal-facts">
@@ -413,6 +484,49 @@ export function CandidateDetail({
               </ol>
             ) : (
               <p>No employment history is available in this view.</p>
+            )}
+            <h3>Education</h3>
+            {education.length ? (
+              <ul className="modal-education-list">
+                {education.map((item, index) => (
+                  <li key={index}>
+                    <strong>{fieldText(item.school)}</strong>
+                    <span>
+                      {[item.degree, item.field_of_study]
+                        .map(fieldText)
+                        .filter((value) => value !== "Unknown")
+                        .join(" · ") || "Qualification not specified"}
+                    </span>
+                    {Boolean(item.start_year || item.end_year) && (
+                      <small>
+                        {fieldText(item.start_year)} —{" "}
+                        {fieldText(item.end_year)}
+                      </small>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No education details were shared.</p>
+            )}
+            <h3>Professional links</h3>
+            {links.length ? (
+              <div className="modal-professional-links">
+                {links.map((link) => {
+                  const label = link.includes("linkedin.com")
+                    ? "LinkedIn"
+                    : link.includes("github.com")
+                      ? "GitHub"
+                      : "Professional link";
+                  return (
+                    <a key={link} href={link} target="_blank" rel="noreferrer">
+                      {label}
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <p>No professional links were shared.</p>
             )}
           </Card>
           <Evidence items={detail.evidence} />

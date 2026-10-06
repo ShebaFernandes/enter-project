@@ -12,9 +12,9 @@ pytestmark = [pytest.mark.django_db, pytest.mark.postgres]
 
 
 @pytest.fixture
-def publication(api_client, opening_factory, tenant, recruiter):
+def publication(api_client, opening_factory, tenant, tenant_admin):
     opening = opening_factory(tenant=tenant)
-    api_client.force_login(recruiter.identity)
+    api_client.force_login(tenant_admin.identity)
     api_client.credentials(HTTP_X_TENANT_ID=str(tenant.id))
     path = f"/api/v1/tenants/{tenant.id}/openings/{opening.id}/publication"
     return api_client, path, opening
@@ -46,6 +46,12 @@ def test_independent_publication_lifecycle(publication):
         "id",
         "title",
         "description",
+        "company_name",
+        "about_company",
+        "role_summary",
+        "responsibilities",
+        "requirements",
+        "nice_to_have",
         "location",
         "work_mode",
         "employment_type",
@@ -90,30 +96,30 @@ def test_confirmation_digest_and_etag_are_required(publication):
     assert not PublicOpeningProjection.objects.exists()
 
 
-def test_updates_require_new_preview_and_reopening_does_not_publish(publication, recruiter):
+def test_updates_require_new_preview_and_reopening_does_not_publish(publication, tenant_admin):
     client, path, opening = publication
     preview = client.get(path).json()
     assert mutate(client, path, preview).status_code == 200
     opening.refresh_from_db()
-    opening = update_opening(opening=opening, membership=recruiter, changes={"title": "Updated"})
+    opening = update_opening(opening=opening, membership=tenant_admin, changes={"title": "Updated"})
     assert client.get(path).json()["publication_state"] == "UNPUBLISHED"
     assert client.get("/api/v1/public/openings").json()["items"] == []
     assert mutate(client, path, preview).status_code == 409
     assert mutate(client, path, client.get(path).json()).status_code == 200
     opening.refresh_from_db()
-    opening = update_opening(opening=opening, membership=recruiter, changes={"state": "PAUSED"})
+    opening = update_opening(opening=opening, membership=tenant_admin, changes={"state": "PAUSED"})
     assert mutate(client, path, client.get(path).json()).status_code == 422
-    update_opening(opening=opening, membership=recruiter, changes={"state": "OPEN"})
+    update_opening(opening=opening, membership=tenant_admin, changes={"state": "OPEN"})
     assert client.get(path).json()["publication_state"] == "UNPUBLISHED"
 
 
-def test_publication_authorization_rechecked_before_replay(publication, recruiter):
+def test_publication_authorization_rechecked_before_replay(publication, tenant_admin):
     client, path, _ = publication
     preview = client.get(path).json()
     key = str(uuid.uuid4())
     assert mutate(client, path, preview, key=key).status_code == 200
-    recruiter.scope = {"opening_ids": [str(uuid.uuid4())]}
-    recruiter.save()
+    tenant_admin.scope = {"opening_ids": [str(uuid.uuid4())]}
+    tenant_admin.save()
     assert mutate(client, path, preview, key=key).status_code in {403, 404}
     assert client.get(path).status_code in {403, 404}
     client.logout()
@@ -148,12 +154,12 @@ def test_publication_audit_is_value_minimized(publication):
 
 
 @pytest.mark.parametrize("role", ["HIRING_MANAGER", "PLATFORM_SECURITY_ADMIN", "CANDIDATE"])
-def test_non_management_roles_cannot_publish(publication, recruiter, role):
+def test_non_management_roles_cannot_publish(publication, tenant_admin, role):
     client, path, _ = publication
     preview = client.get(path).json()
     # Invalid tenant roles are assigned only in this negative authorization fixture.
-    recruiter.role = role
-    recruiter.save()
+    tenant_admin.role = role
+    tenant_admin.save()
     assert client.get(path).status_code in {403, 404}
     assert mutate(client, path, preview).status_code in {403, 404}
     assert mutate(client, path, preview, "withdraw").status_code in {403, 404}
@@ -205,12 +211,12 @@ def test_inactive_unit_and_expired_projection_cannot_publish(publication):
     assert mutate(client, path, client.get(path).json()).status_code == 422
 
 
-def test_failed_sync_after_edit_cannot_reactivate_old_data(publication, recruiter):
+def test_failed_sync_after_edit_cannot_reactivate_old_data(publication, tenant_admin):
     client, path, opening = publication
     assert mutate(client, path, client.get(path).json()).status_code == 200
     opening.refresh_from_db()
     update_opening(
-        opening=opening, membership=recruiter, changes={"description": "Fresh review needed"}
+        opening=opening, membership=tenant_admin, changes={"description": "Fresh review needed"}
     )
     preview = client.get(path).json()
     with patch(

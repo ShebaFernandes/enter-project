@@ -5,6 +5,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { LinkedinLogo } from "@phosphor-icons/react";
 import {
   Alert,
   Button,
@@ -18,10 +19,10 @@ import {
   SkipLink,
   StatusMessage,
   Textarea,
-  TextInput,
 } from "./components";
 import type { PageProps } from "./mount";
 import { visualAssets } from "./visual-assets";
+import { ResumeUploader } from "./candidate-profile";
 
 type Opening = {
   id: string;
@@ -33,9 +34,27 @@ type Opening = {
   published_at: string;
   closes_at: string | null;
   application_url: string;
+  company_name: string;
+  about_company: string;
+  role_summary: string;
+  responsibilities: string;
+  requirements: string;
+  nice_to_have: string;
 };
 
 type Directory = { items: Opening[]; next_cursor: string | null };
+type Readiness = {
+  profile_name: string;
+  profile_state: string;
+  resume: {
+    id: string;
+    scan_status: string;
+    parse_status: string;
+    ready: boolean;
+  } | null;
+  already_applied: boolean;
+  application_id: string | null;
+};
 
 const humanize = (value: string) =>
   value
@@ -43,25 +62,40 @@ const humanize = (value: string) =>
     .replaceAll("_", " ")
     .replace(/^./, (letter) => letter.toUpperCase());
 
-function PublicHeader() {
+function PublicHeader({
+  applicationFlow = false,
+}: {
+  applicationFlow?: boolean;
+}) {
   return (
     <Header>
       <nav className="fm10-nav" aria-label="Public navigation">
-        <a href="/jobs/" aria-current="page">
-          Open roles
-        </a>
-        <a href="/candidate/profile/">Candidate profile</a>
+        {applicationFlow ? (
+          <>
+            <a href="/candidate/profile/">My resume</a>
+            <a href="/candidate/applications/">My applications</a>
+          </>
+        ) : (
+          <>
+            <a href="/jobs/" aria-current="page">
+              Open roles
+            </a>
+            <a href="/candidate/profile/">Candidate account</a>
+          </>
+        )}
       </nav>
     </Header>
   );
 }
 
 export function JobCard({ opening }: { opening: Opening }) {
+  const shareUrl = new URL(opening.application_url, location.origin).href;
   return (
     <article className="fm10-job-card">
       <div className="fm10-card-heading">
         <p className="fm10-kicker">Open role</p>
         <h2>{opening.title}</h2>
+        {opening.company_name && <span>{opening.company_name}</span>}
       </div>
       <p>{opening.description}</p>
       <dl className="fm10-essentials">
@@ -78,10 +112,36 @@ export function JobCard({ opening }: { opening: Opening }) {
           <dd>{humanize(opening.employment_type)}</dd>
         </div>
       </dl>
-      <a className="ui-button fm10-card-link" href={opening.application_url}>
-        View {opening.title}
-      </a>
+      <div className="fm10-card-actions">
+        <a className="ui-button fm10-card-link" href={opening.application_url}>
+          View {opening.title}
+        </a>
+        <a
+          className="fm10-share-link"
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Share ${opening.title} on LinkedIn`}
+        >
+          <LinkedinLogo aria-hidden="true" /> Share
+        </a>
+      </div>
     </article>
+  );
+}
+
+function JobSection({ title, content }: { title: string; content: string }) {
+  if (!content.trim()) return null;
+  return (
+    <section
+      className="fm10-description"
+      aria-labelledby={`job-${title.toLowerCase().replaceAll(/[^a-z]+/g, "-")}`}
+    >
+      <h2 id={`job-${title.toLowerCase().replaceAll(/[^a-z]+/g, "-")}`}>
+        {title}
+      </h2>
+      <p>{content}</p>
+    </section>
   );
 }
 
@@ -194,20 +254,6 @@ export function JobsDirectory({ request }: PageProps) {
   );
 }
 
-function ResumeConsent({ available }: { available: boolean }) {
-  return (
-    <section className="fm10-resume" aria-labelledby="resume-title">
-      <h3 id="resume-title">Resume</h3>
-      <p>
-        {available
-          ? "Your current security-scanned resume will be attached to this role."
-          : "Sign in and add a security-scanned resume in your candidate profile before applying."}
-      </p>
-      {!available && <a href="/candidate/profile/">Open candidate profile</a>}
-    </section>
-  );
-}
-
 function ChannelPreferences({
   email,
   whatsapp,
@@ -236,19 +282,34 @@ function ChannelPreferences({
   );
 }
 
+function RoleResumeUploader({ request }: { request: PageProps["request"] }) {
+  return (
+    <ResumeUploader
+      request={request}
+      disabled={false}
+      onReady={() => undefined}
+      onApplySuggestions={(_suggestions, _fillMissing, resumeId) => {
+        if (!resumeId) return;
+        const reviewUrl = new URL("/candidate/profile/", location.origin);
+        reviewUrl.searchParams.set("return_to", location.pathname);
+        reviewUrl.searchParams.set("resume_id", resumeId);
+        location.assign(reviewUrl.href);
+      }}
+    />
+  );
+}
+
 function ApplicationForm({
   openingId,
-  resumeId,
-  consentId,
+  readiness,
   request,
+  onSubmitted,
 }: {
   openingId: string;
-  resumeId?: string;
-  consentId?: string;
+  readiness: Readiness;
   request: PageProps["request"];
+  onSubmitted: () => void;
 }) {
-  const [name, setName] = useState("");
-  const [emailAddress, setEmailAddress] = useState("");
   const [motivation, setMotivation] = useState("");
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [whatsappUpdates, setWhatsappUpdates] = useState(false);
@@ -256,20 +317,50 @@ function ApplicationForm({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const form = useRef<HTMLFormElement>(null);
-  const ready = Boolean(resumeId && consentId);
+  const ready = Boolean(readiness.resume?.ready);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.current?.reportValidity()) return;
     if (!ready) {
       setMessage(
-        "Sign in and confirm role-specific consent before applying. Your details remain on this page.",
+        "Finish reviewing your clean resume before applying. Your answer remains on this page.",
       );
       return;
     }
     setBusy(true);
     setMessage("Submitting application…");
     try {
+      const preparation = await request(
+        "/api/v1/candidate/applications/prepare",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+          body: JSON.stringify({ opening_id: openingId, confirmed: consented }),
+        },
+      );
+      if (preparation.status === 409) {
+        setMessage(
+          "You already applied to this role. No duplicate application was created.",
+        );
+        onSubmitted();
+        return;
+      }
+      if (!preparation.ok) {
+        setMessage(
+          preparation.status === 401 || preparation.status === 403
+            ? "Your candidate session is unavailable. Sign in again; no application was submitted."
+            : "Your resume or consent is not ready. Review your candidate profile and try again.",
+        );
+        return;
+      }
+      const prepared = (await preparation.json()) as {
+        resume_id: string;
+        consent_record_id: string;
+      };
       const response = await request("/api/v1/candidate/applications", {
         method: "POST",
         headers: {
@@ -278,9 +369,9 @@ function ApplicationForm({
         },
         body: JSON.stringify({
           opening_id: openingId,
-          resume_id: resumeId,
+          resume_id: prepared.resume_id,
           answers: { motivation },
-          consent_record_id: consentId,
+          consent_record_id: prepared.consent_record_id,
           notification_preferences: {
             email: emailUpdates,
             whatsapp: whatsappUpdates,
@@ -298,10 +389,9 @@ function ApplicationForm({
         return;
       }
       setMessage("Application submitted. Your candidate status is Applied.");
-      setName("");
-      setEmailAddress("");
       setMotivation("");
       setConsented(false);
+      onSubmitted();
     } catch {
       setMessage(
         "Application could not be submitted. Your details remain on this page; try again safely.",
@@ -319,29 +409,10 @@ function ApplicationForm({
         onSubmit={submit}
         noValidate
       >
-        <Field label="Full name">
-          {(props) => (
-            <TextInput
-              {...props}
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          )}
-        </Field>
-        <Field label="Verified email">
-          {(props) => (
-            <TextInput
-              {...props}
-              type="email"
-              autoComplete="email"
-              required
-              value={emailAddress}
-              onChange={(event) => setEmailAddress(event.target.value)}
-            />
-          )}
-        </Field>
+        <p className="fm10-verified-candidate">
+          Applying as{" "}
+          <strong>{readiness.profile_name || "verified candidate"}</strong>
+        </p>
         <Field label="Why are you interested?">
           {(props) => (
             <Textarea
@@ -351,7 +422,14 @@ function ApplicationForm({
             />
           )}
         </Field>
-        <ResumeConsent available={Boolean(resumeId)} />
+        <section className="fm10-resume" aria-labelledby="resume-title">
+          <h3 id="resume-title">Resume</h3>
+          <p>
+            Your current resume is ready. You can use it now or upload a newer
+            resume before applying.
+          </p>
+        </section>
+        <RoleResumeUploader request={request} />
         <ChannelPreferences
           email={emailUpdates}
           whatsapp={whatsappUpdates}
@@ -376,6 +454,10 @@ function ApplicationForm({
 export function RolePage({ bootstrap, request }: PageProps) {
   const [opening, setOpening] = useState<Opening>();
   const [failed, setFailed] = useState(false);
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [candidateState, setCandidateState] = useState<
+    "checking" | "anonymous" | "authenticated" | "failed"
+  >("checking");
   const openingId = bootstrap.openingId ?? "";
 
   const load = useCallback(async () => {
@@ -392,16 +474,38 @@ export function RolePage({ bootstrap, request }: PageProps) {
 
   useEffect(() => void load(), [load]);
 
+  const loadReadiness = useCallback(async () => {
+    setCandidateState("checking");
+    try {
+      const response = await request(
+        `/api/v1/candidate/applications/readiness?opening_id=${encodeURIComponent(openingId)}`,
+      );
+      if ([401, 403, 404].includes(response.status)) {
+        setReadiness(null);
+        setCandidateState("anonymous");
+        return;
+      }
+      if (!response.ok) throw new Error("readiness unavailable");
+      setReadiness((await response.json()) as Readiness);
+      setCandidateState("authenticated");
+    } catch {
+      setReadiness(null);
+      setCandidateState("failed");
+    }
+  }, [openingId, request]);
+
+  useEffect(() => void loadReadiness(), [loadReadiness]);
+
   return (
     <div className="ui-shell fm10-shell">
       <SkipLink />
-      <PublicHeader />
+      <PublicHeader applicationFlow />
       <main id="main" tabIndex={-1}>
         <Container width="public">
           {failed && (
             <EmptyState
               title="This role is unavailable"
-              action={<a href="/jobs/">Return to open roles</a>}
+              action={<a href="/">Return home</a>}
             >
               It may have closed or paused. No application has been changed.
             </EmptyState>
@@ -412,6 +516,9 @@ export function RolePage({ bootstrap, request }: PageProps) {
               <section className="fm10-role-copy" aria-labelledby="role-title">
                 <p className="fm10-kicker">Open role</p>
                 <h1 id="role-title">{opening.title}</h1>
+                {opening.company_name && (
+                  <p className="fm10-company-name">{opening.company_name}</p>
+                )}
                 <dl className="fm10-essentials">
                   <div>
                     <dt>Location</dt>
@@ -426,13 +533,27 @@ export function RolePage({ bootstrap, request }: PageProps) {
                     <dd>{humanize(opening.employment_type)}</dd>
                   </div>
                 </dl>
-                <section
-                  className="fm10-description"
-                  aria-labelledby="role-description"
-                >
-                  <h2 id="role-description">About this role</h2>
-                  <p>{opening.description}</p>
-                </section>
+                <JobSection
+                  title="Job description"
+                  content={opening.description}
+                />
+                <JobSection
+                  title="About the company"
+                  content={opening.about_company}
+                />
+                <JobSection title="The role" content={opening.role_summary} />
+                <JobSection
+                  title="What you'll do"
+                  content={opening.responsibilities}
+                />
+                <JobSection
+                  title="What we're looking for"
+                  content={opening.requirements}
+                />
+                <JobSection
+                  title="Nice to have"
+                  content={opening.nice_to_have}
+                />
                 <section
                   className="fm10-description"
                   aria-labelledby="next-title"
@@ -445,12 +566,82 @@ export function RolePage({ bootstrap, request }: PageProps) {
                   </p>
                 </section>
               </section>
-              <ApplicationForm
-                openingId={opening.id}
-                resumeId={bootstrap.resumeId}
-                consentId={bootstrap.consentId}
-                request={request}
-              />
+              {candidateState === "checking" && (
+                <Card title="Apply for this role">
+                  <Loading label="Checking your candidate profile…" />
+                </Card>
+              )}
+              {candidateState === "anonymous" && (
+                <Card title="Apply for this role">
+                  <div className="fm10-entry-card">
+                    <p>
+                      Sign in with a verified email, add your resume and apply.
+                      Your profile stays under your control.
+                    </p>
+                    <a
+                      className="ui-button"
+                      href={`/api/v1/auth/login?platform=candidate&return_to=${encodeURIComponent(location.pathname)}`}
+                    >
+                      Sign in to apply
+                    </a>
+                    <small>
+                      Usually takes 3–5 minutes with a prepared resume.
+                    </small>
+                  </div>
+                </Card>
+              )}
+              {candidateState === "failed" && (
+                <Card title="Apply for this role">
+                  <Alert>
+                    We couldn’t check your candidate profile. No application was
+                    changed.
+                  </Alert>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void loadReadiness()}
+                  >
+                    Try again
+                  </Button>
+                </Card>
+              )}
+              {candidateState === "authenticated" &&
+                readiness?.already_applied && (
+                  <Card title="Application received">
+                    <p>You already applied to this role.</p>
+                    <a className="ui-button" href="/candidate/applications/">
+                      Track application
+                    </a>
+                  </Card>
+                )}
+              {candidateState === "authenticated" &&
+                readiness &&
+                !readiness.already_applied &&
+                !readiness.resume?.ready && (
+                  <Card title="Drop your resume to apply">
+                    <p>
+                      Upload a PDF or Word resume. We’ll scan it, extract the
+                      details and ask you to review them before applying.
+                    </p>
+                    <RoleResumeUploader request={request} />
+                    <a
+                      className="fm10-manual-profile-link"
+                      href={`/candidate/profile/?return_to=${encodeURIComponent(location.pathname)}`}
+                    >
+                      Enter details without uploading
+                    </a>
+                  </Card>
+                )}
+              {candidateState === "authenticated" &&
+                readiness &&
+                !readiness.already_applied &&
+                readiness.resume?.ready && (
+                  <ApplicationForm
+                    openingId={opening.id}
+                    readiness={readiness}
+                    request={request}
+                    onSubmitted={() => void loadReadiness()}
+                  />
+                )}
             </div>
           )}
         </Container>

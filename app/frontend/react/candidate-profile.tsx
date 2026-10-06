@@ -10,7 +10,7 @@ import type { ConflictPayload } from "../shared/conflict-resolution";
 import {
   Alert,
   AppShell,
-  PlatformNavigation,
+  WorkspaceNavigation,
   Button,
   Card,
   Checkbox,
@@ -49,6 +49,13 @@ type EmploymentRecord = {
   source_spans: unknown[];
   version?: number;
 };
+type EducationRecord = {
+  school: string;
+  degree: string;
+  field_of_study: string;
+  start_year: number | null;
+  end_year: number | null;
+};
 type Visibility = {
   mode: VisibilityMode;
   approved_tenant_ids?: string[];
@@ -65,6 +72,7 @@ type CandidateProfile = {
   experience_years: string | number;
   skills: string[];
   employment_history: EmploymentRecord[];
+  education: EducationRecord[];
   role_categories: string[];
   preferred_locations: string[];
   work_arrangements: string[];
@@ -88,6 +96,7 @@ type Draft = {
   experience_years: string;
   skills: string;
   employment_history: EmploymentRecord[];
+  education: EducationRecord[];
   role_categories: string;
   preferred_locations: string;
   work_arrangements: string[];
@@ -96,6 +105,7 @@ type Draft = {
   availability_date: string;
   visibility: VisibilityMode;
   approved_tenant_ids: string;
+  professional_links: string;
 };
 type ResumeSuggestion = {
   id?: string;
@@ -153,6 +163,13 @@ const freshEmployment = (): EmploymentRecord => ({
   provenance: "CANDIDATE_REPORTED",
   source_spans: [],
 });
+const freshEducation = (): EducationRecord => ({
+  school: "",
+  degree: "",
+  field_of_study: "",
+  start_year: null,
+  end_year: null,
+});
 const toDraft = (profile: CandidateProfile): Draft => ({
   full_name: profile.full_name,
   location: displayLocation(profile.location),
@@ -162,6 +179,7 @@ const toDraft = (profile: CandidateProfile): Draft => ({
   experience_years: String(profile.experience_years),
   skills: profile.skills.join(", "),
   employment_history: profile.employment_history,
+  education: profile.education ?? [],
   role_categories: profile.role_categories.join(", "),
   preferred_locations: profile.preferred_locations.join(", "),
   work_arrangements: profile.work_arrangements,
@@ -172,6 +190,7 @@ const toDraft = (profile: CandidateProfile): Draft => ({
   approved_tenant_ids: (profile.visibility.approved_tenant_ids ?? []).join(
     ", ",
   ),
+  professional_links: (profile.professional_links ?? []).join(", "),
 });
 const emptyDraft = (): Draft => ({
   full_name: "",
@@ -182,6 +201,7 @@ const emptyDraft = (): Draft => ({
   experience_years: "",
   skills: "",
   employment_history: [],
+  education: [],
   role_categories: "",
   preferred_locations: "",
   work_arrangements: [],
@@ -190,6 +210,7 @@ const emptyDraft = (): Draft => ({
   availability_date: "",
   visibility: "NOT_LOOKING",
   approved_tenant_ids: "",
+  professional_links: "",
 });
 
 const suggestionKey = (suggestion: ResumeSuggestion, index: number) =>
@@ -211,6 +232,8 @@ const applicableSuggestionTypes = new Set([
   "notice_period",
   "availability_date",
   "employment_history",
+  "education",
+  "professional_links",
 ]);
 const canApplySuggestion = (suggestion: ResumeSuggestion) =>
   applicableSuggestionTypes.has(suggestion.fact_type ?? "");
@@ -302,6 +325,36 @@ const applyResumeSuggestions = (
         if (records.length) next.employment_history = records;
         break;
       }
+      case "education":
+        if (Array.isArray(value))
+          next.education = value.flatMap((item) => {
+            if (!item || typeof item !== "object") return [];
+            const record = item as Record<string, unknown>;
+            if (typeof record.school !== "string" || !record.school.trim())
+              return [];
+            return [
+              {
+                school: record.school.trim(),
+                degree:
+                  typeof record.degree === "string" ? record.degree.trim() : "",
+                field_of_study:
+                  typeof record.field_of_study === "string"
+                    ? record.field_of_study.trim()
+                    : "",
+                start_year:
+                  typeof record.start_year === "number"
+                    ? record.start_year
+                    : null,
+                end_year:
+                  typeof record.end_year === "number" ? record.end_year : null,
+              },
+            ];
+          });
+        break;
+      case "professional_links":
+        if (Array.isArray(value))
+          next.professional_links = value.map(String).join(", ");
+        break;
     }
   }
   return next;
@@ -505,6 +558,137 @@ function EmploymentEditor({
   );
 }
 
+function EducationEditor({
+  records,
+  disabled,
+  onChange,
+}: {
+  records: EducationRecord[];
+  disabled: boolean;
+  onChange: (records: EducationRecord[]) => void;
+}) {
+  const update = (index: number, patch: Partial<EducationRecord>) =>
+    onChange(
+      records.map((record, current) =>
+        current === index ? { ...record, ...patch } : record,
+      ),
+    );
+  return (
+    <ProfileSection title="Education">
+      <p>
+        Add the schools and qualifications recruiters may use when reviewing
+        your profile.
+      </p>
+      <div className="profile-employment-list">
+        {records.map((record, index) => (
+          <fieldset
+            className="profile-employment"
+            key={`${record.school}-${index}`}
+          >
+            <legend>Education record {index + 1}</legend>
+            <div className="profile-field-grid">
+              <Field label="School or college">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    required
+                    maxLength={300}
+                    disabled={disabled}
+                    value={record.school}
+                    onChange={(event) =>
+                      update(index, { school: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Degree">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    maxLength={200}
+                    disabled={disabled}
+                    value={record.degree}
+                    onChange={(event) =>
+                      update(index, { degree: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Field of study">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    maxLength={200}
+                    disabled={disabled}
+                    value={record.field_of_study}
+                    onChange={(event) =>
+                      update(index, { field_of_study: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Start year">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    type="number"
+                    min="1900"
+                    max="2200"
+                    disabled={disabled}
+                    value={record.start_year ?? ""}
+                    onChange={(event) =>
+                      update(index, {
+                        start_year: event.target.value
+                          ? Number(event.target.value)
+                          : null,
+                      })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="End year">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    type="number"
+                    min="1900"
+                    max="2200"
+                    disabled={disabled}
+                    value={record.end_year ?? ""}
+                    onChange={(event) =>
+                      update(index, {
+                        end_year: event.target.value
+                          ? Number(event.target.value)
+                          : null,
+                      })
+                    }
+                  />
+                )}
+              </Field>
+            </div>
+            <Button
+              variant="secondary"
+              disabled={disabled}
+              onClick={() =>
+                onChange(records.filter((_, current) => current !== index))
+              }
+            >
+              Remove education record {index + 1}
+            </Button>
+          </fieldset>
+        ))}
+      </div>
+      <Button
+        variant="secondary"
+        disabled={disabled}
+        onClick={() => onChange([...records, freshEducation()])}
+      >
+        Add education
+      </Button>
+    </ProfileSection>
+  );
+}
+
 function Preferences({
   draft,
   disabled,
@@ -609,9 +793,10 @@ function VisibilityConsent({
       <fieldset>
         <legend>Who can find you?</legend>
         <p className="visibility-explanation">
-          This controls recruiter search visibility. Uploading a resume does not
-          make your profile public. Choose Not looking to keep it hidden while
-          you finish; you can change this later.
+          Publishing for recruiter discovery lets the selected recruiters view
+          your approved profile and current clean resume. It never makes either
+          one public. Choose Not looking to keep everything hidden while you
+          finish; you can change this later.
         </p>
         <div className="profile-visibility-list">
           {modes.map(([mode, label]) => (
@@ -739,12 +924,13 @@ function ScanState({
   );
 }
 
-function ResumeUploader({
+export function ResumeUploader({
   request,
   disabled,
   onApplySuggestions,
   onReady,
   compact = false,
+  initialResumeId = "",
 }: {
   request: PageProps["request"];
   disabled: boolean;
@@ -755,6 +941,7 @@ function ResumeUploader({
   ) => void;
   onReady: () => void;
   compact?: boolean;
+  initialResumeId?: string;
 }) {
   const [state, setState] = useState<ResumeState | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -763,12 +950,45 @@ function ResumeUploader({
   const [dragging, setDragging] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const generation = useRef(0);
+  const initialResumeLoaded = useRef(false);
   useEffect(
     () => () => {
       generation.current++;
     },
     [],
   );
+  useEffect(() => {
+    if (!initialResumeId || initialResumeLoaded.current) return;
+    initialResumeLoaded.current = true;
+    setUploading(true);
+    setFilename("Uploaded resume");
+    void (async () => {
+      try {
+        const { data } = await responseJson<ResumeState>(
+          await request(`/api/v1/candidate/resumes/${initialResumeId}`),
+        );
+        setState(data);
+        if (["READY", "REVIEW_REQUIRED"].includes(data.parse_status)) {
+          onApplySuggestions(
+            (data.suggestions ?? []).filter(canApplySuggestion),
+            true,
+            data.id,
+          );
+        }
+        onReady();
+      } catch {
+        setState({
+          id: initialResumeId,
+          scan_status: "UPLOAD_FAILED",
+          parse_status: "NOT_STARTED",
+          error_message:
+            "We couldn't load the extracted resume details. Choose the resume again.",
+        });
+      } finally {
+        setUploading(false);
+      }
+    })();
+  }, [initialResumeId, onApplySuggestions, onReady, request]);
   const uploadFile = async (file: File) => {
     const current = ++generation.current;
     setUploading(true);
@@ -1053,6 +1273,12 @@ function ResumeUploader({
 }
 
 export function CandidateProfilePage({ request }: PageProps) {
+  const pageQuery = new URLSearchParams(location.search);
+  const requestedReturn = pageQuery.get("return_to") ?? "";
+  const requestedResumeId = pageQuery.get("resume_id") ?? "";
+  const returnTo = /^\/roles\/[0-9a-f-]{36}\/$/i.test(requestedReturn)
+    ? requestedReturn
+    : "";
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const resumeBaseline = useRef<Draft>(emptyDraft());
@@ -1127,12 +1353,14 @@ export function CandidateProfilePage({ request }: PageProps) {
         source_spans: input.source_spans ?? [],
       };
     }),
+    education: draft.education,
     role_categories: list(draft.role_categories),
     preferred_locations: list(draft.preferred_locations),
     work_arrangements: draft.work_arrangements,
     meaningful_work: draft.meaningful_work || null,
     notice_period: draft.notice_period || null,
     availability_date: draft.availability_date || null,
+    professional_links: list(draft.professional_links),
   });
   const save = async () => {
     if (busy) return;
@@ -1362,7 +1590,21 @@ export function CandidateProfilePage({ request }: PageProps) {
         title="Right person. Right problem."
         navigation={
           <>
-            <PlatformNavigation active="candidate" />
+            <WorkspaceNavigation
+              label="Candidate navigation"
+              items={[
+                {
+                  label: "Resume & profile",
+                  href: "/candidate/profile/",
+                  current: true,
+                },
+                {
+                  label: "My applications",
+                  href: "/candidate/applications/",
+                },
+                { label: "Privacy", href: "/candidate/rights/" },
+              ]}
+            />
             <Button
               variant="secondary"
               onClick={async () => {
@@ -1403,6 +1645,23 @@ export function CandidateProfilePage({ request }: PageProps) {
             </li>
           </ol>
         </div>
+        {returnTo && (
+          <aside
+            className="candidate-return-to-role"
+            aria-label="Current application"
+          >
+            <div>
+              <strong>Applying for a role?</strong>
+              <span>
+                Upload and review your resume, save the profile, then return to
+                finish the application.
+              </span>
+            </div>
+            <a className="ui-button" href={returnTo}>
+              Return to role
+            </a>
+          </aside>
+        )}
         {error && <Alert>{error}</Alert>}
         {message && (
           <div className="candidate-feedback">
@@ -1422,6 +1681,7 @@ export function CandidateProfilePage({ request }: PageProps) {
         )}
         <ResumeUploader
           compact={started}
+          initialResumeId={requestedResumeId}
           request={request}
           disabled={busy}
           onReady={() => setStarted(true)}
@@ -1745,6 +2005,43 @@ export function CandidateProfilePage({ request }: PageProps) {
                     setDraft((value) => ({ ...value, employment_history }))
                   }
                 />
+              </details>
+              <details className="profile-conversation">
+                <summary>
+                  Education and links
+                  <small>
+                    Show recruiters where you studied and where they can verify
+                    your work
+                  </small>
+                </summary>
+                <EducationEditor
+                  records={draft.education}
+                  disabled={busy}
+                  onChange={(education) =>
+                    setDraft((value) => ({ ...value, education }))
+                  }
+                />
+                <ProfileSection title="Professional links">
+                  <Field
+                    label="LinkedIn and GitHub links"
+                    help="Separate links with commas. Only safe HTTP(S) URLs are accepted."
+                  >
+                    {(props) => (
+                      <TextInput
+                        {...props}
+                        disabled={busy}
+                        value={draft.professional_links}
+                        placeholder="https://linkedin.com/in/…, https://github.com/…"
+                        onChange={(event) =>
+                          setDraft((value) => ({
+                            ...value,
+                            professional_links: event.target.value,
+                          }))
+                        }
+                      />
+                    )}
+                  </Field>
+                </ProfileSection>
               </details>
               <details className="profile-conversation" open>
                 <summary>

@@ -7,6 +7,7 @@ from django.test import Client, override_settings
 from modules.candidate.models import ResumeAsset
 from modules.identity.local_auth import issue_local_candidate_bootstrap
 from modules.identity.models import SessionCredential
+from modules.recruiting.models import Opening
 
 pytestmark = pytest.mark.django_db
 LOCAL_CACHE = {
@@ -39,7 +40,8 @@ def test_one_time_bootstrap_creates_verified_candidate_session_and_role_context(
 
 @override_settings(CACHES=LOCAL_CACHE)
 def test_repeated_bootstrap_restores_the_synthetic_resume_fixture():
-    issue_local_candidate_bootstrap()
+    first = issue_local_candidate_bootstrap()
+    opening_count = Opening.objects.count()
     ResumeAsset.objects.filter(is_current=True).update(
         scan_status=ResumeAsset.ScanStatus.SCAN_FAILED,
         parse_status=ResumeAsset.ParseStatus.PARSE_FAILED,
@@ -51,6 +53,8 @@ def test_repeated_bootstrap_restores_the_synthetic_resume_fixture():
     page = client.get(response["Location"])
 
     assert page.status_code == 200
+    assert issued.opening_id == first.opening_id
+    assert Opening.objects.count() == opening_count
     assert b'data-resume-id=""' not in page.content
     assert b'data-consent-id=""' not in page.content
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.http import Http404
 from django.shortcuts import render
+from django.templatetags.static import static
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
@@ -16,7 +17,9 @@ from modules.operations.idempotency import execute
 
 from .application_models import CandidateFacingStatus, InternalRecruitingStatus
 from .applications import (
+    application_readiness,
     own_application,
+    prepare_application_consent,
     preview_candidate_status,
     publish_candidate_status,
     replace_notification_preferences,
@@ -44,6 +47,15 @@ class ApplicationSubmitSerializer(serializers.Serializer):
     answers = serializers.DictField()
     consent_record_id = serializers.UUIDField()
     notification_preferences = NotificationPreferencesSerializer()
+
+
+class ApplicationPreparationSerializer(serializers.Serializer):
+    opening_id = serializers.UUIDField()
+    confirmed = StrictBooleanField()
+
+
+class ApplicationReadinessSerializer(serializers.Serializer):
+    opening_id = serializers.UUIDField()
 
 
 class WithdrawalSerializer(serializers.Serializer):
@@ -95,6 +107,38 @@ class CandidateApplicationCollectionView(APIView):
             response = Response(application_data(application), status=status.HTTP_201_CREATED)
             response["ETag"] = strong_etag(application.id, application.version)
             return response
+
+        return execute(request, operation)
+
+
+class CandidateApplicationReadinessView(APIView):
+    def get(self, request):
+        serializer = ApplicationReadinessSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            application_readiness(
+                identity=request.user,
+                public_opening_id=serializer.validated_data["opening_id"],
+            )
+        )
+
+
+class CandidateApplicationPreparationView(APIView):
+    def post(self, request):
+        profile_for(request.user)
+
+        def operation():
+            serializer = ApplicationPreparationSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            return Response(
+                prepare_application_consent(
+                    identity=request.user,
+                    public_opening_id=serializer.validated_data["opening_id"],
+                    confirmed=serializer.validated_data["confirmed"],
+                    request_key=request.headers["Idempotency-Key"],
+                ),
+                status=status.HTTP_201_CREATED,
+            )
 
         return execute(request, operation)
 
@@ -215,8 +259,11 @@ def public_application_page(request, opening_id):
     from .public_openings import application_publication_link, available_publications, public_reader
 
     with public_reader():
-        if not available_publications().filter(pk=opening_id).exists():
+        public_opening = available_publications().filter(pk=opening_id).first()
+        if public_opening is None:
             raise Http404("Role unavailable")
+        public_title = public_opening.title
+        public_description = public_opening.description
     page_bootstrap: dict[str, object] = {
         "version": 1,
         "page": "public-role",
@@ -225,6 +272,10 @@ def public_application_page(request, opening_id):
     }
     context: dict[str, object] = {
         "opening_id": opening_id,
+        "page_title": f"{public_title} | Enter jobs",
+        "page_description": public_description[:180],
+        "page_url": request.build_absolute_uri(f"/roles/{opening_id}/"),
+        "page_image": request.build_absolute_uri(static("dist/react/assets/app3.png")),
         "page_bootstrap": page_bootstrap,
     }
     if request.user.is_authenticated:

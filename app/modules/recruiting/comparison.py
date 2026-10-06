@@ -19,12 +19,15 @@ from .models import Opening, ShortlistEntry
 
 COMPARISON_FIELDS = [
     "name",
+    "current_role",
+    "current_company",
     "location",
     "experience",
     "notice_or_availability",
     "compensation_availability",
     "skills",
     "employment",
+    "education",
     "preferences",
     "match_evidence",
     "informational_findings",
@@ -287,6 +290,18 @@ def _project_candidate(
     )
     fields = {
         "name": _field("KNOWN" if name else "UNKNOWN", name, ["CANDIDATE_REPORTED"]),
+        "current_role": _field(
+            "KNOWN" if profile.current_role else ("UNKNOWN" if profile_allowed else "UNAVAILABLE"),
+            (profile.current_role or None) if profile_allowed else None,
+            ["CANDIDATE_REPORTED"] if profile_allowed and profile.current_role else [],
+        ),
+        "current_company": _field(
+            "KNOWN"
+            if profile.current_company
+            else ("UNKNOWN" if profile_allowed else "UNAVAILABLE"),
+            (profile.current_company or None) if profile_allowed else None,
+            ["CANDIDATE_REPORTED"] if profile_allowed and profile.current_company else [],
+        ),
         "location": _field("KNOWN" if location else "UNKNOWN", location, ["CANDIDATE_REPORTED"]),
         "experience": _field(
             "KNOWN" if profile_allowed else "UNAVAILABLE",
@@ -311,6 +326,11 @@ def _project_candidate(
         ),
         "skills": skill_field,
         "employment": employment_field,
+        "education": _field(
+            "KNOWN" if profile.education else ("UNKNOWN" if profile_allowed else "UNAVAILABLE"),
+            (profile.education or None) if profile_allowed else None,
+            ["CANDIDATE_REPORTED"] if profile_allowed and profile.education else [],
+        ),
         "preferences": _field(
             "KNOWN" if preferences else ("UNKNOWN" if profile_allowed else "UNAVAILABLE"),
             preferences or None,

@@ -5,11 +5,14 @@ from .candidate_views import (
     ApplicationStatusPublishView,
     CandidateApplicationCollectionView,
     CandidateApplicationDetailView,
+    CandidateApplicationPreparationView,
+    CandidateApplicationReadinessView,
     CandidateApplicationWithdrawView,
     CandidateNotificationPreferencesView,
 )
 from .comparison_views import ComparisonView
 from .opening_views import (
+    OpeningApplicationCollectionView,
     OpeningCollectionView,
     OpeningDetailView,
     OpeningPublicationView,
@@ -19,6 +22,7 @@ from .public_views import PublicOpeningCollectionView
 from .views import (
     ApplicationInternalStatusView,
     ApplicationNoteCollectionView,
+    ApplicationResumeView,
     CandidateWorkCollectionView,
     CandidateWorkDetailView,
     CandidateWorkNoteCollectionView,
@@ -43,6 +47,14 @@ urlpatterns = [
     ),
     path("public/openings", PublicOpeningCollectionView.as_view()),
     path("public/openings/<uuid:opening_id>", PublicOpeningCollectionView.as_view()),
+    path(
+        "candidate/applications/readiness",
+        CandidateApplicationReadinessView.as_view(),
+    ),
+    path(
+        "candidate/applications/prepare",
+        CandidateApplicationPreparationView.as_view(),
+    ),
     path("candidate/applications", CandidateApplicationCollectionView.as_view()),
     path(
         "candidate/applications/<uuid:application_id>",
@@ -73,6 +85,10 @@ urlpatterns = [
         ApplicationInternalStatusView.as_view(),
     ),
     path(
+        "tenants/<uuid:tenant_id>/applications/<uuid:application_id>/resume",
+        ApplicationResumeView.as_view(),
+    ),
+    path(
         "tenants/<uuid:tenant_id>/candidate-work",
         CandidateWorkCollectionView.as_view(),
     ),
@@ -101,6 +117,10 @@ urlpatterns = [
         "tenants/<uuid:tenant_id>/openings",
         OpeningCollectionView.as_view(),
         name="opening-collection",
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/openings/<uuid:opening_id>/applications",
+        OpeningApplicationCollectionView.as_view(),
     ),
     path(
         "tenants/<uuid:tenant_id>/openings/<uuid:opening_id>",

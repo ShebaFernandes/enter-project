@@ -156,12 +156,15 @@ def test_comparison_returns_consistent_fields_stable_order_unknowns_and_findings
     assert response.status_code == 200
     assert response.data["fields"] == [
         "name",
+        "current_role",
+        "current_company",
         "location",
         "experience",
         "notice_or_availability",
         "compensation_availability",
         "skills",
         "employment",
+        "education",
         "preferences",
         "match_evidence",
         "informational_findings",

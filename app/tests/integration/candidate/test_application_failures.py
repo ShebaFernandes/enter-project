@@ -30,7 +30,14 @@ def _payload(profile, opening):
     consent = ConsentRecordFactory(
         profile=profile,
         purpose="APPLICATION_SUBMISSION",
-        field_scope=["application", "resume", "notifications"],
+        field_scope=[
+            "application",
+            "profile",
+            "resume",
+            "employment_history",
+            "professional_links",
+            "notifications",
+        ],
         audience_scope={"opening_id": str(opening.id), "tenant_id": str(opening.tenant_id)},
     )
     return {

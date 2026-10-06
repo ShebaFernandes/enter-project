@@ -124,7 +124,14 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
         lambda obj: ConsentRecordFactory(
             profile_id=obj.candidate_profile_id,
             purpose="APPLICATION_SUBMISSION",
-            field_scope=["application", "resume", "notifications"],
+            field_scope=[
+                "application",
+                "profile",
+                "resume",
+                "employment_history",
+                "professional_links",
+                "notifications",
+            ],
             audience_scope={
                 "opening_id": str(obj.opening.id),
                 "tenant_id": str(obj.tenant.id),

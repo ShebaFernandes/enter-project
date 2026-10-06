@@ -7,7 +7,7 @@ from modules.operations.concurrency import strong_etag
 from modules.recruiting.models import RecruiterEnteredCandidate
 from modules.search.models import CriteriaGroup, Criterion, SearchDefinition
 from modules.tenancy.models import BusinessUnit
-from tests.factories import MembershipFactory, TenantFactory
+from tests.factories import ApplicationFactory, MembershipFactory, TenantFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -50,12 +50,14 @@ def opening_search(*, recruiter, opening):
     return search
 
 
-def test_organization_lifecycle_synthetic_provenance_and_stale_conflicts(api_client, recruiter):
+def test_organization_lifecycle_synthetic_provenance_and_stale_conflicts(
+    api_client, recruiter, tenant_admin
+):
     tenant_id = recruiter.tenant_id
     units_path = f"/api/v1/tenants/{tenant_id}/business-units"
     created_unit = tenant_request(
         api_client,
-        recruiter,
+        tenant_admin,
         "post",
         units_path,
         {"name": "Synthetic Engineering", "description": "Synthetic only"},
@@ -67,7 +69,7 @@ def test_organization_lifecycle_synthetic_provenance_and_stale_conflicts(api_cli
     openings_path = f"/api/v1/tenants/{tenant_id}/openings"
     created_opening = tenant_request(
         api_client,
-        recruiter,
+        tenant_admin,
         "post",
         openings_path,
         {
@@ -105,7 +107,7 @@ def test_organization_lifecycle_synthetic_provenance_and_stale_conflicts(api_cli
     unit_model = BusinessUnit.objects.get(pk=unit["id"])
     stale = tenant_request(
         api_client,
-        recruiter,
+        tenant_admin,
         "patch",
         f"{units_path}/{unit['id']}",
         {"description": "Stale overwrite"},
@@ -129,6 +131,61 @@ def test_organization_lifecycle_synthetic_provenance_and_stale_conflicts(api_cli
         f"/api/v1/tenants/{other.tenant_id}/openings/{opening['id']}",
     )
     assert denied.status_code == 404
+
+
+def test_tenant_admin_can_edit_and_delete_an_empty_draft(api_client, tenant_admin, opening_factory):
+    opening = opening_factory(tenant=tenant_admin.tenant, state="DRAFT")
+    path = f"/api/v1/tenants/{tenant_admin.tenant_id}/openings/{opening.id}"
+
+    updated = tenant_request(
+        api_client,
+        tenant_admin,
+        "patch",
+        path,
+        {
+            "title": "Applied AI Engineer",
+            "location": {"display": "Mumbai"},
+            "work_mode": "HYBRID",
+            "employment_type": "CONTRACT",
+            "description": "Build and evaluate recruiting models.",
+        },
+        HTTP_IF_MATCH=strong_etag(opening.id, opening.version),
+        HTTP_IDEMPOTENCY_KEY="opening-edit-contract",
+    )
+
+    assert updated.status_code == 200, updated.data
+    assert updated.json()["title"] == "Applied AI Engineer"
+    assert updated.json()["location"] == {"display": "Mumbai"}
+    assert updated.json()["work_mode"] == "HYBRID"
+    assert updated.json()["employment_type"] == "CONTRACT"
+
+    deleted = tenant_request(
+        api_client,
+        tenant_admin,
+        "delete",
+        path,
+        HTTP_IF_MATCH=updated["ETag"],
+        HTTP_IDEMPOTENCY_KEY="opening-delete-contract",
+    )
+    assert deleted.status_code == 204, deleted.data
+
+
+def test_job_with_applicants_cannot_be_deleted(api_client, tenant_admin, opening_factory):
+    opening = opening_factory(tenant=tenant_admin.tenant, state="DRAFT")
+    ApplicationFactory(opening=opening)
+    path = f"/api/v1/tenants/{tenant_admin.tenant_id}/openings/{opening.id}"
+
+    response = tenant_request(
+        api_client,
+        tenant_admin,
+        "delete",
+        path,
+        HTTP_IF_MATCH=strong_etag(opening.id, opening.version),
+        HTTP_IDEMPOTENCY_KEY="opening-delete-blocked-contract",
+    )
+
+    assert response.status_code == 422, response.data
+    assert "closed instead of deleted" in str(response.json())
 
 
 def test_saved_search_has_only_authoritative_context_and_detects_changes(

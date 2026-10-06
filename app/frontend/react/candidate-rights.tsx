@@ -222,7 +222,11 @@ export function RightsCenter({ request }: PageProps) {
         <WorkspaceNavigation
           label="Candidate navigation"
           items={[
-            { label: "Profile", href: "/candidate/profile/" },
+            { label: "Resume & profile", href: "/candidate/profile/" },
+            {
+              label: "My applications",
+              href: "/candidate/applications/",
+            },
             {
               label: "Privacy rights",
               href: "/candidate/rights/",

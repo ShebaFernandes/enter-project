@@ -6,6 +6,10 @@ import {
   StatusMessage,
   Alert,
   PlatformNavigation,
+  Field,
+  TextInput,
+  Select,
+  Chip,
 } from "./components";
 import { AnimatedAIChat } from "./components/ui/animated-ai-chat";
 import type { PageProps } from "./mount";
@@ -14,6 +18,41 @@ import { workflowTransport } from "../shared/workflow-handoff";
 
 type Opening = { id: string; title: string; state: string };
 type Recent = { search_id: string; created_at: string; name?: string };
+type Criterion = {
+  id: string;
+  group_id: string;
+  field: string;
+  operator: string;
+  value: string | number | boolean | string[];
+};
+type Criteria = {
+  context: Record<string, string>;
+  groups: {
+    id: string;
+    purpose: "REQUIREMENT" | "PREFERENCE" | "EXCLUSION";
+    operator: "ANY" | "ALL";
+    label?: string | null;
+  }[];
+  criteria: Criterion[];
+  limit: number;
+};
+type Clarification = {
+  id: "skills" | "location" | "work_arrangement" | "experience_rule";
+  question: string;
+  kind: "TEXT" | "CHOICE";
+  options: string[];
+  allow_any: boolean;
+};
+type InterpretedSearch = {
+  original_prompt: string;
+  workflow_id: string;
+  criteria: Criteria;
+  requires_review: boolean;
+  ai_status: string;
+  ambiguities: string[];
+  clarifications: Clarification[];
+  estimated_count?: number;
+};
 export function SearchHome({ bootstrap, request }: PageProps) {
   const tenant = bootstrap.tenantId!;
   const base = `/api/v1/tenants/${tenant}`;
@@ -30,6 +69,8 @@ export function SearchHome({ bootstrap, request }: PageProps) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
+  const [review, setReview] = useState<InterpretedSearch | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const completedSearch = useRef<string | null>(null);
   const executionRetry = useRef(crypto.randomUUID());
   const [speechStatus, setSpeechStatus] = useState("Typed search is ready.");
@@ -112,17 +153,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
       recognition.current = null;
     };
   }, []);
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (busy || uncertain) return;
-    if (!prompt.trim()) {
-      setError("Describe the role before searching.");
-      composer.current?.focus();
-      return;
-    }
-    setBusy(true);
-    setError("");
-    setStatus("Interpreting the hiring need…");
+  const execute = async (criteria: Criteria) => {
     let executing = false;
     try {
       if (completedSearch.current) {
@@ -136,49 +167,12 @@ export function SearchHome({ bootstrap, request }: PageProps) {
         );
         return;
       }
-      const response = await request(`${base}/searches/interpret`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          context: opening
-            ? { type: "OPENING", opening_id: opening }
-            : { type: "AD_HOC" },
-        }),
-      });
-      if (!response.ok)
-        throw new Error(
-          response.status === 429
-            ? "Too many requests. Wait before trying again."
-            : "Interpretation is unavailable. Your typed query remains here.",
-        );
-      const intent = (await response.json()) as {
-        criteria: { groups?: unknown[]; criteria?: unknown[] };
-        requires_review: boolean;
-        ai_status: string;
-        ambiguities: string[];
-      };
-      if (
-        intent.requires_review !== false ||
-        !["USED", "NOT_NEEDED"].includes(intent.ai_status) ||
-        !Array.isArray(intent.ambiguities) ||
-        intent.ambiguities.length ||
-        !intent.criteria ||
-        typeof intent.criteria !== "object" ||
-        !Array.isArray(intent.criteria.groups) ||
-        !Array.isArray(intent.criteria.criteria) ||
-        !intent.criteria.criteria.length
-      ) {
-        throw new Error(
-          "Clarify your query before searching. Interpretation is ambiguous, unsafe or could not be validated. No search ran; edit the query and try again.",
-        );
-      }
       setStatus("Searching authorized candidates…");
       executing = true;
       const result = await request(`${base}/searches`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(intent.criteria),
+        body: JSON.stringify(criteria),
       });
       if (!result.ok) {
         if (result.status < 500) executing = false;
@@ -214,6 +208,165 @@ export function SearchHome({ bootstrap, request }: PageProps) {
             : failure instanceof Error
               ? failure.message
               : "Search is unavailable.",
+      );
+      setStatus("");
+      setBusy(false);
+    }
+  };
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (busy || uncertain) return;
+    if (!prompt.trim()) {
+      setError("Describe the role before searching.");
+      composer.current?.focus();
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setReview(null);
+    setStatus("Interpreting the hiring need…");
+    try {
+      const response = await request(`${base}/searches/interpret`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          context: opening
+            ? { type: "OPENING", opening_id: opening }
+            : { type: "AD_HOC" },
+        }),
+      });
+      if (!response.ok)
+        throw new Error(
+          response.status === 429
+            ? "Too many requests. Wait before trying again."
+            : "Interpretation is unavailable. Your typed query remains here.",
+        );
+      const intent = (await response.json()) as InterpretedSearch;
+      intent.ambiguities = Array.isArray(intent.ambiguities)
+        ? intent.ambiguities
+        : [];
+      intent.clarifications = Array.isArray(intent.clarifications)
+        ? intent.clarifications
+        : [];
+      if (
+        !intent.criteria ||
+        !Array.isArray(intent.criteria.groups) ||
+        !Array.isArray(intent.criteria.criteria) ||
+        !intent.criteria.criteria.length
+      )
+        throw new Error(
+          "The request could not be converted into safe search criteria. Edit it and try again.",
+        );
+      const unsafe = intent.ambiguities.some((item) =>
+        /protected|instruction-like|unsafe/i.test(item),
+      );
+      if (unsafe)
+        throw new Error(
+          "The request contains criteria that cannot be used in hiring. Remove protected or instruction-like terms and try again.",
+        );
+      if (intent.requires_review || intent.clarifications.length) {
+        setReview(intent);
+        setAnswers(
+          Object.fromEntries(
+            intent.clarifications.map((item) => [
+              item.id,
+              item.id === "experience_rule" ? "AT_LEAST" : "ANY",
+            ]),
+          ),
+        );
+        setStatus("I found a few details to confirm before searching.");
+        setBusy(false);
+        return;
+      }
+      await execute(intent.criteria);
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Interpretation is unavailable.",
+      );
+      setStatus("");
+      setBusy(false);
+    }
+  };
+  const confirmRequirements = async () => {
+    if (!review || busy) return;
+    setBusy(true);
+    setError("");
+    setStatus("Confirming the recruiter-reviewed requirements…");
+    const criteria: Criteria = JSON.parse(JSON.stringify(review.criteria));
+    const addGroup = (operator: "ANY" | "ALL", label: string) => {
+      const id = crypto.randomUUID();
+      criteria.groups.push({
+        id,
+        purpose: "REQUIREMENT",
+        operator,
+        label,
+      });
+      return id;
+    };
+    const add = (
+      field: string,
+      operator: string,
+      value: string,
+      groupId: string,
+    ) =>
+      criteria.criteria.push({
+        id: crypto.randomUUID(),
+        group_id: groupId,
+        field,
+        operator,
+        value,
+      });
+    const skills = (answers.skills ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item && item !== "ANY");
+    if (skills.length) {
+      const group = addGroup("ALL", "Essential skills");
+      skills.forEach((skill) => add("skill", "CONTAINS", skill, group));
+    }
+    const locations = (answers.location ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item && item !== "ANY");
+    if (locations.length) {
+      const group = addGroup("ANY", "Accepted locations");
+      locations.forEach((location) => add("location", "EQ", location, group));
+    }
+    if (answers.work_arrangement && answers.work_arrangement !== "ANY") {
+      const group = addGroup("ALL", "Work arrangement");
+      add("work_arrangement", "EQ", answers.work_arrangement, group);
+    }
+    if (answers.experience_rule === "EXACT")
+      criteria.criteria = criteria.criteria.map((item) =>
+        item.field === "experience_years" ? { ...item, operator: "EQ" } : item,
+      );
+    try {
+      const response = await request(`${base}/searches/interpret`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: review.original_prompt,
+          context: criteria.context,
+          criteria,
+          workflow_id: review.workflow_id,
+        }),
+      });
+      if (!response.ok)
+        throw new Error(
+          "The reviewed requirements could not be confirmed. Check the answers and try again.",
+        );
+      const { criteria: confirmed } =
+        (await response.json()) as InterpretedSearch;
+      setReview(null);
+      await execute(confirmed);
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "The reviewed requirements could not be confirmed.",
       );
       setStatus("");
       setBusy(false);
@@ -288,6 +441,8 @@ export function SearchHome({ bootstrap, request }: PageProps) {
             executionRetry.current = crypto.randomUUID();
             setPrompt("");
             setOpening("");
+            setReview(null);
+            setAnswers({});
             composer.current?.focus();
           }}
         >
@@ -349,6 +504,103 @@ export function SearchHome({ bootstrap, request }: PageProps) {
           <StatusMessage>{status}</StatusMessage>
           {error && <Alert>{error}</Alert>}
         </div>
+        {review && (
+          <section
+            className="search-clarification"
+            aria-labelledby="clarification-title"
+          >
+            <div className="search-clarification__heading">
+              <div>
+                <span>Human review</span>
+                <h2 id="clarification-title">Let’s sharpen the search</h2>
+                <p>
+                  I translated your request into filters. Confirm the missing
+                  details before any candidate search runs.
+                </p>
+              </div>
+              {typeof review.estimated_count === "number" && (
+                <strong>{review.estimated_count} currently in scope</strong>
+              )}
+            </div>
+            <div
+              className="search-clarification__criteria"
+              aria-label="Detected requirements"
+            >
+              {review.criteria.criteria.map((item) => (
+                <Chip key={item.id} tone="sage">
+                  {item.field.replaceAll("_", " ")} · {String(item.value)}
+                </Chip>
+              ))}
+            </div>
+            <div className="search-clarification__questions">
+              {review.clarifications.map((item) => (
+                <Field key={item.id} label={item.question}>
+                  {(props) =>
+                    item.kind === "CHOICE" ? (
+                      <Select
+                        {...props}
+                        value={answers[item.id] ?? "ANY"}
+                        disabled={busy}
+                        onChange={(event) =>
+                          setAnswers((current) => ({
+                            ...current,
+                            [item.id]: event.target.value,
+                          }))
+                        }
+                      >
+                        {item.allow_any && (
+                          <option value="ANY">Any / no restriction</option>
+                        )}
+                        {item.options.map((option) => (
+                          <option key={option} value={option}>
+                            {option.replaceAll("_", " ").toLowerCase()}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <TextInput
+                        {...props}
+                        value={
+                          answers[item.id] === "ANY"
+                            ? ""
+                            : (answers[item.id] ?? "")
+                        }
+                        disabled={busy}
+                        placeholder={
+                          item.id === "skills"
+                            ? "Python, Django, PostgreSQL — or leave blank for any"
+                            : "Bengaluru, Mumbai — or leave blank for any"
+                        }
+                        onChange={(event) =>
+                          setAnswers((current) => ({
+                            ...current,
+                            [item.id]: event.target.value,
+                          }))
+                        }
+                      />
+                    )
+                  }
+                </Field>
+              ))}
+            </div>
+            <footer>
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  setReview(null);
+                  setStatus("");
+                  composer.current?.focus();
+                }}
+              >
+                Edit original request
+              </Button>
+              <Button busy={busy} onClick={() => void confirmRequirements()}>
+                Search with these requirements
+              </Button>
+            </footer>
+          </section>
+        )}
       </main>
       {panel && (
         <dialog

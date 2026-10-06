@@ -18,6 +18,16 @@ pytestmark = [pytest.mark.django_db, pytest.mark.postgres]
 
 
 def publish(opening, recruiter):
+    # Job publication is an admin action in production. Older contract tests
+    # pass the shared recruiter fixture; resolve an admin test membership for
+    # that same identity so the fixture still models an approved admin flow.
+    if recruiter.role == "RECRUITER":
+        from modules.tenancy.models import TenantMembership
+
+        TenantMembership.objects.filter(pk=recruiter.pk).update(
+            role=TenantMembership.Role.TENANT_ADMIN
+        )
+        recruiter.role = TenantMembership.Role.TENANT_ADMIN
     token = tenant_context.set(recruiter.tenant_id)
     try:
         with tenant_transaction():
@@ -72,9 +82,9 @@ def test_projection_is_explicit_publication_only(opening_factory, tenant, recrui
                 cursor.execute(sql)
 
 
-def test_expired_and_unpublished_are_hidden(opening_factory, tenant, recruiter):
+def test_expired_and_unpublished_are_hidden(opening_factory, tenant, tenant_admin):
     opening = opening_factory(tenant=tenant, state="DRAFT")
-    publish(opening, recruiter)
+    publish(opening, tenant_admin)
     projection = PublicOpeningProjection.objects.get()
     projection.closes_at = timezone.now() - timedelta(seconds=1)
     projection.save()
@@ -88,17 +98,17 @@ def test_expired_and_unpublished_are_hidden(opening_factory, tenant, recruiter):
 
 
 def test_source_change_invalidates_publication_even_without_service(
-    opening_factory, tenant, recruiter
+    opening_factory, tenant, tenant_admin
 ):
     opening = opening_factory(tenant=tenant, state="DRAFT")
-    publish(opening, recruiter)
+    publish(opening, tenant_admin)
     type(opening).objects.filter(pk=opening.pk).update(state="CLOSED")
     with public_reader():
         assert not PublicOpeningProjection.objects.exists()
 
 
 def test_failed_publication_does_not_commit_source_or_projection(
-    opening_factory, tenant, recruiter
+    opening_factory, tenant, tenant_admin
 ):
     opening = opening_factory(tenant=tenant, state="DRAFT")
     with (
@@ -108,32 +118,36 @@ def test_failed_publication_does_not_commit_source_or_projection(
         ),
         pytest.raises(RuntimeError),
     ):
-        publish(opening, recruiter)
+        publish(opening, tenant_admin)
     opening.refresh_from_db()
     assert opening.state == "DRAFT"
     assert not PublicOpeningProjection.objects.exists()
 
 
-def test_updates_withdrawals_and_deletion(opening_factory, tenant, recruiter):
+def test_updates_withdrawals_and_deletion(opening_factory, tenant, tenant_admin):
     from modules.audit.models import AuditEvent
 
     opening = opening_factory(tenant=tenant, state="DRAFT")
-    publish(opening, recruiter)
+    publish(opening, tenant_admin)
     token = tenant_context.set(tenant.id)
     try:
         with tenant_transaction():
-            update_opening(opening=opening, membership=recruiter, changes={"title": "Updated role"})
+            update_opening(
+                opening=opening,
+                membership=tenant_admin,
+                changes={"title": "Updated role"},
+            )
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()
-            publish(opening, recruiter)
+            publish(opening, tenant_admin)
             assert PublicOpeningProjection.objects.get().title == "Updated role"
-            update_opening(opening=opening, membership=recruiter, changes={"state": "PAUSED"})
+            update_opening(opening=opening, membership=tenant_admin, changes={"state": "PAUSED"})
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()
-            update_opening(opening=opening, membership=recruiter, changes={"state": "OPEN"})
+            update_opening(opening=opening, membership=tenant_admin, changes={"state": "OPEN"})
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()
-            publish(opening, recruiter)
+            publish(opening, tenant_admin)
             opening.delete()
             with public_reader():
                 assert not PublicOpeningProjection.objects.exists()
@@ -143,9 +157,9 @@ def test_updates_withdrawals_and_deletion(opening_factory, tenant, recruiter):
     assert AuditEvent.objects.filter(action="OPENING_PUBLICATION_WITHDRAWN").exists()
 
 
-def test_private_open_edit_is_not_publication(opening_factory, tenant, recruiter):
+def test_private_open_edit_is_not_publication(opening_factory, tenant, recruiter, tenant_admin):
     opening = opening_factory(tenant=tenant)
-    update_opening(opening=opening, membership=recruiter, changes={"title": "Private edit"})
+    update_opening(opening=opening, membership=tenant_admin, changes={"title": "Private edit"})
     assert not PublicOpeningProjection.objects.exists()
 
 
@@ -165,12 +179,12 @@ def test_cross_tenant_and_revoked_membership_cannot_publish(opening_factory, ten
 
 
 def test_restricted_writer_cannot_change_other_tenant_publication(
-    opening_factory, tenant, recruiter
+    opening_factory, tenant, recruiter, tenant_admin
 ):
     import uuid
 
     opening = opening_factory(tenant=tenant, state="DRAFT")
-    publish(opening, recruiter)
+    publish(opening, tenant_admin)
     with transaction.atomic(), connection.cursor() as cursor:
         cursor.execute("SET LOCAL ROLE enter_opening_publisher")
         cursor.execute("SELECT set_config('app.tenant_id', %s, true)", [str(uuid.uuid4())])

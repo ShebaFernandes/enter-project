@@ -80,6 +80,7 @@ class CandidateProfilePatchSerializer(serializers.Serializer):
         child=serializers.CharField(min_length=1, max_length=200), min_length=1, required=False
     )
     employment_history = EmploymentRecordInputSerializer(many=True, required=False)
+    education = serializers.ListField(child=serializers.DictField(), required=False, max_length=20)
     role_categories = serializers.ListField(
         child=serializers.CharField(max_length=200), required=False
     )
@@ -128,6 +129,39 @@ class CandidateProfilePatchSerializer(serializers.Serializer):
             if parsed.scheme not in {"http", "https"} or not parsed.hostname:
                 raise serializers.ValidationError("Only safe HTTP(S) links are accepted.")
         return values
+
+    def validate_education(self, values):
+        allowed = {
+            "school",
+            "degree",
+            "field_of_study",
+            "start_year",
+            "end_year",
+        }
+        cleaned = []
+        for value in values:
+            if set(value) - allowed:
+                raise serializers.ValidationError("Education contains unsupported fields.")
+            school = str(value.get("school", "")).strip()
+            if not school:
+                raise serializers.ValidationError("Each education entry requires a school.")
+            item = {
+                "school": school[:300],
+                "degree": str(value.get("degree", "")).strip()[:200],
+                "field_of_study": str(value.get("field_of_study", "")).strip()[:200],
+                "start_year": value.get("start_year"),
+                "end_year": value.get("end_year"),
+            }
+            for key in ("start_year", "end_year"):
+                year = item[key]
+                if year in (None, ""):
+                    item[key] = None
+                elif not isinstance(year, int) or not 1900 <= year <= 2200:
+                    raise serializers.ValidationError(f"{key} must be a valid year.")
+            if item["start_year"] and item["end_year"] and item["end_year"] < item["start_year"]:
+                raise serializers.ValidationError("Education end year cannot precede start year.")
+            cleaned.append(item)
+        return cleaned
 
 
 class VisibilityChangeSerializer(serializers.Serializer):

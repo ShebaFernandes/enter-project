@@ -2,6 +2,7 @@ import uuid
 
 from django.db import DatabaseError
 from django.shortcuts import redirect, render
+from django.templatetags.static import static
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
@@ -87,8 +88,15 @@ def platform_chooser(request):
 
 def public_jobs(request):
     response = PublicOpeningCollectionView.as_view()(request)
+    page_url = request.build_absolute_uri("/jobs/")
     context = {
         "directory": response.data if response.status_code == 200 else None,
+        "page_title": "Open roles | Enter",
+        "page_description": (
+            "Explore open roles and apply with a candidate-controlled profile and resume."
+        ),
+        "page_url": page_url,
+        "page_image": request.build_absolute_uri(static("dist/react/assets/app3.png")),
         "page_bootstrap": {
             "version": 1,
             "page": "public-jobs",

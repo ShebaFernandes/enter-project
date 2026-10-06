@@ -604,6 +604,10 @@ export function GovernancePage({ bootstrap, request }: PageProps) {
           label="Tenant Admin navigation"
           items={[
             {
+              label: "Jobs",
+              href: "/tenants/" + tenantId + "/admin/jobs/",
+            },
+            {
               label: "Governance",
               href: "/tenants/" + tenantId + "/admin/governance/",
               current: true,

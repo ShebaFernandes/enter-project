@@ -62,6 +62,38 @@ def test_profile_accepts_openapi_merge_patch_media_type(candidate_api):
     assert response.json()["meaningful_work"] == "Synthetic merge-patch verification"
 
 
+def test_profile_accepts_education_and_professional_links(candidate_api):
+    client, _identity, profile = candidate_api
+    response = client.patch(
+        "/api/v1/candidate/profile",
+        {
+            "education": [
+                {
+                    "school": "Bengaluru Institute of Technology",
+                    "degree": "B.Tech",
+                    "field_of_study": "Computer Science",
+                    "start_year": 2016,
+                    "end_year": 2020,
+                }
+            ],
+            "professional_links": [
+                "https://www.linkedin.com/in/synthetic-candidate",
+                "https://github.com/synthetic-candidate",
+            ],
+        },
+        format="json",
+        HTTP_IF_MATCH=strong_etag(profile.id, profile.version),
+        HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["education"][0]["school"] == "Bengaluru Institute of Technology"
+    assert response.json()["professional_links"] == [
+        "https://www.linkedin.com/in/synthetic-candidate",
+        "https://github.com/synthetic-candidate",
+    ]
+
+
 @override_settings(
     AWS_REGION="ap-south-1",
     S3_ENDPOINT_URL="http://localhost:4566",

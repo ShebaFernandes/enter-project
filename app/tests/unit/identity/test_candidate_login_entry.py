@@ -1,6 +1,7 @@
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib.sessions.backends.signed_cookies import SessionStore
 from django.test import RequestFactory, override_settings
@@ -44,6 +45,50 @@ def test_candidate_parameter_cannot_enable_synthetic_login_in_production(setting
         response = login_start_view(request)
     candidate.assert_not_called()
     assert response.url.startswith("https://signin.example.com/oauth2/authorize?")
+
+
+def test_candidate_login_preserves_only_safe_application_return_path(settings):
+    role_path = "/roles/11111111-1111-4111-8111-111111111111/"
+    request = RequestFactory().get(
+        "/api/v1/auth/login",
+        {"platform": "candidate", "return_to": role_path},
+    )
+    request.session = SessionStore()
+    with (
+        override_settings(
+            ENV=replace(settings.ENV, app_env="local"),
+            LOCAL_SYNTHETIC_AUTH_ENABLED=True,
+        ),
+        patch(
+            "modules.identity.local_auth.issue_local_candidate_bootstrap",
+            return_value=SimpleNamespace(token="test-token"),  # noqa: S106
+        ),
+    ):
+        response = login_start_view(request)
+
+    query = parse_qs(urlsplit(response.url).query)
+    assert query == {"token": ["test-token"], "return_to": [role_path]}
+
+    unsafe = RequestFactory().get(
+        "/api/v1/auth/login",
+        {"platform": "candidate", "return_to": "https://untrusted.invalid/steal"},
+    )
+    unsafe.session = SessionStore()
+    with (
+        override_settings(
+            ENV=replace(settings.ENV, app_env="local"),
+            LOCAL_SYNTHETIC_AUTH_ENABLED=True,
+        ),
+        patch(
+            "modules.identity.local_auth.issue_local_candidate_bootstrap",
+            return_value=SimpleNamespace(token="test-token"),  # noqa: S106
+        ),
+    ):
+        rejected = login_start_view(unsafe)
+    assert parse_qs(urlsplit(rejected.url).query) == {
+        "token": ["test-token"],
+        "profile": ["1"],
+    }
 
 
 def test_local_results_navigation_preserves_destination(settings):

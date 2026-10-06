@@ -28,7 +28,6 @@ from tests.factories import AccessGrantFactory
                 "business_unit.read",
                 "business_unit.write",
                 "opening.read",
-                "opening.write",
                 "candidate.search",
                 "candidate.read",
                 "candidate.field.read",

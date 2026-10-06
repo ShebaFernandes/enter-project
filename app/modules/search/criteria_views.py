@@ -108,6 +108,7 @@ def interpret_search_view(request, tenant_id):
         "criteria": criteria,
         "requires_review": intent.requires_review,
         "ambiguities": intent.ambiguities,
+        "clarifications": [item.model_dump(mode="json") for item in intent.clarifications],
         "ai_status": intent.ai_status,
         "estimated_count": estimated_count,
         "group_impacts": _group_impacts(membership, criteria),

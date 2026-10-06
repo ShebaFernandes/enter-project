@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from modules.operations.concurrency import strong_etag
 from modules.operations.idempotency import execute
 
+from .applicant_review import applicant_resume
 from .application_models import Application, InternalRecruitingStatus
 from .candidate_work import (
     candidate_work_data,
@@ -241,6 +242,16 @@ class ApplicationInternalStatusView(APIView):
             return response
 
         return execute(request, operation)
+
+
+class ApplicationResumeView(APIView):
+    def get(self, request, tenant_id, application_id):
+        if request.tenant_id != tenant_id:
+            raise PermissionDenied("Resume unavailable")
+        return applicant_resume(
+            membership=request.tenant_membership,
+            application_id=application_id,
+        )
 
 
 class DisclosurePreviewView(APIView):

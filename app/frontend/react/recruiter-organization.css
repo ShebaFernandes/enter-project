@@ -8,6 +8,10 @@ body[data-frontend-renderer="react"]:has(.fm12-grid) {
   gap: var(--fm-spacing-panel);
   align-items: start;
 }
+.enter-ui .fm12-grid-admin {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 70rem;
+}
 .enter-ui .fm12-grid > .ui-card {
   min-width: 0;
   display: grid;
@@ -24,6 +28,74 @@ body[data-frontend-renderer="react"]:has(.fm12-grid) {
 .enter-ui .fm12-form-grid > :last-child {
   grid-column: 1 / -1;
 }
+.enter-ui .fm12-job-form > :nth-last-child(2) {
+  grid-column: 1 / -1;
+}
+.enter-ui .fm12-job-form > :last-child {
+  justify-self: start;
+}
+.enter-ui .fm12-content-fields {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--fm-spacing-control);
+  margin: 0;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-paper);
+}
+.enter-ui .fm12-content-fields legend {
+  padding-inline: 0.35rem;
+  font-weight: 750;
+}
+.enter-ui .fm12-content-fields > p {
+  margin: 0;
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm12-content-fields textarea {
+  min-height: 7rem;
+}
+.enter-ui .fm12-grid-admin .fm12-opening-list {
+  margin-top: var(--fm-spacing-field);
+}
+.enter-ui .fm12-job-library {
+  display: grid;
+  gap: var(--fm-spacing-field);
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+  padding-top: clamp(1.5rem, 3vw, 2.25rem);
+  border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm12-job-library-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--fm-spacing-field);
+}
+.enter-ui .fm12-job-library-head h3,
+.enter-ui .fm12-job-library-head p,
+.enter-ui .fm12-job-list-footer p {
+  margin: 0;
+}
+.enter-ui .fm12-job-library-head p {
+  margin-top: 0.35rem;
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm12-job-count {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-paper);
+  font-variant-numeric: tabular-nums;
+}
+.enter-ui .fm12-job-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 0.35fr);
+  gap: var(--fm-spacing-control);
+  align-items: end;
+}
+.enter-ui .fm12-grid-admin .fm12-opening {
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
 .enter-ui .fm12-list,
 .enter-ui .fm12-opening-list {
   display: grid;
@@ -39,6 +111,22 @@ body[data-frontend-renderer="react"]:has(.fm12-grid) {
   border: 1px solid var(--fm-color-hairline);
   border-radius: var(--fm-radius-control);
 }
+.enter-ui .fm12-job-list-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fm-spacing-control);
+  padding-top: var(--fm-spacing-control);
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm12-no-jobs {
+  padding: var(--fm-spacing-section);
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-paper);
+  color: var(--fm-color-muted);
+  text-align: center;
+}
 .enter-ui .fm12-card-head,
 .enter-ui .fm12-meta {
   display: flex;
@@ -53,12 +141,105 @@ body[data-frontend-renderer="react"]:has(.fm12-grid) {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+@media (max-width: 640px) {
+  .enter-ui .fm12-job-library-head {
+    align-items: flex-start;
+  }
+  .enter-ui .fm12-job-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .enter-ui .fm12-publication {
   display: grid;
   gap: var(--fm-spacing-control);
   margin-top: var(--fm-spacing-field);
   padding-top: var(--fm-spacing-field);
   border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm12-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.enter-ui .fm12-share-actions .ui-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+}
+.enter-ui .fm12-job-actions {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: var(--fm-spacing-field);
+  padding-top: var(--fm-spacing-field);
+  border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm12-job-actions .ui-status:empty {
+  display: none;
+}
+.enter-ui .fm12-edit-job-form {
+  min-width: min(34rem, 75vw);
+}
+.enter-ui .fm12-edit-job-form textarea {
+  min-height: 9rem;
+}
+.enter-ui .fm12-applicants {
+  display: grid;
+  gap: var(--fm-spacing-control);
+  margin-top: var(--fm-spacing-field);
+  padding-top: var(--fm-spacing-field);
+  border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm12-applicant-list {
+  display: grid;
+  gap: var(--fm-spacing-control);
+}
+.enter-ui .fm12-applicant {
+  display: grid;
+  gap: 10px;
+  padding: var(--fm-spacing-field);
+  background: var(--fm-color-paper);
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+}
+.enter-ui .fm12-applicant h5 {
+  margin: 0;
+  font-size: 1rem;
+}
+.enter-ui .fm12-applicant p {
+  margin: 4px 0 0;
+}
+.enter-ui .fm12-applicant label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.enter-ui .fm12-applicant select {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--fm-color-hairline);
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-paper);
+  color: inherit;
+}
+.enter-ui .fm12-applicant-details {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+.enter-ui .fm12-applicant-details div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.enter-ui .fm12-applicant-details dt {
+  color: var(--fm-color-muted);
+  text-transform: capitalize;
+}
+.enter-ui .fm12-applicant-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 .enter-ui .fm12-preview {
   display: grid;

@@ -1,12 +1,17 @@
 from django.urls import path
 
-from .page_views import recruiter_organization_page, tenant_governance_page
+from .page_views import admin_jobs_page, recruiter_organization_page, tenant_governance_page
 
 urlpatterns = [
     path(
         "tenants/<uuid:tenant_id>/recruiter/organization/",
         recruiter_organization_page,
         name="recruiter-organization-page",
+    ),
+    path(
+        "tenants/<uuid:tenant_id>/admin/jobs/",
+        admin_jobs_page,
+        name="admin-jobs-page",
     ),
     path(
         "tenants/<uuid:tenant_id>/admin/governance/",

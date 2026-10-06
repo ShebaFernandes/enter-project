@@ -23,6 +23,10 @@ export function ResultsFilters({
   const [max, setMax] = useState("");
   const [location, setLocation] = useState("");
   const [notice, setNotice] = useState("");
+  const [currentRole, setCurrentRole] = useState("");
+  const [currentCompany, setCurrentCompany] = useState("");
+  const [education, setEducation] = useState("");
+  const [arrangement, setArrangement] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState<string | null>(null);
@@ -42,6 +46,10 @@ export function ResultsFilters({
         if (min || max) replaced.add("experience_years");
         if (location.trim()) replaced.add("location");
         if (notice) replaced.add("notice_period");
+        if (currentRole.trim()) replaced.add("current_role");
+        if (currentCompany.trim()) replaced.add("current_company");
+        if (education.trim()) replaced.add("education");
+        if (arrangement) replaced.add("work_arrangement");
         next.criteria = next.criteria.filter(
           (item) => !replaced.has(item.field),
         );
@@ -79,6 +87,21 @@ export function ResultsFilters({
           if (min) add("experience_years", "GTE", Number(min), id);
           if (max) add("experience_years", "LTE", Number(max), id);
           if (notice) add("notice_period", "EQ", notice, id);
+        }
+        if (
+          currentRole.trim() ||
+          currentCompany.trim() ||
+          education.trim() ||
+          arrangement
+        ) {
+          const id = group("ALL");
+          if (currentRole.trim())
+            add("current_role", "CONTAINS", currentRole.trim(), id);
+          if (currentCompany.trim())
+            add("current_company", "CONTAINS", currentCompany.trim(), id);
+          if (education.trim())
+            add("education", "CONTAINS", education.trim(), id);
+          if (arrangement) add("work_arrangement", "EQ", arrangement, id);
         }
         const locations = location
           .split(",")
@@ -153,6 +176,26 @@ export function ResultsFilters({
           </section>
           <section>
             <h3>Work experience</h3>
+            <Field label="Current or recent role">
+              {(p) => (
+                <TextInput
+                  {...p}
+                  placeholder="Backend engineer"
+                  value={currentRole}
+                  onChange={(e) => setCurrentRole(e.target.value)}
+                />
+              )}
+            </Field>
+            <Field label="Current company">
+              {(p) => (
+                <TextInput
+                  {...p}
+                  placeholder="Company name"
+                  value={currentCompany}
+                  onChange={(e) => setCurrentCompany(e.target.value)}
+                />
+              )}
+            </Field>
             <div className="filter-pair">
               <Field label="Minimum years">
                 {(p) => (
@@ -181,6 +224,33 @@ export function ResultsFilters({
                 )}
               </Field>
             </div>
+          </section>
+          <section>
+            <Field label="School or college">
+              {(p) => (
+                <TextInput
+                  {...p}
+                  placeholder="Institute name"
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                />
+              )}
+            </Field>
+            <Field label="Work arrangement">
+              {(p) => (
+                <Select
+                  {...p}
+                  value={arrangement}
+                  onChange={(e) => setArrangement(e.target.value)}
+                >
+                  <option value="">Any</option>
+                  <option value="REMOTE">Remote</option>
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="ON_SITE">On-site</option>
+                  <option value="FLEXIBLE">Flexible</option>
+                </Select>
+              )}
+            </Field>
           </section>
           <section>
             <Field label="Current locations">
@@ -217,10 +287,10 @@ export function ResultsFilters({
             </Field>
           </section>
           <section className="filter-data-note">
-            <h3>Other filters</h3>
+            <h3>Evidence boundary</h3>
             <p>
-              Salary, industry and institute filters are unavailable until those
-              details are collected and supported.
+              Filters use candidate-confirmed profile and resume details.
+              Unknown values never count as matches.
             </p>
           </section>
         </fieldset>

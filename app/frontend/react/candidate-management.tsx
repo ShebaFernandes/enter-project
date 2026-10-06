@@ -110,7 +110,9 @@ const label = (value: string) => value.replaceAll("_", " ").toLowerCase();
 export function CandidateManagement({ bootstrap, request }: PageProps) {
   const tenant = bootstrap.tenantId,
     candidate = bootstrap.candidateId;
-  const search = new URLSearchParams(location.search).get("search_id") ?? "";
+  const query = new URLSearchParams(location.search);
+  const search = query.get("search_id") ?? "";
+  const requestedAction = query.get("action");
   const base = `/api/v1/tenants/${tenant}`;
   const detailUrl = `${base}/candidates/${candidate}?search_id=${encodeURIComponent(search)}`;
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -139,14 +141,28 @@ export function CandidateManagement({ bootstrap, request }: PageProps) {
     etag: string;
   } | null>(null);
   const [publishedChoice, setPublishedChoice] = useState("PROFILE_VIEWED");
-  const [purpose, setPurpose] = useState("HIRING_TEAM_SHARE");
-  const [destinationType, setDestinationType] = useState("HIRING_TEAM");
+  const [purpose, setPurpose] = useState(
+    requestedAction === "email" || requestedAction === "whatsapp"
+      ? "CANDIDATE_CONTACT"
+      : "HIRING_TEAM_SHARE",
+  );
+  const [destinationType, setDestinationType] = useState(
+    requestedAction === "email"
+      ? "CANDIDATE_EMAIL"
+      : requestedAction === "whatsapp"
+        ? "CANDIDATE_WHATSAPP"
+        : "HIRING_TEAM",
+  );
   const [destinationId, setDestinationId] = useState("");
   const [destinationLabel, setDestinationLabel] = useState("");
   const [fields, setFields] = useState<string[]>([]);
   const [preview, setPreview] = useState<Disclosure | null>(null);
   const generation = useRef(0);
   const keys = useRef(new Map<string, { body: string; key: string }>());
+  useEffect(() => {
+    if (detail && requestedAction)
+      document.getElementById("disclosure")?.scrollIntoView({ block: "start" });
+  }, [detail, requestedAction]);
   const clear = () => {
     generation.current++;
     setDetail(null);

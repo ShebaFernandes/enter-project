@@ -338,6 +338,39 @@ body:has(.candidate-profile-page) {
 .enter-ui .candidate-start-actions {
   text-align: center;
 }
+.enter-ui .candidate-return-to-role {
+  width: min(100%, 820px);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border: 1px solid #cdd8cb;
+  border-radius: 14px;
+  background: #edf5ec;
+}
+.enter-ui .candidate-return-to-role > div {
+  display: grid;
+  gap: 3px;
+}
+.enter-ui .candidate-return-to-role span {
+  color: var(--candidate-muted);
+  font-size: 13px;
+}
+.enter-ui .candidate-return-to-role .ui-button {
+  flex: none;
+  text-decoration: none;
+}
+@media (max-width: 620px) {
+  .enter-ui .candidate-return-to-role {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .enter-ui .candidate-return-to-role .ui-button {
+    justify-content: center;
+  }
+}
 .enter-ui .candidate-start-actions .ui-button {
   background: transparent;
   border: 0;

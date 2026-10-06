@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from modules.tenancy.context import effective_role
 
+from .redirects import safe_candidate_return_to
 from .services import (
     exchange_code,
     global_sign_out,
@@ -39,13 +40,22 @@ def sign_out_view(request: HttpRequest) -> Response:
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def login_start_view(request: HttpRequest):
+    candidate_entry = request.query_params.get("platform") == "candidate"
+    return_to = safe_candidate_return_to(request) if candidate_entry else ""
     if settings.LOCAL_SYNTHETIC_AUTH_ENABLED and settings.ENV.app_env in {"local", "test"}:
+        from urllib.parse import urlencode
+
         from .local_auth import issue_local_candidate_bootstrap, issue_local_recruiter_bootstrap
 
-        if request.query_params.get("platform") == "candidate":
+        if candidate_entry:
             issued = issue_local_candidate_bootstrap()
+            params = {"token": issued.token}
+            if return_to:
+                params["return_to"] = return_to
+            else:
+                params["profile"] = "1"
             response = redirect(
-                f"/api/v1/__local__/synthetic-candidate-session?token={issued.token}&profile=1"
+                f"/api/v1/__local__/synthetic-candidate-session?{urlencode(params)}"
             )
         else:
             recruiter_bootstrap = issue_local_recruiter_bootstrap()
@@ -56,6 +66,10 @@ def login_start_view(request: HttpRequest):
         response["Cache-Control"] = "no-store, private"
         response["Referrer-Policy"] = "no-referrer"
         return response
+    if return_to:
+        request.session["candidate_return_to"] = return_to
+    else:
+        request.session.pop("candidate_return_to", None)
     started = start_login()
     request.session["oidc_state"] = started.state
     request.session["oidc_nonce"] = started.nonce
@@ -84,4 +98,9 @@ def callback_view(request: HttpRequest) -> Response | HttpResponseRedirect:
         refresh_token=str(tokens.get("refresh_token", "")) or None,
         workforce=workforce,
     )
-    return redirect("/")
+    destination = (
+        "/"
+        if workforce
+        else request.session.pop("candidate_return_to", None) or "/candidate/profile/"
+    )
+    return redirect(destination)

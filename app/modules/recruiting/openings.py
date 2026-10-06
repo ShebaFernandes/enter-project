@@ -68,7 +68,20 @@ def update_opening(
         }
         if target_state not in transitions[current_state]:
             raise ValidationError({"state": "Invalid opening lifecycle transition."})
-    for key in {"title", "description", "state"} & changes.keys():
+    for key in {
+        "title",
+        "location",
+        "work_mode",
+        "employment_type",
+        "description",
+        "company_name",
+        "about_company",
+        "role_summary",
+        "responsibilities",
+        "requirements",
+        "nice_to_have",
+        "state",
+    } & changes.keys():
         setattr(opening, key, changes[key])
     opening.version += 1
     opening.full_clean()
@@ -94,6 +107,30 @@ def update_opening(
         ),
     )
     return opening
+
+
+@transaction.atomic
+def delete_opening(*, opening: Opening, membership: TenantMembership) -> None:
+    authorize_opening(membership, opening, "opening.write")
+    if opening.applications.exists():
+        raise ValidationError(
+            {"opening": "This job has applicants and must be closed instead of deleted."}
+        )
+    is_public = PublicOpeningProjection.objects.filter(
+        id__in=OpeningPublicationLink.objects.filter(opening=opening).values("public_id"),
+        active=True,
+    ).exists()
+    if is_public:
+        raise ValidationError({"opening": "Unpublish this job before deleting it."})
+    opening_id = opening.id
+    record_governance_event(
+        membership=membership,
+        action="OPENING_DELETE",
+        target_type="opening",
+        target_id=opening_id,
+        changed_fields=["deleted"],
+    )
+    opening.delete()
 
 
 def _replace_hiring_team(opening: Opening, actor: TenantMembership, membership_ids) -> None:

@@ -114,3 +114,30 @@ def test_exclusions_and_estimated_counts_are_deterministic():
     second = sum(evaluate_candidate(candidate, groups).eligible for candidate in corpus)
 
     assert first == second == 1
+
+
+def test_incomplete_recruiter_prompt_asks_for_human_clarification():
+    result = deterministic_fallback("backend engineers 4 years exp", {"type": "AD_HOC"})
+
+    assert result.requires_review is True
+    assert {item.id for item in result.clarifications} == {
+        "skills",
+        "location",
+        "work_arrangement",
+        "experience_rule",
+    }
+    assert {(item.field, item.operator, item.value) for item in result.criteria.criteria} == {
+        ("experience_years", "GTE", 4),
+        ("role_category", "CONTAINS", "engineer"),
+        ("resume_keyword", "CONTAINS", "backend"),
+    }
+
+
+def test_explicit_minimum_experience_does_not_ask_redundant_question():
+    result = deterministic_fallback(
+        "Python backend engineer in Bengaluru, remote, at least 5 years experience",
+        {"type": "AD_HOC"},
+    )
+
+    assert result.requires_review is False
+    assert result.clarifications == []

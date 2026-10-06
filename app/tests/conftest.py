@@ -43,6 +43,21 @@ def recruiter(identity, tenant):
 
 
 @pytest.fixture
+def tenant_admin(tenant):
+    identity = Identity.objects.create_user(
+        cognito_subject="fixture-tenant-admin",
+        email_lookup_hmac=b"fixture-tenant-admin-hmac",
+        email_ciphertext=b"fixture-tenant-admin-ciphertext",
+    )
+    return TenantMembership.objects.create(
+        tenant=tenant,
+        identity=identity,
+        role=TenantMembership.Role.TENANT_ADMIN,
+        status=TenantMembership.Status.ACTIVE,
+    )
+
+
+@pytest.fixture
 def api_client():
     from rest_framework.test import APIClient
 

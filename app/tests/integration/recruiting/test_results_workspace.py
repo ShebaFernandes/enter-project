@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from modules.candidate.models import ExtractedFact
+from modules.candidate.models import ExtractedFact, ProfileLink
 from modules.search.models import CriteriaGroup, Criterion
 from modules.search.views import _candidate_values
 from tests.factories import ResumeAssetFactory
@@ -58,6 +58,48 @@ def test_resume_download_requires_current_audience_scope(api_client, profile_fac
             ).status_code
             == 404
         )
+
+
+def test_candidate_detail_includes_recruiter_profile_context(
+    api_client, profile_factory, recruiter
+):
+    profile, search = context(profile_factory, recruiter)
+    profile.current_role = "Senior Backend Engineer"
+    profile.current_company = "Zylker Pay"
+    profile.education = [
+        {
+            "school": "Bengaluru Institute of Technology",
+            "degree": "B.Tech",
+            "field_of_study": "Computer Science",
+            "start_year": 2016,
+            "end_year": 2020,
+        }
+    ]
+    profile.save(update_fields=("current_role", "current_company", "education"))
+    ProfileLink.objects.create(
+        profile=profile,
+        normalized_url="https://github.com/synthetic-candidate",
+        display_label="GitHub",
+    )
+    ResumeAssetFactory(profile=profile, clean=True)
+    consent = profile.visibility_rules.get(superseded_at__isnull=True).consent_record
+    consent.field_scope.append("resume")
+    consent.save(update_fields=("field_scope",))
+    api_client.force_login(recruiter.identity)
+
+    response = api_client.get(
+        f"/api/v1/tenants/{recruiter.tenant_id}/candidates/{profile.id}",
+        {"search_id": str(search.id)},
+        HTTP_X_TENANT_ID=str(recruiter.tenant_id),
+    )
+
+    assert response.status_code == 200
+    assert response.data["resume_download_available"] is True
+    fields = response.data["permitted_fields"]
+    assert fields["current_role"] == "Senior Backend Engineer"
+    assert fields["current_company"] == "Zylker Pay"
+    assert fields["education"][0]["school"] == "Bengaluru Institute of Technology"
+    assert fields["professional_links"] == ["https://github.com/synthetic-candidate"]
 
 
 def test_keyword_filter_does_not_read_unpermitted_raw_resume(profile_factory, recruiter):

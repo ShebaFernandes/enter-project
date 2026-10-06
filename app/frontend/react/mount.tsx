@@ -6,6 +6,7 @@ export type PageBootstrap = {
   version: 1;
   page: string;
   tenantId?: string;
+  role?: string;
   candidateId?: string;
   openingId?: string;
   resumeId?: string;
@@ -74,6 +75,7 @@ export function readBootstrap(element: HTMLElement): PageBootstrap {
     requiresSession: value.requiresSession,
     ...(value.entryError ? { entryError: true } : {}),
     ...(value.tenantId ? { tenantId: value.tenantId } : {}),
+    ...(value.role ? { role: value.role } : {}),
     ...(value.candidateId ? { candidateId: value.candidateId } : {}),
     ...(value.openingId ? { openingId: value.openingId } : {}),
     ...(value.resumeId ? { resumeId: value.resumeId } : {}),

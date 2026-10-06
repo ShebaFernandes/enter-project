@@ -11,9 +11,9 @@ test("public application validates, preserves preferences, and reflows", async (
       <p>Bengaluru · Remote · Permanent</p>
       <p>After applying, you can track progress and control notification channels.</p>
       <form data-application-form>
-        <label>Full name <input name="full_name" required /></label>
-        <label>Email <input name="email" type="email" required /></label>
-        <label>Resume <input name="resume" type="file" required /></label>
+        <p>Applying as <strong>Verified candidate</strong></p>
+        <label>Why are you interested? <textarea name="motivation"></textarea></label>
+        <p>Your clean, reviewed resume will be attached.</p>
         <label><input name="email_updates" type="checkbox" /> Email updates</label>
         <label><input name="whatsapp_updates" type="checkbox" /> WhatsApp updates</label>
         <label><input name="consent" type="checkbox" required /> I consent to this application</label>
@@ -28,7 +28,7 @@ test("public application validates, preserves preferences, and reflows", async (
   });
 
   await page.getByRole("button", { name: "Apply" }).click();
-  await expect(page.getByLabel("Full name")).toBeFocused();
+  await expect(page.getByLabel("I consent to this application")).toBeFocused();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320);

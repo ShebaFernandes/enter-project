@@ -74,20 +74,23 @@ def test_golden_clear_prompt_produces_typed_criteria():
 
 
 @pytest.mark.parametrize(
-    "responses",
+    ("responses", "expected_status"),
     [
-        [BedrockUnavailable("timeout")],
-        ["not-json", "still-not-json"],
+        ([BedrockUnavailable("timeout")], "UNAVAILABLE"),
+        (["not-json", "still-not-json"], "INVALID_OUTPUT"),
     ],
 )
-def test_timeout_invalid_output_use_complete_deterministic_fallback_without_review(responses):
+def test_timeout_invalid_output_preserves_fallback_and_requests_missing_requirements(
+    responses, expected_status
+):
     result = interpret_search(
         "Python engineer in Bengaluru",
         {"type": "AD_HOC"},
         gateway=FakeGateway(responses),
     )
-    assert result.ai_status == "NOT_NEEDED"
-    assert result.requires_review is False
+    assert result.ai_status == expected_status
+    assert result.requires_review is True
+    assert [item.id for item in result.clarifications] == ["work_arrangement"]
     assert all(item.field != "gender" for item in result.criteria.criteria)
 
 

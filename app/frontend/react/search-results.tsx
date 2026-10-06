@@ -113,6 +113,7 @@ export function ResultCard({
   busy,
   toggle,
   detail,
+  action,
   viewed = false,
   changeStatus,
 }: {
@@ -121,6 +122,7 @@ export function ResultCard({
   busy: boolean;
   toggle: (checked: boolean) => void;
   detail: () => void;
+  action?: (action: "whatsapp" | "email" | "share") => void;
   viewed?: boolean;
   changeStatus?: (status: string) => void;
 }) {
@@ -151,6 +153,15 @@ export function ResultCard({
       )
     : [];
   const employmentNotices = consolidatedFindingMessages(item.findings);
+  const education = Array.isArray(summary.education)
+    ? summary.education
+        .flatMap((item) =>
+          item && typeof item === "object" && "school" in item
+            ? [String(item.school)]
+            : [],
+        )
+        .filter(Boolean)
+    : [];
   return (
     <article className="result-card">
       <div className="candidate-avatar" aria-hidden="true">
@@ -175,8 +186,8 @@ export function ResultCard({
             ? ` at ${fieldText(summary.current_company)}`
             : ""}
         </p>
-        {summary.education ? (
-          <p className="candidate-alias">{fieldText(summary.education)}</p>
+        {education.length ? (
+          <p className="candidate-alias">{education.join(" · ")}</p>
         ) : null}
         <div className="result-facts">
           <div>
@@ -256,24 +267,27 @@ export function ResultCard({
           <Button
             variant="secondary"
             aria-label={`WhatsApp ${name}`}
-            disabled
-            title="Contact information is not available in search results"
+            disabled={busy || !action}
+            title="Open the consent-checked WhatsApp workflow"
+            onClick={() => action?.("whatsapp")}
           >
             <ResultIcon name="whatsapp" />
           </Button>
           <Button
             variant="secondary"
             aria-label={`Email ${name}`}
-            disabled
-            title="Contact information is not available in search results"
+            disabled={busy || !action}
+            title="Open the consent-checked email workflow"
+            onClick={() => action?.("email")}
           >
             <ResultIcon name="mail" />
           </Button>
           <Button
             variant="secondary"
             aria-label={`Share ${name}`}
-            disabled
-            title="Sharing is available in the candidate workspace"
+            disabled={busy || !action}
+            title="Open the recruiter sharing workflow"
+            onClick={() => action?.("share")}
           >
             <ResultIcon name="share" />
           </Button>
@@ -780,6 +794,11 @@ export function SearchResults({ bootstrap, request }: PageProps) {
                         changeStatus={(status) => {
                           setRequestedStatus(status);
                           setDetailId(item.candidate_id);
+                        }}
+                        action={(action) => {
+                          location.assign(
+                            `/tenants/${tenant}/recruiter/candidates/${item.candidate_id}/?search_id=${encodeURIComponent(data.search_id)}&action=${action}#disclosure`,
+                          );
                         }}
                         detail={() => {
                           setRequestedStatus(undefined);

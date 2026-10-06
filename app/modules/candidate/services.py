@@ -75,6 +75,7 @@ def profile_data(profile: CandidateProfile) -> dict[str, object]:
         "employment_history": [
             employment_record_data(item) for item in profile.employment_history.all()
         ],
+        "education": profile.education,
         "role_categories": profile.role_categories,
         "preferred_locations": profile.preferred_locations,
         "work_arrangements": profile.work_arrangements,

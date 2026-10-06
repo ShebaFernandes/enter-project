@@ -39,12 +39,15 @@ type Selection = {
 
 const labels: Record<string, string> = {
   name: "Name",
+  current_role: "Current role",
+  current_company: "Current company",
   location: "Location",
   experience: "Experience",
   notice_or_availability: "Notice or availability",
   compensation_availability: "Compensation availability",
   skills: "Skills",
   employment: "Employment",
+  education: "Education",
   preferences: "Preferences",
   match_evidence: "Why this match",
   informational_findings: "Informational findings",
@@ -68,6 +71,14 @@ function values(value: unknown): string[] {
       ? "Current"
       : String(record.end_date || "End unknown");
     return [`${role} — ${company} (${start} to ${end})`];
+  }
+  if ("school" in record) {
+    return [
+      [record.school, record.degree, record.field_of_study]
+        .filter(Boolean)
+        .map(String)
+        .join(" · "),
+    ];
   }
   if ("display" in record) return [String(record.display || "Unknown")];
   return ["Available as structured evidence"];

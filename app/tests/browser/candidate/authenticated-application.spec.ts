@@ -24,10 +24,6 @@ test("authenticated candidate applies, recruiter publishes, candidate tracks and
   await expect(candidatePage.getByRole("heading", { level: 1 })).toHaveText(
     "Software Engineer",
   );
-  await candidatePage.getByLabel("Full name").fill("Synthetic Candidate");
-  await candidatePage
-    .getByLabel("Verified email")
-    .fill("candidate@local-synthetic.invalid");
   await candidatePage.getByLabel("Email", { exact: true }).check();
   await candidatePage
     .getByLabel(
@@ -45,9 +41,9 @@ test("authenticated candidate applies, recruiter publishes, candidate tracks and
   expect(submitted.status()).toBe(201);
   const application = (await submitted.json()) as { id: string };
   const submittedEtag = submitted.headers()["etag"];
-  await expect(candidatePage.getByRole("status")).toContainText(
-    "Application submitted",
-  );
+  await expect(
+    candidatePage.getByRole("heading", { name: "Application received" }),
+  ).toBeVisible();
 
   const recruiterContext = await browser.newContext();
   const recruiterPage = await recruiterContext.newPage();

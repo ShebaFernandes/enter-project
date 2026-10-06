@@ -75,6 +75,11 @@ body[data-frontend-renderer="react"]:has(.fm10-shell) {
   display: grid;
   gap: 6px;
 }
+.enter-ui .fm10-card-heading > span,
+.enter-ui .fm10-company-name {
+  color: var(--fm-color-muted);
+  font-weight: 650;
+}
 .enter-ui .fm10-essentials {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -101,6 +106,56 @@ body[data-frontend-renderer="react"]:has(.fm10-shell) {
   align-items: center;
   text-decoration: none;
 }
+.enter-ui .fm10-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.enter-ui .fm10-share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  color: var(--fm-color-ink);
+  font-weight: 650;
+  text-decoration: none;
+}
+.enter-ui .fm10-share-link:hover {
+  color: var(--fm-color-sage);
+}
+.enter-ui .fm10-entry-card {
+  display: grid;
+  gap: 16px;
+}
+.enter-ui .fm10-entry-card .ui-button {
+  justify-self: start;
+  text-decoration: none;
+}
+.enter-ui .fm10-role-layout .profile-upload-card {
+  width: 100%;
+  margin: 0;
+  box-shadow: none;
+}
+.enter-ui .fm10-role-layout .profile-drop-zone {
+  min-height: 15rem;
+  padding: 1.75rem 1rem;
+}
+.enter-ui .fm10-manual-profile-link {
+  display: inline-flex;
+  margin-top: 0.75rem;
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm10-entry-card small,
+.enter-ui .fm10-verified-candidate {
+  color: var(--fm-color-muted);
+}
+.enter-ui .fm10-verified-candidate {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--fm-radius-control);
+  background: var(--fm-color-sage-soft);
+}
 .enter-ui .fm10-more {
   display: flex;
   justify-content: center;
@@ -126,6 +181,10 @@ body[data-frontend-renderer="react"]:has(.fm10-shell) {
 .enter-ui .fm10-description {
   padding-top: 18px;
   border-top: 1px solid var(--fm-color-hairline);
+}
+.enter-ui .fm10-description p {
+  max-width: 68ch;
+  white-space: pre-line;
 }
 .enter-ui .fm10-resume {
   padding: 16px;

@@ -1,5 +1,6 @@
 """Resolve reviewed React build assets; never accept paths from a request."""
 
+import hashlib
 import json
 from pathlib import Path, PurePosixPath
 
@@ -29,6 +30,7 @@ def react_assets(directory: Path) -> dict[str, str] | None:
         styles = list(dict.fromkeys(styles))
         if len(styles) != 1:
             return None
+        resolved_paths: list[tuple[str, Path]] = []
         for value in paths:
             path = PurePosixPath(value)
             if path.is_absolute() or ".." in path.parts or ":" in value or "\\" in value:
@@ -36,8 +38,17 @@ def react_assets(directory: Path) -> dict[str, str] | None:
             resolved = (directory / value).resolve()
             if not resolved.is_relative_to(directory.resolve()) or not resolved.is_file():
                 return None
+            resolved_paths.append((value, resolved))
         if not script.endswith(".js") or not styles[0].endswith(".css"):
             return None
-        return {"script": f"dist/react/{script}", "style": f"dist/react/{styles[0]}"}
+        digest = hashlib.sha256()
+        for value, resolved in sorted(set(resolved_paths)):
+            digest.update(value.encode())
+            digest.update(resolved.read_bytes())
+        return {
+            "script": f"dist/react/{script}",
+            "style": f"dist/react/{styles[0]}",
+            "version": digest.hexdigest()[:16],
+        }
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return None

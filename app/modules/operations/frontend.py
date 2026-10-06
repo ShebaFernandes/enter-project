@@ -15,6 +15,10 @@ VERIFIED_REACT_ROUTES: dict[str, dict[str, str]] = {
         "manifest": "react",
         "template": "recruiter/react_organization.html",
     },
+    "admin-jobs-page": {
+        "manifest": "react",
+        "template": "recruiter/react_organization.html",
+    },
     "candidate-progress-page": {
         "manifest": "react",
         "template": "candidate/react_progress.html",
@@ -59,6 +63,7 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
         "frontend_template": "",
         "frontend_script": "dist/assets/app.js",
         "frontend_style": "dist/assets/app.css",
+        "frontend_asset_version": "",
     }
     match = request.resolver_match
     route = match.url_name if match else None
@@ -83,5 +88,6 @@ def frontend_rollout(request: HttpRequest) -> dict[str, str]:
             frontend_template=approved["template"],
             frontend_script=approved["script"],
             frontend_style=approved["style"],
+            frontend_asset_version=approved.get("version", ""),
         )
     return result

@@ -64,6 +64,21 @@ def _candidate_values(profile, membership=None):
         "work_arrangements": profile.work_arrangements,
         "availability_date": profile.availability_date,
         "role_categories": profile.role_categories,
+        "current_role": profile.current_role or None,
+        "current_company": profile.current_company or None,
+        "education": [
+            " ".join(
+                str(part).strip()
+                for part in (
+                    item.get("school"),
+                    item.get("degree"),
+                    item.get("field_of_study"),
+                )
+                if part
+            )
+            for item in profile.education
+            if isinstance(item, dict)
+        ],
         "notice_period": profile.notice_period or None,
         "resume_keyword": [
             profile.current_role,
@@ -136,6 +151,12 @@ def _result(profile, matched, membership, search_id=None):
             ]
             if history_allowed
             else [],
+            "education": getattr(profile, "education", []),
+            "professional_links": (
+                list(profile.links.values_list("normalized_url", flat=True))
+                if getattr(profile, "links", None) is not None
+                else []
+            ),
         },
         "score": str(matched.score),
         "evidence": matched.evidence,
@@ -193,7 +214,7 @@ def execute_search(request, tenant_id):
             profiles = with_query_timeout(
                 lambda: list(
                     eligible_profiles(membership, data["context"]).prefetch_related(
-                        "skills", "consents", "findings"
+                        "skills", "consents", "findings", "links", "employment_history"
                     )
                 )
             )
@@ -347,7 +368,7 @@ def candidate_detail(request, tenant_id, candidate_id):
         profile = (
             eligible_profiles(membership, snapshot.search.criteria_context)
             .filter(pk=candidate_id)
-            .prefetch_related("skills", "findings", "consents")
+            .prefetch_related("skills", "findings", "consents", "links", "employment_history")
             .first()
         )
     if profile is None:
@@ -396,7 +417,11 @@ def candidate_detail(request, tenant_id, candidate_id):
         if consent_allows_field(profile, tenant_id, "resume")
         else None
     )
-    if request.query_params.get("download") == "resume":
+    resume_action = (
+        request.query_params.get("download") == "resume"
+        or request.query_params.get("view") == "resume"
+    )
+    if resume_action:
         if resume is None or not resume.clean_key:
             raise PermissionDenied("Resume unavailable")
         from modules.candidate.resume_processing import storage_client
@@ -412,7 +437,7 @@ def candidate_detail(request, tenant_id, candidate_id):
         )
         response = FileResponse(
             stored["Body"],
-            as_attachment=True,
+            as_attachment=request.query_params.get("view") != "resume",
             filename=f"resume.{extension}",
             content_type=resume.detected_mime,
         )

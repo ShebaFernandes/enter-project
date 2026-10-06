@@ -284,9 +284,9 @@ export function ProgressPage({ request }: PageProps) {
           <WorkspaceNavigation
             label="Candidate navigation"
             items={[
-              { label: "Profile", href: "/candidate/profile/" },
+              { label: "Resume & profile", href: "/candidate/profile/" },
               {
-                label: "Applications",
+                label: "My applications",
                 href: "/candidate/applications/",
                 current: true,
               },

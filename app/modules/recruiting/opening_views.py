@@ -1,3 +1,6 @@
+import uuid
+
+from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -10,8 +13,9 @@ from modules.operations.idempotency import IdempotencyConflict, complete, execut
 from modules.tenancy.models import TenantMembership
 from modules.tenancy.policy import authorize_opening
 
+from .applicant_review import applications_for_opening
 from .models import Opening
-from .openings import create_opening, update_opening
+from .openings import create_opening, delete_opening, update_opening
 from .public_openings import (
     authorized_publication_opening,
     publication_preview,
@@ -29,13 +33,24 @@ from .serializers import (
     RecruiterEnteredCandidateSerializer,
 )
 
+LOCAL_SYNTHETIC_BASE_OPENING_ID = uuid.UUID("00000000-0000-4000-8000-000000000106")
+
 
 class OpeningCollectionView(APIView):
     def get(self, request, tenant_id):
         if request.tenant_id != tenant_id:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        queryset = Opening.objects.filter(tenant_id=tenant_id).prefetch_related("hiring_team")
+        queryset = (
+            Opening.objects.filter(tenant_id=tenant_id)
+            .prefetch_related("hiring_team")
+            .order_by("-created_at", "-id")
+        )
         membership = request.tenant_membership
+        if (
+            settings.LOCAL_SYNTHETIC_AUTH_ENABLED
+            and membership.role == TenantMembership.Role.TENANT_ADMIN
+        ):
+            queryset = queryset.exclude(pk=LOCAL_SYNTHETIC_BASE_OPENING_ID)
         if membership.role == TenantMembership.Role.HIRING_MANAGER:
             queryset = queryset.filter(hiring_team__membership=membership)
         if membership.scope.get("opening_ids"):
@@ -67,7 +82,9 @@ class OpeningDetailView(APIView):
             Opening.objects.prefetch_related("hiring_team"), pk=opening_id, tenant_id=tenant_id
         )
         authorize_opening(request.tenant_membership, opening, "opening.read")
-        return Response(OpeningSerializer(opening).data)
+        response = Response(OpeningSerializer(opening).data)
+        response["ETag"] = strong_etag(opening.pk, opening.version)
+        return response
 
     @transaction.atomic
     def patch(self, request, tenant_id, opening_id):
@@ -89,6 +106,26 @@ class OpeningDetailView(APIView):
         response = Response(OpeningSerializer(opening).data)
         response["ETag"] = strong_etag(opening.pk, opening.version)
         return response
+
+    @transaction.atomic
+    def delete(self, request, tenant_id, opening_id):
+        opening = get_object_or_404(
+            Opening.objects.select_for_update(), pk=opening_id, tenant_id=tenant_id
+        )
+        authorize_opening(request.tenant_membership, opening, "opening.write")
+        require_if_match(request.headers.get("If-Match"), opening, {})
+        delete_opening(opening=opening, membership=request.tenant_membership)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OpeningApplicationCollectionView(APIView):
+    def get(self, request, tenant_id, opening_id):
+        if request.tenant_id != tenant_id:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        opening = get_object_or_404(Opening, pk=opening_id, tenant_id=tenant_id)
+        return Response(
+            applications_for_opening(membership=request.tenant_membership, opening=opening)
+        )
 
 
 class OpeningPublicationView(APIView):

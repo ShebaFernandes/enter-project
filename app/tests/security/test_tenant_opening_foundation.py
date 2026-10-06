@@ -21,7 +21,7 @@ from tests.factories import IdentityFactory
 pytestmark = pytest.mark.django_db
 
 
-def test_opening_cannot_cross_business_unit_tenant(identity, recruiter):
+def test_opening_cannot_cross_business_unit_tenant(identity, recruiter, tenant_admin):
     IdentityCapability.objects.create(
         identity=identity,
         role=IdentityCapability.Role.PLATFORM_SECURITY_ADMIN,
@@ -35,7 +35,7 @@ def test_opening_cannot_cross_business_unit_tenant(identity, recruiter):
     unit = BusinessUnit.objects.create(tenant=other, name="Other Unit", created_by=identity)
     with pytest.raises(BusinessUnit.DoesNotExist):
         create_opening(
-            membership=recruiter,
+            membership=tenant_admin,
             business_unit_id=unit.id,
             title="Role",
             location={},
@@ -63,23 +63,21 @@ def test_hiring_manager_cannot_create_opening(identity, tenant):
         )
 
 
-def test_recruiter_object_scope_and_opening_transitions_are_enforced(identity, recruiter, tenant):
+def test_admin_owns_opening_creation_and_transitions(identity, recruiter, tenant, tenant_admin):
     allowed = BusinessUnit.objects.create(tenant=tenant, name="Allowed", created_by=identity)
     denied = BusinessUnit.objects.create(tenant=tenant, name="Denied", created_by=identity)
-    recruiter.scope = {"business_unit_ids": [str(allowed.id)]}
-    recruiter.save(update_fields=("scope",))
-    with pytest.raises(ValidationError):
+    with pytest.raises(PermissionDenied):
         create_opening(
             membership=recruiter,
-            business_unit_id=denied.id,
-            title="Denied Role",
+            business_unit_id=allowed.id,
+            title="Recruiter-created role",
             location={},
             work_mode="REMOTE",
             employment_type="FULL_TIME",
         )
     opening = create_opening(
-        membership=recruiter,
-        business_unit_id=allowed.id,
+        membership=tenant_admin,
+        business_unit_id=denied.id,
         title="Allowed Role",
         location={"city": "Bengaluru", "country": "IN"},
         work_mode="REMOTE",
@@ -87,23 +85,23 @@ def test_recruiter_object_scope_and_opening_transitions_are_enforced(identity, r
     )
     update_opening(
         opening=opening,
-        membership=recruiter,
+        membership=tenant_admin,
         changes={"state": "CLOSED"},
     )
     with pytest.raises(ValidationError):
         update_opening(
             opening=opening,
-            membership=recruiter,
+            membership=tenant_admin,
             changes={"state": "OPEN"},
         )
 
 
 def test_application_shell_has_unique_candidate_per_opening_and_eight_statuses(
-    identity, recruiter, tenant
+    identity, recruiter, tenant, tenant_admin
 ):
     unit = BusinessUnit.objects.create(tenant=tenant, name="Applications", created_by=identity)
     opening = create_opening(
-        membership=recruiter,
+        membership=tenant_admin,
         business_unit_id=unit.id,
         title="Foundation-only role",
         location={"country": "IN"},
@@ -176,10 +174,10 @@ def test_recruiter_entered_candidate_is_disabled_outside_synthetic_environments(
         )
 
 
-def test_hiring_manager_reads_only_assigned_openings(identity, recruiter, tenant):
+def test_hiring_manager_reads_only_assigned_openings(identity, recruiter, tenant, tenant_admin):
     unit = BusinessUnit.objects.create(tenant=tenant, name="Scoped Unit", created_by=identity)
     opening = create_opening(
-        membership=recruiter,
+        membership=tenant_admin,
         business_unit_id=unit.id,
         title="Scoped Role",
         location={"country": "IN"},

@@ -33,6 +33,27 @@ def test_ambiguous_prompt_routes_to_review_with_estimate(api_client, recruiter):
 
 
 @pytest.mark.django_db
+def test_missing_search_requirements_return_structured_questions(api_client, recruiter):
+    api_client.force_login(recruiter.identity)
+    response = api_client.post(
+        reverse("search-interpret", kwargs={"tenant_id": recruiter.tenant_id}),
+        {"prompt": "backend engineers 4 years exp", "context": {"type": "AD_HOC"}},
+        format="json",
+        HTTP_X_TENANT_ID=str(recruiter.tenant_id),
+    )
+
+    assert response.status_code == 200
+    assert response.data["requires_review"] is True
+    assert {item["id"] for item in response.data["clarifications"]} == {
+        "skills",
+        "location",
+        "work_arrangement",
+        "experience_rule",
+    }
+    assert response.data["estimated_count"] >= 0
+
+
+@pytest.mark.django_db
 def test_recruiter_edits_preserve_ids_and_override_interpretation(
     api_client, recruiter, search_payload
 ):

@@ -19,11 +19,26 @@ class OpeningSerializer(serializers.ModelSerializer):
             "work_mode",
             "employment_type",
             "description",
+            "company_name",
+            "about_company",
+            "role_summary",
+            "responsibilities",
+            "requirements",
+            "nice_to_have",
             "hiring_team_ids",
             "state",
             "version",
+            "created_at",
+            "updated_at",
         )
-        read_only_fields = ("id", "tenant_id", "state", "version")
+        read_only_fields = (
+            "id",
+            "tenant_id",
+            "state",
+            "version",
+            "created_at",
+            "updated_at",
+        )
 
     def get_hiring_team_ids(self, obj):
         return [item.membership_id for item in obj.hiring_team.all()]
@@ -44,7 +59,16 @@ class OpeningCreateSerializer(serializers.ModelSerializer):
 
 class OpeningPatchSerializer(serializers.Serializer):
     title = serializers.CharField(min_length=1, max_length=300, required=False)
+    location = serializers.JSONField(required=False)
+    work_mode = serializers.ChoiceField(choices=Opening.WorkMode.choices, required=False)
+    employment_type = serializers.CharField(min_length=1, max_length=100, required=False)
     description = serializers.CharField(max_length=20000, required=False, allow_blank=True)
+    company_name = serializers.CharField(max_length=300, required=False, allow_blank=True)
+    about_company = serializers.CharField(max_length=10000, required=False, allow_blank=True)
+    role_summary = serializers.CharField(max_length=10000, required=False, allow_blank=True)
+    responsibilities = serializers.CharField(max_length=20000, required=False, allow_blank=True)
+    requirements = serializers.CharField(max_length=20000, required=False, allow_blank=True)
+    nice_to_have = serializers.CharField(max_length=10000, required=False, allow_blank=True)
     hiring_team_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     state = serializers.ChoiceField(choices=Opening.State.choices, required=False)
 

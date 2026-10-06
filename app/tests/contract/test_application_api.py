@@ -9,6 +9,8 @@ from django.utils import timezone
 from modules.audit.models import AuditEvent
 from modules.candidate.models import ConsentRecord
 from modules.recruiting.models import Application, CandidateFacingStatus, Opening
+from modules.tenancy.models import TenantMembership
+from tests.database.test_public_opening_projection import publish
 from tests.factories import (
     CandidateCapabilityFactory,
     CandidateProfileFactory,
@@ -32,7 +34,14 @@ def _submission(profile, opening, *, resume=None):
     consent = ConsentRecordFactory(
         profile=profile,
         purpose="APPLICATION_SUBMISSION",
-        field_scope=["application", "resume", "notifications"],
+        field_scope=[
+            "application",
+            "profile",
+            "resume",
+            "employment_history",
+            "professional_links",
+            "notifications",
+        ],
         audience_scope={"opening_id": str(opening.id), "tenant_id": str(opening.tenant_id)},
     )
     return {
@@ -71,6 +80,104 @@ def test_public_opening_hides_closed_role(api_client):
     opening = OpeningFactory(closed=True)
     response = api_client.get(f"/api/v1/public/openings/{opening.id}")
     assert response.status_code == 404
+
+
+def test_candidate_can_prepare_a_shared_public_role_application(api_client):
+    profile = _candidate_client(api_client)
+    resume = ResumeAssetFactory(profile=profile, clean=True)
+    opening = cast(Opening, OpeningFactory(open=True))
+    membership = TenantMembership.objects.create(
+        tenant=opening.tenant,
+        identity=opening.created_by,
+        role="RECRUITER",
+        status="ACTIVE",
+    )
+    publish(opening, membership)
+    public_id = opening.openingpublicationlink.public_id
+
+    readiness = api_client.get(
+        "/api/v1/candidate/applications/readiness",
+        {"opening_id": str(public_id)},
+    )
+
+    assert readiness.status_code == 200
+    assert readiness.data["resume"] == {
+        "id": str(resume.id),
+        "scan_status": "CLEAN",
+        "parse_status": "READY",
+        "ready": True,
+    }
+    assert readiness.data["already_applied"] is False
+
+    prepared = api_client.post(
+        "/api/v1/candidate/applications/prepare",
+        {"opening_id": str(public_id), "confirmed": True},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY=f"prepare-{uuid.uuid4()}",
+    )
+
+    assert prepared.status_code == 201
+    consent = ConsentRecord.objects.get(pk=prepared.data["consent_record_id"])
+    assert prepared.data["resume_id"] == str(resume.id)
+    assert consent.purpose == "APPLICATION_SUBMISSION"
+    assert consent.affirmative_action == "APPLICATION_FORM_CHECKBOX"
+    assert consent.audience_scope == {
+        "tenant_id": str(opening.tenant_id),
+        "opening_id": str(opening.id),
+    }
+    assert AuditEvent.objects.filter(
+        action="APPLICATION_CONSENT_CAPTURED",
+        target_id=str(consent.id),
+    ).exists()
+
+    submitted = api_client.post(
+        "/api/v1/candidate/applications",
+        {
+            "opening_id": str(public_id),
+            "resume_id": str(resume.id),
+            "answers": {"motivation": "Ready to contribute."},
+            "consent_record_id": str(consent.id),
+            "notification_preferences": {"email": True, "whatsapp": False},
+        },
+        format="json",
+        HTTP_IDEMPOTENCY_KEY=f"submit-{uuid.uuid4()}",
+    )
+    assert submitted.status_code == 201, submitted.data
+
+    recruiter = api_client
+    recruiter.force_login(opening.created_by)
+    applicants = recruiter.get(
+        f"/api/v1/tenants/{opening.tenant_id}/openings/{opening.id}/applications",
+        HTTP_X_TENANT_ID=str(opening.tenant_id),
+    )
+    assert applicants.status_code == 200
+    assert applicants.data[0]["candidate_id"] == str(profile.id)
+    assert applicants.data[0]["resume_available"] is True
+    assert applicants.data[0]["candidate_status"] == CandidateFacingStatus.APPLIED
+
+
+def test_application_preparation_requires_confirmed_ready_resume(api_client):
+    _candidate_client(api_client)
+    opening = cast(Opening, OpeningFactory(open=True))
+    membership = TenantMembership.objects.create(
+        tenant=opening.tenant,
+        identity=opening.created_by,
+        role="RECRUITER",
+        status="ACTIVE",
+    )
+    publish(opening, membership)
+    public_id = opening.openingpublicationlink.public_id
+
+    response = api_client.post(
+        "/api/v1/candidate/applications/prepare",
+        {"opening_id": str(public_id), "confirmed": True},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY=f"prepare-{uuid.uuid4()}",
+    )
+
+    assert response.status_code == 422
+    assert response.data["errors"]["resume"]
+    assert not ConsentRecord.objects.filter(purpose="APPLICATION_SUBMISSION").exists()
 
 
 def test_one_verified_profile_can_submit_independent_applications(api_client):

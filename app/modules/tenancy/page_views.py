@@ -42,6 +42,29 @@ def recruiter_organization_page(request, tenant_id):
                 "version": 1,
                 "page": "recruiter-organization",
                 "tenantId": str(tenant_id),
+                "role": membership.role,
+                "requiresSession": True,
+            },
+        },
+    )
+    response["Cache-Control"] = "no-store, private"
+    response["Pragma"] = "no-cache"
+    return response
+
+
+def admin_jobs_page(request, tenant_id):
+    membership = _membership(request, tenant_id, [TenantMembership.Role.TENANT_ADMIN])
+    response = render(
+        request,
+        "recruiter/organization.html",
+        {
+            "tenant_id": tenant_id,
+            "role": membership.role,
+            "page_bootstrap": {
+                "version": 1,
+                "page": "recruiter-organization",
+                "tenantId": str(tenant_id),
+                "role": membership.role,
                 "requiresSession": True,
             },
         },
