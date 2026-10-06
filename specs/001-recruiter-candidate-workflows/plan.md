@@ -1,5 +1,23 @@
 # Implementation Plan: Integrated Recruiter and Candidate Workflows
 
+## Current Delivery Plan (authoritative as of 2026-10-06)
+
+The application now targets candidate and recruiter experiences only. Public jobs, public role
+pages/application acquisition, Tenant Admin UI, and Platform Security Admin UI are preserved as
+historical or dormant implementation and are excluded from current product acceptance.
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Shared Django/PostgreSQL security, tenant isolation, consent, audit, and React/Tailwind foundation | Complete |
+| 2 | Candidate resume review, editable profile, publication, visibility, maintenance, and privacy controls | Complete locally |
+| 3 | Recruiter search, criteria interpretation, recent searches, results, filters, and candidate detail | Complete locally |
+| 4 | Recruiter notes, workflow status, consent-aware contact/share, shortlist, and comparison | Complete locally |
+| 5 | Candidate/recruiter visual parity, accessibility automation, responsive behavior, and regression coverage | Complete locally |
+| 6 | Production infrastructure, manual accessibility/security review, recovery, legal review, and release evidence | Pending |
+
+The detailed older phase sequence below is retained as implementation history. It is not the
+current roadmap where it includes public jobs, applications, or administrative UI.
+
 ## FM6 approved direct-results amendment
 
 The standard journey is Search input → Search → Results. Search is explicit execution
@@ -69,7 +87,7 @@ React route is enabled by this clarification.
 
 ## Approved frontend architecture amendment (2026-10-01)
 
-React + TypeScript + Tailwind through the existing Vite pipeline are approved for all user-facing pages. Django/DRF retain URLs, session, CSRF, authentication, authorization, validation, business logic, audit and database authority. The detailed [frontend migration plan](./frontend-migration.md) is normative for FM1–FM14, including WIP inventory, exact routes, components, APIs, design tokens, state/accessibility tests, fallback and rollback. This supersedes earlier server-rendered-only/no-framework statements below; historical infrastructure and AI plans do not authorize work during migration. Phase 10 remains deferred until FM14-03.
+React + TypeScript + Tailwind through the existing Vite pipeline are approved for all user-facing pages. Django/DRF retain URLs, session, CSRF, authentication, authorization, validation, business logic, audit and database authority. The detailed [frontend migration plan](./frontend-migration.md) is normative for FM1–FM14, including WIP inventory, exact routes, components, APIs, design tokens, state/accessibility tests, fallback and rollback. This supersedes earlier server-rendered-only/no-framework statements below; historical infrastructure and AI plans do not authorize work during migration. The legacy Phase 10 gate is now current Phase 6; it remains pending after FM14 completion.
 
 Only three scope additions are approved: signed-out chooser at / using existing OIDC, public jobs at /jobs/ using a minimum published-opening GET collection, and backend recent-search GET list/criteria restoration using existing models. All other backend APIs/models remain unchanged. Every route retains a verified Django/legacy fallback until its replacement passes functional, security, accessibility and visual gates. Original mockup stays immutable; production privacy/security/accessibility controls take precedence. No protected browser storage and no shared React/imperative DOM ownership are permitted.
 
@@ -115,7 +133,7 @@ perform existing consent, ownership, eligibility and duplicate checks against
 the authoritative source. Publication failure must roll back, and direct source
 changes must invalidate an old projection rather than leave stale public data.
 Anonymous list/detail reads require bounded pagination, rate limits, non-enumerating
-errors and no-store caching. This is attached to FM3, not FM4 or Phase 10.
+errors and no-store caching. This was attached to FM3, not FM4 or the production-readiness phase.
 
 Turn the approved single-file recruiter/candidate mockup into an India-only production web application while preserving its information architecture, visuals, interactions, and supported workflows. Use a Django modular monolith with server-rendered templates and small TypeScript modules, PostgreSQL/RLS/pgvector, Cognito, S3 quarantine and malware scanning, SQS/outbox workers, and ECS Fargate in Mumbai with warm recovery infrastructure in Hyderabad.
 
@@ -395,7 +413,7 @@ The full local and release evidence matrix is [quickstart.md](./quickstart.md).
 4. Canary deployment and progressive tenant enablement; compare SLO, authorization denies, notification failures, and support metrics.
 5. General India launch after all gates pass. Roll back application images/config safely; never roll back consent withdrawal, deletion, audit, or security policy state.
 
-## Phased Implementation Order
+## Historical Phased Implementation Order (superseded)
 
 ### Phase 1 — Guardrails and baseline capture
 

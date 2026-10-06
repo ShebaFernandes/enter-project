@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   AppShell,
   Button,
   Card,
@@ -13,6 +14,7 @@ import {
   WorkspaceNavigation,
 } from "./components";
 import type { PageProps } from "./mount";
+import { visualAssets } from "./visual-assets";
 
 type Status =
   | "APPLIED"
@@ -199,7 +201,7 @@ function ApplicationCard({
     }
   };
   return (
-    <Card>
+    <Card data-application-id={application.id}>
       <div className="fm11-card-head">
         <div>
           <p className="fm11-kicker">Application</p>
@@ -262,6 +264,7 @@ function ApplicationCard({
 export function ProgressPage({ request }: PageProps) {
   const [items, setItems] = useState<Application[]>();
   const [failed, setFailed] = useState(false);
+  const [signOutFailed, setSignOutFailed] = useState(false);
   const load = useCallback(async () => {
     setFailed(false);
     try {
@@ -277,18 +280,37 @@ export function ProgressPage({ request }: PageProps) {
     <AppShell
       title="Your applications"
       navigation={
-        <WorkspaceNavigation
-          label="Candidate navigation"
-          items={[
-            { label: "Profile", href: "/candidate/profile/" },
-            {
-              label: "Applications",
-              href: "/candidate/applications/",
-              current: true,
-            },
-            { label: "Privacy rights", href: "/candidate/rights/" },
-          ]}
-        />
+        <>
+          <WorkspaceNavigation
+            label="Candidate navigation"
+            items={[
+              { label: "Profile", href: "/candidate/profile/" },
+              {
+                label: "Applications",
+                href: "/candidate/applications/",
+                current: true,
+              },
+              { label: "Privacy rights", href: "/candidate/rights/" },
+            ]}
+          />
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              setSignOutFailed(false);
+              try {
+                const response = await request("/api/v1/session/sign-out", {
+                  method: "DELETE",
+                });
+                if (!response.ok) throw new Error();
+                location.replace("/");
+              } catch {
+                setSignOutFailed(true);
+              }
+            }}
+          >
+            Sign out
+          </Button>
+        </>
       }
     >
       <p>
@@ -304,18 +326,26 @@ export function ProgressPage({ request }: PageProps) {
           Interview requested · Offer made · Not selected · Withdrawn
         </p>
       </aside>
+      {signOutFailed && (
+        <Alert>Sign-out failed. Your session remains active; try again.</Alert>
+      )}
       {failed && <ErrorState onRetry={() => void load()} />}
       {!failed && !items && <Loading label="Loading applications…" />}
       {!failed && items?.length === 0 && (
         <EmptyState
           title="No applications yet"
+          illustration={{
+            src: visualAssets.applicationJourneyEmpty,
+            width: 1024,
+            height: 1024,
+          }}
           action={
-            <a className="ui-button" href="/jobs/">
-              Browse open roles
+            <a className="ui-button" href="/candidate/profile/">
+              Return to your profile
             </a>
           }
         >
-          Applications you submit will appear here.
+          There are no application records linked to your profile.
         </EmptyState>
       )}
       <div className="fm11-application-list">

@@ -12,6 +12,7 @@ import {
 } from "./components";
 import { ApiError, responseJson } from "../shared/api-client";
 import { handoffToken } from "../shared/workflow-handoff";
+import { visualAssets } from "./visual-assets";
 
 type ComparisonField = {
   state: "KNOWN" | "UNKNOWN" | "UNAVAILABLE";
@@ -429,7 +430,14 @@ export function CandidateComparison({ bootstrap, request }: PageProps) {
         )}
         {message && <StatusMessage>{message}</StatusMessage>}
         {!loading && !error && (!token || !selection || !result) && (
-          <EmptyState title="No candidates selected">
+          <EmptyState
+            title="No candidates selected"
+            illustration={{
+              src: visualAssets.candidateComparisonEmpty,
+              width: 1024,
+              height: 1024,
+            }}
+          >
             Select between two and ten candidates from the current authorized
             result view.
           </EmptyState>

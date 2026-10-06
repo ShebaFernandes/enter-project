@@ -22,6 +22,7 @@ body:has(.search-results-page) {
   align-items: center;
   gap: 14px;
   padding: 18px 32px;
+  height: 78px;
   min-height: 64px;
   background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid var(--results-border);
@@ -75,7 +76,7 @@ body:has(.search-results-page) {
   border-radius: 50%;
   background: #276955;
 }
-.enter-ui .search-results-page .ui-header .ui-button {
+.enter-ui .search-results-page .ui-header:has(.platform-navigation) .ui-button {
   border: 1px solid var(--results-border);
   border-radius: 6px;
   color: var(--results-soft);
@@ -100,6 +101,88 @@ body:has(.search-results-page) {
   overflow: hidden;
   clip-path: inset(50%);
 }
+.enter-ui .results-sparkles-banner {
+  position: relative;
+  min-height: 154px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  margin-bottom: 10px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 12px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(83 70 184 / 34%), transparent 50%),
+    linear-gradient(135deg, #090a16, #11142b);
+  box-shadow: 0 14px 36px rgb(17 19 66 / 12%);
+}
+.enter-ui .results-sparkles-field,
+.enter-ui .sparkles-core,
+.enter-ui .sparkles-core__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.enter-ui .results-sparkles-field {
+  z-index: -1;
+  pointer-events: none;
+  mask-image: radial-gradient(
+    ellipse 66% 100% at 50% 30%,
+    black 18%,
+    transparent 82%
+  );
+}
+.enter-ui .results-sparkles-beam {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 50%;
+  width: min(70%, 600px);
+  height: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #745cff 26%,
+    #70c6ff 50%,
+    #745cff 74%,
+    transparent
+  );
+  box-shadow:
+    0 0 10px #7c64ff,
+    0 0 28px rgb(112 198 255 / 45%);
+}
+.enter-ui .results-sparkles-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 26px 20px;
+  text-align: center;
+}
+.enter-ui .results-sparkles-copy > span {
+  color: rgb(255 255 255 / 68%);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.enter-ui .results-sparkles-copy h2 {
+  margin: 0;
+  color: #fff;
+  font:
+    750 clamp(28px, 4vw, 40px) / 1.05 "Results Inter",
+    sans-serif;
+  letter-spacing: -0.045em;
+  text-shadow: 0 0 32px rgb(119 102 255 / 32%);
+}
+.enter-ui .results-sparkles-copy p {
+  color: rgb(255 255 255 / 68%);
+  font-size: 12px;
+}
 .enter-ui .results-toolbar {
   display: flex;
   justify-content: space-between;
@@ -112,7 +195,7 @@ body:has(.search-results-page) {
   padding: 12px 16px;
   margin: 0 0 8px;
   position: sticky;
-  top: 78px;
+  top: 86px;
   z-index: 18;
 }
 .enter-ui .results-toolbar h2 {
@@ -158,9 +241,6 @@ body:has(.search-results-page) {
   width: 20px;
   height: 20px;
 }
-.enter-ui #results-criteria:not([open]) {
-  display: none;
-}
 .enter-ui #results-criteria {
   background: white;
   padding: 16px;
@@ -178,6 +258,7 @@ body:has(.search-results-page) {
   align-items: start;
   gap: 10px;
   padding: 8px 12px;
+  min-height: 208px;
   background: white;
   border: 1px solid var(--results-border);
   border-radius: 8px;
@@ -542,6 +623,17 @@ body:has(.search-results-page) {
     flex-wrap: wrap;
     padding: 12px;
   }
+  .enter-ui .results-sparkles-banner {
+    min-height: 132px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+  }
+  .enter-ui .results-sparkles-copy {
+    padding: 20px 14px;
+  }
+  .enter-ui .results-sparkles-copy h2 {
+    font-size: 28px;
+  }
   .enter-ui .results-toolbar h2 {
     font-size: 20px;
   }
@@ -618,4 +710,61 @@ body:has(.search-results-page) {
   .enter-ui .detail-fields {
     grid-template-columns: 1fr;
   }
+}
+
+/* Keep the reference header independent of the shared platform rhythm. */
+.enter-ui .search-results-page .ui-header:has(.platform-navigation) {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  min-height: 78px;
+  padding: 18px 32px;
+  gap: 14px;
+}
+.enter-ui .search-results-page .platform-brand-label {
+  font-size: 13px;
+}
+.enter-ui .search-results-page .platform-navigation a {
+  padding: 7px 17px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.enter-ui .search-results-page .platform-privacy-link {
+  display: none;
+}
+.enter-ui .search-results-page .ui-header:has(.platform-navigation) .ui-button {
+  min-height: 30px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  font-weight: 400;
+  border-radius: 6px;
+}
+.enter-ui .stage-signal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+@media (max-width: 860px) {
+  .enter-ui .search-results-page .ui-header:has(.platform-navigation) {
+    grid-template-columns: 1fr auto auto;
+    height: auto;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .enter-ui .search-results-page .platform-brand-label {
+    display: none;
+  }
+  .enter-ui .search-results-page .platform-navigation {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+  .enter-ui .search-results-page .platform-navigation a {
+    padding-inline: 12px;
+    font-size: 12px;
+  }
+}
+
+.enter-ui .search-results-page .result-card-actions {
+  align-self: stretch;
 }

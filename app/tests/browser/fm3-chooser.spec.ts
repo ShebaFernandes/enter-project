@@ -7,6 +7,7 @@ const fixture = "/app/tests/browser/fixtures/fm3.html";
 test("FM3 safe error, loading announcement and bundle recovery", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const html = await readFile("tests/browser/fixtures/fm3.html", "utf8");
   await page.route("**/fm3.html", (route) =>
     route.fulfill({
@@ -43,12 +44,13 @@ test("FM3 safe error, loading announcement and bundle recovery", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Candidate platform" }),
-  ).toHaveAttribute("href", "/jobs/");
+  ).toHaveAttribute("href", "/candidate/profile/");
 });
 
 test("FM3 chooser visual, responsive and accessibility states", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const [width, height, zoom] of [
     [1440, 1000, 1],
     [1024, 768, 1],
@@ -59,7 +61,11 @@ test("FM3 chooser visual, responsive and accessibility states", async ({
     await page.setViewportSize({ width, height });
     await page.goto(fixture);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "Choose your kingdom platform",
+      "Welcome to Enter",
+    );
+    await expect(page.locator(".enter-access-background")).toHaveAttribute(
+      "aria-hidden",
+      "true",
     );
     await page.locator("html").evaluate((el, factor) => {
       el.style.zoom = String(factor);
@@ -84,7 +90,7 @@ test("FM3 keyboard choices use fixed server endpoints without storage", async ({
 }) => {
   await page.goto(fixture);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Choose your kingdom platform",
+    "Welcome to Enter",
   );
   await page.keyboard.press("Tab");
   await expect(
@@ -98,6 +104,7 @@ test("FM3 keyboard choices use fixed server endpoints without storage", async ({
   });
   await expect(recruiter).toHaveAttribute("href", "/api/v1/auth/login");
   await expect(candidate).toHaveAttribute("href", "/candidate/profile/");
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
   expect(
     await page.evaluate(() => [localStorage.length, sessionStorage.length]),
   ).toEqual([0, 0]);

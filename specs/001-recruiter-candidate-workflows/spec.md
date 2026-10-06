@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-28
 
-**Status**: Approved
+**Status**: Implemented for local development; production readiness pending
 
 **Approved**: 2026-09-29
 
@@ -14,6 +14,22 @@
 visual and functional mockup. Create a feature specification describing its recruiter and
 candidate workflows, user requirements, interactions, states, validation, accessibility
 requirements, and acceptance criteria. Do not implement or modify the HTML yet."
+
+## Current Product Scope (authoritative as of 2026-10-06)
+
+Enter Talent currently has two active product experiences:
+
+- **Candidate**: resume upload and review, profile editing and publication, visibility/consent,
+  profile maintenance, and privacy controls.
+- **Recruiter**: natural-language and structured talent search, results and filters, authorized
+  candidate profiles, private workflow state, notes, contact/share controls, and comparison.
+
+Public jobs, public role discovery/application acquisition, tenant-administration screens, and
+platform-security administration are not part of the active UI scope. Their existing code and
+historical requirements remain preserved, but they do not define current design work or release
+acceptance. Backend tenant isolation, authorization, audit, and consent enforcement remain required
+because they protect both active experiences. Where older sections conflict with this scope, this
+section takes precedence.
 
 ## Clarifications
 

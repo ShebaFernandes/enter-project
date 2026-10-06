@@ -11,9 +11,7 @@ def react_assets(directory: Path) -> dict[str, str] | None:
         if entry.get("isEntry") is not True:
             return None
         script = entry["file"]
-        styles = entry["css"]
-        if len(styles) != 1:
-            return None
+        styles = list(entry.get("css", []))
         paths = [script, *styles]
         pending = list(entry.get("imports", []))
         visited = set()
@@ -24,8 +22,13 @@ def react_assets(directory: Path) -> dict[str, str] | None:
             visited.add(key)
             chunk = manifest[key]
             paths.append(chunk["file"])
-            paths.extend(chunk.get("css", []))
+            chunk_styles = chunk.get("css", [])
+            styles.extend(chunk_styles)
+            paths.extend(chunk_styles)
             pending.extend(chunk.get("imports", []))
+        styles = list(dict.fromkeys(styles))
+        if len(styles) != 1:
+            return None
         for value in paths:
             path = PurePosixPath(value)
             if path.is_absolute() or ".." in path.parts or ":" in value or "\\" in value:

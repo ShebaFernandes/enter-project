@@ -21,6 +21,7 @@ import {
   TextInput,
 } from "./components";
 import type { PageProps } from "./mount";
+import { visualAssets } from "./visual-assets";
 
 type Opening = {
   id: string;
@@ -124,12 +125,25 @@ export function JobsDirectory({ request }: PageProps) {
       <main id="main" tabIndex={-1}>
         <Container width="public">
           <section className="fm10-hero" aria-labelledby="jobs-title">
-            <p className="fm10-kicker">Candidate opportunities</p>
-            <h1 id="jobs-title">Find work that matters</h1>
-            <p>
-              Explore currently published roles. You stay in control of your
-              profile, consent and application updates.
-            </p>
+            <div className="fm10-hero-copy">
+              <p className="fm10-kicker">Candidate opportunities</p>
+              <h1 id="jobs-title">Find work that matters</h1>
+              <p>
+                Explore currently published roles. You stay in control of your
+                profile, consent and application updates.
+              </p>
+            </div>
+            <img
+              className="fm10-hero-illustration"
+              src={visualAssets.jobsOpportunitiesHero}
+              width={1536}
+              height={1024}
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
           </section>
           {failed && (
             <div className="ui-stack">
@@ -144,7 +158,14 @@ export function JobsDirectory({ request }: PageProps) {
           )}
           {!failed && !directory && <Loading label="Loading open roles…" />}
           {!failed && directory?.items.length === 0 && (
-            <EmptyState title="No open roles right now">
+            <EmptyState
+              title="No open roles right now"
+              illustration={{
+                src: visualAssets.openRolesEmpty,
+                width: 1024,
+                height: 1024,
+              }}
+            >
               Published roles will appear here when they are available. Please
               check again later.
             </EmptyState>

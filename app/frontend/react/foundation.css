@@ -1,6 +1,8 @@
 /* No preflight. Only namespaced tokens and .enter-ui descendants are styled. */
 @import "tailwindcss/theme.css" layer(theme) prefix(fm);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(fm) source(none);
+@source "./components/ui/gaming-login.tsx";
+@source "./components/ui/animated-ai-chat.tsx";
 
 @font-face {
   font-family: "Results Inter";
@@ -183,6 +185,25 @@
   border: var(--ui-border) solid var(--fm-color-hairline);
   min-width: 0;
 }
+.enter-ui .ui-empty-state-body {
+  display: grid;
+  gap: var(--fm-spacing-control);
+  min-width: 0;
+}
+.enter-ui .ui-empty-state-copy {
+  color: var(--fm-color-muted);
+}
+.enter-ui .ui-empty-state[data-has-illustration="true"] {
+  grid-template-columns: 176px minmax(0, 1fr);
+  align-items: center;
+}
+.enter-ui .ui-empty-illustration {
+  display: block;
+  width: 176px;
+  height: 176px;
+  object-fit: contain;
+  justify-self: center;
+}
 .enter-ui .ui-button {
   @apply fm:bg-ink fm:text-paper fm:rounded-control;
   border: var(--ui-border) solid var(--fm-color-ink);
@@ -344,6 +365,19 @@
   display: block;
   background: var(--fm-color-raised);
   padding: 10px;
+}
+@media (max-width: 680px) {
+  .enter-ui .ui-empty-state[data-has-illustration="true"] {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+  .enter-ui .ui-empty-illustration {
+    width: 128px;
+    height: 128px;
+  }
+  .enter-ui .ui-empty-state-body > .ui-button {
+    justify-self: center;
+  }
 }
 @media (max-width: 860px) {
   .enter-ui .ui-grid {

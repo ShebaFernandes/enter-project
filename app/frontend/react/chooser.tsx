@@ -1,5 +1,6 @@
-import { useState, type MouseEvent, type ReactNode } from "react";
-import { Alert, Header, SkipLink, StatusMessage } from "./components";
+import { useState, type ReactNode } from "react";
+import { SkipLink, StatusMessage } from "./components";
+import LoginPage from "./components/ui/gaming-login";
 import type { PageProps } from "./mount";
 
 export function PublicShell({ children }: { children: ReactNode }) {
@@ -7,6 +8,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <div className="ui-public-shell">
       <SkipLink />
       <main id="main" tabIndex={-1} className="ui-chooser-stage">
+        <LoginPage.VideoBackground />
         {children}
       </main>
     </div>
@@ -15,68 +17,17 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
 export function PlatformChooser({ bootstrap }: PageProps) {
   const [leaving, setLeaving] = useState("");
-  const announce = (event: MouseEvent<HTMLAnchorElement>, message: string) => {
-    if (
-      event.button === 0 &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.shiftKey &&
-      !event.altKey
-    )
-      setLeaving(message);
-  };
   return (
     <PublicShell>
-      <section className="ui-chooser-card" aria-labelledby="platform-title">
-        <Header>
-          <span>Talent Platform</span>
-        </Header>
-        <div className="ui-chooser-note">
-          Two platforms in one hiring system
-        </div>
-        <h1 id="platform-title">Choose your kingdom platform</h1>
-        <p>
-          Recruiters search and contact matching candidates. Candidates manage
-          their profile and decide who can discover them.
-        </p>
-        <div className="ui-secure-entry">
-          <strong>Secure recruiter access</strong>
-          <p>
-            Continue to company sign-in. Authentication and workspace access are
-            verified securely by the server.
-          </p>
-        </div>
-        <nav className="ui-platform-choices" aria-label="Platform choice">
-          <a
-            className="ui-platform-primary"
-            href="/api/v1/auth/login"
-            onClick={(event) =>
-              announce(event, "Opening secure recruiter sign-in…")
-            }
-          >
-            <strong>Recruiter</strong>
-            <span>Search, review and contact candidates.</span>
-          </a>
-          <a
-            href="/candidate/profile/"
-            onClick={(event) =>
-              announce(event, "Opening your candidate profile…")
-            }
-          >
-            <strong>Candidate platform</strong>
-            <span>Upload your resume and shape your profile.</span>
-          </a>
-        </nav>
+      <div className="ui-login-content">
+        <LoginPage.LoginForm
+          entryError={bootstrap.entryError}
+          onNavigate={setLeaving}
+        />
         <div className="ui-entry-feedback">
-          {bootstrap.entryError && (
-            <Alert>
-              Sign-in could not be completed. Try secure sign-in again, or
-              explore public roles.
-            </Alert>
-          )}
           <StatusMessage>{leaving}</StatusMessage>
         </div>
-      </section>
+      </div>
     </PublicShell>
   );
 }

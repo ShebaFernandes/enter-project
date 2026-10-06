@@ -16,9 +16,7 @@ def test_chooser_server_gate_and_rollback_preserve_urls_and_endpoints(client):
             assert ("data-react-page" in body) is flag
             assert ("dist/assets/app.js" in body) is not flag
             assert "/api/v1/auth/login" in body
-            assert "/jobs/" in body
-            jobs = client.get("/jobs/")
-            assert b'data-frontend-renderer="legacy"' in jobs.content
+            assert "/candidate/profile/" in body
 
 
 @override_settings(LOCAL_SYNTHETIC_AUTH_ENABLED=False)

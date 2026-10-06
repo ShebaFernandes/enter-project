@@ -92,6 +92,40 @@ async function mockReads(page: Page) {
   );
 }
 
+async function mockEmptyReads(page: Page) {
+  await page.route("**/api/v1/session", (route) =>
+    route.fulfill({ json: { authenticated: true } }),
+  );
+  for (const endpoint of [
+    "business-units",
+    "openings",
+    "recruiter-entered-candidates",
+    "saved-searches",
+  ]) {
+    await page.route(`**${base}/${endpoint}`, (route) =>
+      route.fulfill({ json: [] }),
+    );
+  }
+}
+
+test("FM12 empty organization uses decorative setup artwork", async ({
+  page,
+}) => {
+  await mockEmptyReads(page);
+  await page.goto(fixture);
+  await expect(
+    page.getByRole("heading", { name: "Organization is ready" }),
+  ).toBeVisible();
+  const illustration = page.locator(".ui-empty-illustration");
+  await expect(illustration).toHaveAttribute("alt", "");
+  await expect(illustration).toHaveAttribute("aria-hidden", "true");
+  expect(
+    await illustration.evaluate(
+      (image) => (image as HTMLImageElement).naturalWidth,
+    ),
+  ).toBe(1024);
+});
+
 test("FM12 loads tenant organization with immutable synthetic provenance and no browser storage", async ({
   page,
 }) => {

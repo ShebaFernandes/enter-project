@@ -31,6 +31,11 @@ test("FM10 public jobs lists only API-provided roles and handles an empty direct
   await expect(
     page.getByRole("heading", { name: "Find work that matters" }),
   ).toBeVisible();
+  const hero = page.locator(".fm10-hero-illustration");
+  await expect(hero).toHaveAttribute("alt", "");
+  expect(
+    await hero.evaluate((image) => (image as HTMLImageElement).naturalWidth),
+  ).toBe(1536);
   await expect(
     page.getByRole("heading", { name: opening.title }),
   ).toBeVisible();
@@ -48,6 +53,13 @@ test("FM10 public jobs lists only API-provided roles and handles an empty direct
   await expect(
     page.getByRole("heading", { name: "No open roles right now" }),
   ).toBeVisible();
+  const illustration = page.locator(".ui-empty-illustration");
+  await expect(illustration).toHaveAttribute("aria-hidden", "true");
+  expect(
+    await illustration.evaluate(
+      (image) => (image as HTMLImageElement).naturalWidth,
+    ),
+  ).toBe(1024);
 });
 
 test("FM10 role submits explicit consent and channel preferences with protected headers", async ({

@@ -96,9 +96,11 @@ test("authenticated candidate applies, recruiter publishes, candidate tracks and
     `[data-application-id="${application.id}"]`,
   );
   await expect(
-    applicationCard.getByText("Shortlisted", { exact: true }),
+    applicationCard.locator(".ui-chip").getByText("Shortlisted", {
+      exact: true,
+    }),
   ).toBeVisible();
-  await expect(applicationCard.getByText("EMAIL: pending")).toBeVisible();
+  await expect(applicationCard.getByText(/Email: Pending/i)).toBeVisible();
   await candidatePage.getByRole("button", { name: "Sign out" }).click();
   await expect(candidatePage).toHaveURL(/^http:\/\/127\.0\.0\.1:\d+\/$/);
   expect(await candidatePage.evaluate(() => sessionStorage.length)).toBe(0);

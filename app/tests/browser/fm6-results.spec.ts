@@ -105,6 +105,7 @@ test("FM6 applied criteria edit stays inside results and never executes merely b
 test("FM6 results and authorized detail are accessible and responsive", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const [width, height, zoom] of [
     [1440, 1000, 1],
     [1024, 768, 1],
@@ -159,6 +160,16 @@ test("FM6 results and authorized detail are accessible and responsive", async ({
   expect(
     await page.evaluate(() => [localStorage.length, sessionStorage.length]),
   ).toEqual([0, 0]);
+});
+
+test("FM6 result sparkles load as a non-interactive decorative layer", async ({
+  page,
+}) => {
+  await page.goto(fixture);
+  const field = page.locator(".results-sparkles-field");
+  await expect(field).toHaveAttribute("aria-hidden", "true");
+  await expect(field.locator("canvas")).toBeVisible();
+  await expect(field).toHaveCSS("pointer-events", "none");
 });
 test("FM6 expired results and revoked candidate reads fail closed", async ({
   page,
@@ -270,6 +281,14 @@ test("FM6 empty throttled and degraded states do not retain candidate cards", as
   await expect(
     page.getByRole("heading", { name: "No authorized candidates matched" }),
   ).toBeVisible();
+  const illustration = page.locator(".ui-empty-illustration");
+  await expect(illustration).toHaveAttribute("alt", "");
+  await expect(illustration).toHaveAttribute("aria-hidden", "true");
+  expect(
+    await illustration.evaluate(
+      (image) => (image as HTMLImageElement).naturalWidth,
+    ),
+  ).toBe(1024);
   for (const status of [429, 503]) {
     await page.route("**/search-handoffs/search-results/display", (route) =>
       route.fulfill({ status, json: {} }),
@@ -300,6 +319,7 @@ test("Results navigation without a previous search offers a clear next step", as
 test("filters open beside results and Apply executes backend criteria", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   let submitted: Record<string, unknown> | undefined;
   await page.route("**/searches", (route) => {
     submitted = route.request().postDataJSON();
@@ -410,6 +430,7 @@ test("profile modal saves notes and status through authorized APIs", async ({
 });
 
 test("filters remain usable on a narrow screen", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(fixture);
   await page.getByRole("button", { name: "Show filters" }).click();

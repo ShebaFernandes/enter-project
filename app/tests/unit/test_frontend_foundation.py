@@ -32,6 +32,28 @@ def test_manifest_assets_are_local_and_missing_build_fails_closed(tmp_path):
         "script": "dist/react/assets/app.js",
         "style": "dist/react/assets/app.css",
     }
+
+    manifest.write_text(
+        json.dumps(
+            {
+                "frontend/react/entry.ts": {
+                    "file": "assets/app.js",
+                    "isEntry": True,
+                    "imports": ["_entry.js"],
+                },
+                "_entry.js": {
+                    "file": "assets/entry.js",
+                    "css": ["assets/app.css"],
+                },
+            }
+        )
+    )
+    (tmp_path / "assets" / "entry.js").touch()
+    assert react_assets(tmp_path) == {
+        "script": "dist/react/assets/app.js",
+        "style": "dist/react/assets/app.css",
+    }
+
     for unsafe in ("../private.js", "https://example.test/app.js", "/assets/app.js"):
         manifest.write_text(
             json.dumps(

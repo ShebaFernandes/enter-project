@@ -8,6 +8,25 @@
 
 **Organization**: Tasks are dependency ordered and grouped by user story. The shared tenant/business-unit/opening shell is foundational because Matching roles and applications depend on active openings. US6 precedes US4 so applicant linking exists before the combined sourced/applicant management tests.
 
+## Current Status and Phase Map (authoritative as of 2026-10-06)
+
+Only the Candidate and Recruiter product experiences are active. Public jobs, public application
+acquisition, Tenant Admin UI, and Platform Security Admin UI are outside the current release scope.
+Existing implementation and completed checks for those surfaces are retained as historical evidence.
+
+| Current phase | Included work | Status |
+|---|---|---|
+| 1 — Foundation | Security, tenancy boundaries, consent, audit, Django, PostgreSQL, React, and Tailwind | Complete |
+| 2 — Candidate | Resume/profile review, publication, visibility, maintenance, and privacy | Complete locally |
+| 3 — Recruiter discovery | Search, criteria, results, filters, candidate detail, and recent searches | Complete locally |
+| 4 — Recruiter workflow | Notes, statuses, disclosure, sharing, shortlist, and comparison | Complete locally |
+| 5 — Experience quality | Responsive UI, accessibility automation, visual parity, and regression coverage | Complete locally |
+| 6 — Production readiness | Infrastructure, security/manual accessibility review, recovery, legal, and release evidence | Pending |
+
+The checked legacy phases and FM1–FM14 entries below are an implementation ledger, not the current
+roadmap. Open production tasks apply only where they support the Candidate and Recruiter scope;
+job-, application-, opening-, or admin-only launch checks are deferred and do not block this scope.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: May run in parallel after phase prerequisites are satisfied because it targets different files and has no dependency on incomplete work.
@@ -16,7 +35,9 @@
 
 ---
 
-## Phase 1: Setup and Mockup Baseline
+## Historical Implementation Ledger
+
+### Legacy Phase 1: Setup and Mockup Baseline
 
 **Purpose**: Establish reproducible tooling and freeze the existing HTML/CSS/JavaScript experience as a read-only preservation baseline.
 
@@ -39,7 +60,7 @@
 
 ---
 
-## Phase 2: Foundational Security, Shared Data, and Opening Prerequisites
+### Legacy Phase 2: Foundational Security, Shared Data, and Opening Prerequisites
 
 **Purpose**: Deliver the shared security controls and the tenant/opening shell required by search and applications.
 
@@ -87,7 +108,7 @@
 
 ---
 
-## Phase 3: User Story 1 — Candidate Creates and Controls a Profile (Priority: P1) — Recommended MVP
+### Legacy Phase 3: User Story 1 — Candidate Creates and Controls a Profile (Priority: P1) — Recommended MVP
 
 **Goal**: A verified candidate can create a truthful profile, control visibility and consent, and exercise all privacy rights.
 
@@ -129,7 +150,7 @@
 
 ---
 
-## Phase 4: User Story 2 — Recruiter Searches for Candidates (Priority: P1)
+### Legacy Phase 4: User Story 2 — Recruiter Searches for Candidates (Priority: P1)
 
 **Goal**: An authorized recruiter can sign in and execute explainable deterministic searches with typed or optional speech input.
 
@@ -169,7 +190,7 @@
 
 ---
 
-## Phase 5: User Story 3 — Recruiter Reviews Search Intent (Priority: P1)
+### Legacy Phase 5: User Story 3 — Recruiter Reviews Search Intent (Priority: P1)
 
 **Goal**: Recruiters inspect, quantify, and correct interpreted criteria before ambiguous searches run.
 
@@ -196,7 +217,7 @@
 
 ---
 
-## Phase 6: User Story 6 — Candidate Applies and Tracks Progress (Priority: P2)
+### Legacy Phase 6: User Story 6 — Candidate Applies and Tracks Progress (Priority: P2)
 
 **Goal**: Candidates can review open roles, submit independent applications, and track the canonical eight statuses.
 
@@ -227,7 +248,7 @@
 
 ---
 
-## Phase 7: User Story 4 — Recruiter Evaluates and Manages Candidates (Priority: P2)
+### Legacy Phase 7: User Story 4 — Recruiter Evaluates and Manages Candidates (Priority: P2)
 
 **Goal**: Recruiters manage sourced and applied candidates, notes, reasons, status publication, and consent-checked contact/share actions.
 
@@ -263,7 +284,7 @@
 
 ---
 
-## Phase 8: User Story 5 — Recruiter Compares a Shortlist (Priority: P2)
+### Legacy Phase 8: User Story 5 — Recruiter Compares a Shortlist (Priority: P2)
 
 **Goal**: Recruiters compare consistent authorized evidence without generated recommendations or automated employment decisions.
 
@@ -287,7 +308,7 @@
 
 ---
 
-## Phase 9: User Story 7 — Recruiter Organizes Hiring Work (Priority: P3)
+### Legacy Phase 9: User Story 7 — Recruiter Organizes Hiring Work (Priority: P3)
 
 **Goal**: Tenant users manage organization context, saved searches, audit metadata, and access reviews without changing tenant boundaries or gaining candidate-content access.
 
@@ -318,7 +339,7 @@
 
 ---
 
-## Frontend Migration: after Phase 9, before Phase 10
+## Historical Frontend Migration Ledger
 
 Approved 2026-10-01. Normative route/component/API/state/test/fallback details for every phase are in [frontend-migration.md](./frontend-migration.md). Preserve all existing task completion marks. Each phase is test-first: define/capture acceptance coverage, implement the slice, verify before cutover. Every task remains unchecked until implementation and acceptance pass. FM task IDs are a dedicated namespace, not replacements for T001–T206.
 
@@ -353,7 +374,7 @@ transactional authorized publication with minimized audits, restricted endpoint
 reads, and projection-backed public role resolution. Never add an anonymous
 policy to recruiting_opening or change its forced RLS. No automatic source
 backfill. FM3-03 must verify these security gates plus chooser navigation and
-legacy rollback. This clarification does not authorize FM4 or Phase 10.
+legacy rollback. This clarification did not authorize FM4 or production-readiness work.
 
 FM3 evidence: [security, visual and regression verification](../../docs/evidence/frontend-migration/fm3.md).
 295 PostgreSQL tests collected (294 pass, one expected skip), 53 browser tests
@@ -530,13 +551,14 @@ the FM1–FM14 umbrella checklist remains unchecked.
 
 - [X] FM14-01 Capture acceptance tests and evidence for this phase's exact routes, states, keyboard/screen-reader behavior, four viewports and zoom; preserve prior security tests. Dependency: FM13-03.
 - [X] FM14-02 Run full PostgreSQL collection/suite, mypy ., Ruff, Django/migration checks, frontend checks/build and complete authenticated Playwright/accessibility/visual suites; prove no deleted tests or reduced type scope. Dependency: FM14-01.
-- [X] FM14-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; approve migration completion only with no unexplained drift; Phase 10 stays deferred until this gate passes. Dependency: FM14-02.
+- [X] FM14-03 Record passing functional, authorization, accessibility, screenshot and build evidence; verify both renderers and rollback; approve migration completion only with no unexplained drift; production readiness stays deferred until this gate passes. Dependency: FM14-02.
 
-FM14 evidence: `docs/evidence/frontend-migration/fm14.md` and `docs/evidence/frontend-migration/fm14/`. The full deterministic backend, frontend, authenticated browser, accessibility, responsive, rollback and visual checks passed with no unexplained drift. FM1–FM14 are complete. Phase 10 remains deferred and required for production release.
+FM14 evidence: `docs/evidence/frontend-migration/fm14.md` and `docs/evidence/frontend-migration/fm14/`. The full deterministic backend, frontend, authenticated browser, accessibility, responsive, rollback and visual checks passed with no unexplained drift. FM1–FM14 are complete. Current Phase 6 remains pending and required for production release.
 
-## Phase 10: Production Hardening, Manual Review, and Release Evidence
+## Current Phase 6: Production Hardening, Manual Review, and Release Evidence
 
-Deferred: requires FM14-03. No production-hardening work begins during frontend migration.
+FM14 is complete. Production hardening remains pending and is limited to the active Candidate and
+Recruiter scope described above.
 
 **Purpose**: Validate accessibility, usability, privacy, incident response, security, AI promotion, recovery, scale, and existing-functionality preservation.
 
@@ -581,7 +603,7 @@ Deferred: requires FM14-03. No production-hardening work begins during frontend 
 
 ---
 
-## Dependencies and Execution Order
+## Historical Dependencies and Execution Order
 
 ### Phase Dependencies
 
@@ -606,7 +628,7 @@ Setup → Foundation (tenant/business-unit/opening shell) → US1 (MVP)
                      └─────────┴→ US4 → US5
                           US2 ───────→ US7 saved-search integration
 
-All launch stories → FM1–FM14 → deferred Phase 10 manual accessibility + incident + access review + DAST/AI + restore/replay gates
+All launch stories → FM1–FM14 → current Phase 6 manual accessibility + incident + access review + DAST/AI + restore/replay gates
 ```
 
 ### Parallel Opportunities
@@ -619,7 +641,7 @@ All launch stories → FM1–FM14 → deferred Phase 10 manual accessibility + i
 
 ---
 
-## Implementation Strategy
+## Historical Implementation Strategy
 
 ### Recommended MVP
 

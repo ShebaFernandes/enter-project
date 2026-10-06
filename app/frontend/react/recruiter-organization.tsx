@@ -18,6 +18,7 @@ import {
   WorkspaceNavigation,
 } from "./components";
 import type { PageProps } from "./mount";
+import { visualAssets } from "./visual-assets";
 
 type Request = PageProps["request"];
 type Unit = {
@@ -724,7 +725,14 @@ export function OrganizationPage({ bootstrap, request }: PageProps) {
         !openings.length &&
         !synthetic.length &&
         !saved.length && (
-          <EmptyState title="Organization is ready">
+          <EmptyState
+            title="Organization is ready"
+            illustration={{
+              src: visualAssets.organizationSetupEmpty,
+              width: 1024,
+              height: 1024,
+            }}
+          >
             Create a business unit to begin.
           </EmptyState>
         )}

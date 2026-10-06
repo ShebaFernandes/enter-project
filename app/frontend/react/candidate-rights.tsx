@@ -223,7 +223,6 @@ export function RightsCenter({ request }: PageProps) {
           label="Candidate navigation"
           items={[
             { label: "Profile", href: "/candidate/profile/" },
-            { label: "Applications", href: "/candidate/applications/" },
             {
               label: "Privacy rights",
               href: "/candidate/rights/",

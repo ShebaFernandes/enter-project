@@ -55,7 +55,44 @@ test("result career journey shows company details on hover and focus at desktop 
                 },
               ],
             },
-            findings: [],
+            findings: [
+              {
+                code: "SHORT_TENURE",
+                informational_only: true,
+                message:
+                  "Candidate left Synthetic Previous Employer after approximately 8 months.",
+                evidence: {
+                  employment_record_id: "00000000-0000-4000-8000-000000000001",
+                  company: "Synthetic Previous Employer",
+                  confirmed_start_date: "2019-01-01",
+                  confirmed_end_date: "2019-09-01",
+                  calculated_duration: {
+                    calendar_months: 8,
+                    remaining_days: 0,
+                  },
+                  calculation_version: "short-tenure-v1",
+                  evaluated_at: "2026-10-01T00:00:00Z",
+                },
+              },
+              {
+                code: "SHORT_TENURE",
+                informational_only: true,
+                message:
+                  "Candidate left Synthetic Previous Employer after approximately 8 months.",
+                evidence: {
+                  employment_record_id: "00000000-0000-4000-8000-000000000002",
+                  company: "Synthetic Previous Employer",
+                  confirmed_start_date: "2020-01-01",
+                  confirmed_end_date: "2020-09-01",
+                  calculated_duration: {
+                    calendar_months: 8,
+                    remaining_days: 0,
+                  },
+                  calculation_version: "short-tenure-v1",
+                  evaluated_at: "2026-10-01T00:00:00Z",
+                },
+              },
+            ],
             evidence: [],
             unknowns: [],
           },
@@ -77,6 +114,7 @@ test("result career journey shows company details on hover and focus at desktop 
   await expect(
     page.getByRole("heading", { name: "Showing 1 of 1 results" }),
   ).toBeVisible();
+  await expect(page.getByText(/2 separate employment records/)).toHaveCount(1);
   await page.getByRole("button", { name: "Razorpay", exact: true }).hover();
   await expect(page.getByRole("tooltip")).toContainText(
     "Backend Engineer at Razorpay",
@@ -138,9 +176,9 @@ test("result career journey shows company details on hover and focus at desktop 
   await ref.screenshot({ path: "/tmp/results-reference.png", fullPage: true });
   const referenceCard = await ref.locator(".card").first().boundingBox();
   const actualCard = await page.locator(".result-card").first().boundingBox();
-  // The shared platform layout intentionally widens the result workspace.
+  // Results retain the compact width of the supplied reference.
   expect(referenceCard?.width).toBe(900);
-  expect(actualCard?.width).toBe(1072);
+  expect(actualCard?.width).toBe(referenceCard?.width);
   expect(actualCard?.x).toBeGreaterThanOrEqual(0);
   expect((actualCard?.x ?? 0) + (actualCard?.width ?? 0)).toBeLessThanOrEqual(
     1440,

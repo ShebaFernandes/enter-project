@@ -7,6 +7,7 @@ import {
   Alert,
   PlatformNavigation,
 } from "./components";
+import { AnimatedAIChat } from "./components/ui/animated-ai-chat";
 import type { PageProps } from "./mount";
 import type { Recognition } from "../recruiter/speech-search";
 import { workflowTransport } from "../shared/workflow-handoff";
@@ -37,7 +38,7 @@ export function SearchHome({ bootstrap, request }: PageProps) {
   const recognition = useRef<Recognition | null>(null);
   const panelToggle = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLDialogElement>(null);
-  const composer = useRef<HTMLInputElement>(null);
+  const composer = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (panel) sidebar.current?.showModal();
   }, [panel]);
@@ -309,68 +310,31 @@ export function SearchHome({ bootstrap, request }: PageProps) {
         </Button>
       </div>
       <main id="main" tabIndex={-1} className="ui-search-stage">
-        <h1>Who are we hiring today?</h1>
-        <form className="ui-search-composer" onSubmit={submit}>
-          <label className="ui-visually-hidden" htmlFor="hiring-prompt">
-            Describe the candidate you need
-          </label>
-          <input
-            id="hiring-prompt"
-            ref={composer}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            type="text"
-            disabled={busy || uncertain}
-            maxLength={4000}
-            placeholder="Example: Backend engineers in Bengaluru, 4–7 yrs, Java, Kafka, 0-to-1 or ex"
-            aria-describedby="search-feedback"
-          />
-          <div className="ui-composer-bottom">
-            <Button
-              type="button"
-              variant="secondary"
-              className="ui-search-voice"
-              aria-label="Use speech"
-              title={
-                speechAvailable
-                  ? "Use speech"
-                  : "Speech input is unavailable in this browser"
-              }
-              disabled={!speechAvailable || busy || uncertain}
-              aria-pressed={listening}
-              onClick={() => {
-                try {
-                  if (listening) recognition.current?.stop();
-                  else recognition.current?.start();
-                } catch {
-                  setSpeechStatus("Speech is unavailable. Continue by typing.");
-                }
-              }}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="12" rx="3" />
-                <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3" />
-              </svg>
-            </Button>
-            <Button
-              type="submit"
-              className="ui-search-submit"
-              variant="secondary"
-              aria-label="Search"
-              busy={busy}
-              disabled={busy || uncertain}
-            >
-              <span className="ui-search-submit-logo" aria-hidden="true">
-                <img
-                  src={
-                    new URL("./assets/enter-logo.jpeg", import.meta.url).href
-                  }
-                  alt=""
-                />
-              </span>
-            </Button>
-          </div>
-        </form>
+        <AnimatedAIChat
+          ref={composer}
+          value={prompt}
+          onValueChange={setPrompt}
+          onSubmit={submit}
+          busy={busy}
+          disabled={uncertain}
+          speechAvailable={speechAvailable}
+          listening={listening}
+          describedBy="search-feedback"
+          onSpeechToggle={() => {
+            try {
+              if (listening) recognition.current?.stop();
+              else recognition.current?.start();
+            } catch {
+              setSpeechStatus("Speech is unavailable. Continue by typing.");
+            }
+          }}
+          suggestions={[
+            { label: "0→1 backend builders" },
+            { label: "Production ML engineers" },
+            { label: "Founding engineers" },
+          ]}
+          onSuggestion={(value) => setPrompt(value)}
+        />
         <div
           className={
             speechStatus === "Typed search is ready." ||
@@ -385,25 +349,6 @@ export function SearchHome({ bootstrap, request }: PageProps) {
           <StatusMessage>{status}</StatusMessage>
           {error && <Alert>{error}</Alert>}
         </div>
-        <nav className="ui-suggested" aria-label="Suggested searches">
-          {[
-            "0→1 backend builders",
-            "Production ML engineers",
-            "Founding engineers",
-          ].map((text) => (
-            <Button
-              key={text}
-              disabled={busy || uncertain}
-              variant="secondary"
-              onClick={() => {
-                setPrompt(text);
-                composer.current?.focus();
-              }}
-            >
-              {text}
-            </Button>
-          ))}
-        </nav>
       </main>
       {panel && (
         <dialog

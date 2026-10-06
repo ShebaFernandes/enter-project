@@ -37,6 +37,29 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
+test("FM11 application empty state uses decorative journey artwork", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/candidate/applications", (route) =>
+    route.fulfill({ json: [] }),
+  );
+  await page.goto(progress);
+  await expect(
+    page.getByRole("heading", { name: "No applications yet" }),
+  ).toBeVisible();
+  const illustration = page.locator(".ui-empty-illustration");
+  await expect(illustration).toHaveAttribute("alt", "");
+  await expect(illustration).toHaveAttribute("aria-hidden", "true");
+  await expect(
+    page.getByRole("link", { name: "Return to your profile" }),
+  ).toHaveAttribute("href", "/candidate/profile/");
+  expect(
+    await illustration.evaluate(
+      (image) => (image as HTMLImageElement).naturalWidth,
+    ),
+  ).toBe(1024);
+});
+
 test("FM11 updates channels with ETag and explicitly confirms withdrawal", async ({
   page,
 }) => {
@@ -147,6 +170,7 @@ test("FM11 rights uses explicit deletion consequences and protected requests", a
   await expect(
     page.getByRole("heading", { name: "Your data rights" }),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Applications" })).toHaveCount(0);
   for (const state of [
     "Pending",
     "In progress",

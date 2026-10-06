@@ -188,6 +188,14 @@ test("FM8 shows safe empty guidance without a valid handoff", async ({
   await expect(
     page.getByText(/select between two and ten candidates/i),
   ).toBeVisible();
+  const illustration = page.locator(".ui-empty-illustration");
+  await expect(illustration).toHaveAttribute("alt", "");
+  await expect(illustration).toHaveAttribute("aria-hidden", "true");
+  expect(
+    await illustration.evaluate(
+      (image) => (image as HTMLImageElement).naturalWidth,
+    ),
+  ).toBe(1024);
 });
 
 test("FM8 comparison responsive and accessibility baselines", async ({

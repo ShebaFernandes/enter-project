@@ -239,9 +239,14 @@ export function Field({
     </div>
   );
 }
-export function Card({ children, title }: Children & { title?: string }) {
+export function Card({
+  children,
+  title,
+  className,
+  ...props
+}: Children & { title?: string } & ComponentProps<"section">) {
   return (
-    <section className="ui-card">
+    <section {...props} className={`ui-card ${className ?? ""}`}>
       {title && <h2>{title}</h2>}
       {children}
     </section>
@@ -288,11 +293,34 @@ export function EmptyState({
   title,
   children,
   action,
-}: Children & { title: string; action?: ReactNode }) {
+  illustration,
+}: Children & {
+  title: string;
+  action?: ReactNode;
+  illustration?: { src: string; width: number; height: number };
+}) {
   return (
-    <Card title={title}>
-      <p>{children}</p>
-      {action}
+    <Card
+      className="ui-empty-state"
+      data-has-illustration={illustration ? "true" : undefined}
+    >
+      {illustration && (
+        <img
+          className="ui-empty-illustration"
+          src={illustration.src}
+          width={illustration.width}
+          height={illustration.height}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+        />
+      )}
+      <div className="ui-empty-state-body">
+        <h2>{title}</h2>
+        <div className="ui-empty-state-copy">{children}</div>
+        {action}
+      </div>
     </Card>
   );
 }

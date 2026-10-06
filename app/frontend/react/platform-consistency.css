@@ -95,7 +95,6 @@
   border-radius: 8px;
 }
 .enter-ui .ui-container,
-.enter-ui .search-results-page .ui-container,
 .enter-ui .candidate-profile-page main .ui-container {
   width: 100%;
   max-width: 1120px;
@@ -123,17 +122,6 @@
 }
 .enter-ui .ui-search-tools {
   top: 104px;
-}
-.enter-ui .results-toolbar {
-  position: relative;
-  top: auto;
-  padding: 18px;
-  margin-bottom: 16px;
-}
-.enter-ui .results-toolbar h2 {
-  font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.7px;
 }
 @media (max-width: 900px) {
   .enter-ui .platform-brand-label {
@@ -165,7 +153,6 @@
     font-size: 12px;
   }
   .enter-ui .ui-container,
-  .enter-ui .search-results-page .ui-container,
   .enter-ui .candidate-profile-page main .ui-container {
     padding: 28px 16px 48px;
   }
@@ -173,9 +160,6 @@
   .enter-ui .ui-search-stage h1,
   .enter-ui .candidate-profile-page main h1 {
     font-size: 28px;
-  }
-  .enter-ui .results-toolbar h2 {
-    font-size: 24px;
   }
   .enter-ui .ui-search-stage {
     padding: clamp(170px, calc(45svh - 132px), 300px) 16px 48px;
@@ -188,40 +172,6 @@
     top: 164px;
     left: 16px;
     right: 16px;
-  }
-}
-.enter-ui .result-card {
-  padding: 16px;
-  gap: 14px;
-}
-.enter-ui .result-card h3 {
-  font-size: 18px;
-  line-height: 1.3;
-}
-.enter-ui .candidate-headline,
-.enter-ui .candidate-alias,
-.enter-ui .result-facts {
-  font-size: 14px;
-  line-height: 1.5;
-}
-.enter-ui .result-facts {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 20px;
-}
-.enter-ui .career-journey-label,
-.enter-ui .career-unavailable,
-.enter-ui .result-skills > strong,
-.enter-ui .result-skills .ui-chip {
-  font-size: 12px;
-}
-.enter-ui .result-timeline {
-  grid-template-columns: 100px minmax(0, 1fr);
-  margin-top: 14px;
-}
-@media (max-width: 680px) {
-  .enter-ui .result-facts,
-  .enter-ui .result-timeline {
-    grid-template-columns: 1fr;
   }
 }
 /* Candidate reference: compact centered review with visible editable facts. */

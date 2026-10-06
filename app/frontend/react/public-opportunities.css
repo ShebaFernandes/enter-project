@@ -24,11 +24,25 @@ body[data-frontend-renderer="react"]:has(.fm10-shell) {
 }
 .enter-ui .fm10-hero {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  align-items: center;
+  gap: clamp(28px, 6vw, 72px);
   padding: clamp(32px, 7vw, 76px) 0 clamp(28px, 5vw, 52px);
-  max-width: 720px;
 }
-.enter-ui .fm10-hero > p:last-child,
+.enter-ui .fm10-hero-copy {
+  display: grid;
+  gap: 12px;
+  max-width: 650px;
+}
+.enter-ui .fm10-hero-illustration {
+  display: block;
+  width: min(100%, 420px);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  justify-self: end;
+}
+.enter-ui .fm10-hero-copy > p:last-child,
 .enter-ui .fm10-job-card > p,
 .enter-ui .fm10-description p,
 .enter-ui .fm10-resume p {
@@ -131,9 +145,14 @@ body[data-frontend-renderer="react"]:has(.fm10-shell) {
   font-weight: 650;
 }
 @media (max-width: 860px) {
+  .enter-ui .fm10-hero,
   .enter-ui .fm10-job-grid,
   .enter-ui .fm10-role-layout {
     grid-template-columns: 1fr;
+  }
+  .enter-ui .fm10-hero-illustration {
+    width: min(100%, 360px);
+    justify-self: center;
   }
 }
 @media (max-width: 520px) {

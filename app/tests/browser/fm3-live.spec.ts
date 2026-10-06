@@ -6,7 +6,10 @@ const output =
   process.env.FM3_LIVE_OUTPUT ?? "../docs/evidence/frontend-migration/fm3";
 test.skip(!origin, "Run against the isolated FM3 Django verification server");
 
-test("FM3 real chooser, public jobs and keyboard return", async ({ page }) => {
+test("FM3 real chooser, candidate profile and keyboard return", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const [width, height, zoom] of [
     [1440, 1000, 1],
     [1024, 768, 1],
@@ -31,11 +34,11 @@ test("FM3 real chooser, public jobs and keyboard return", async ({ page }) => {
       animations: "disabled",
     });
     await page
-      .getByRole("link", { name: /Candidate platform.*Explore/ })
+      .getByRole("link", { name: /Candidate platform.*Upload/ })
       .click();
-    await expect(page).toHaveURL(`${origin}/jobs/`);
+    await expect(page).toHaveURL(`${origin}/candidate/profile/`);
     await expect(
-      page.getByRole("heading", { name: "Open roles", exact: true }),
+      page.getByRole("heading", { name: "Right person. Right problem." }),
     ).toBeVisible();
     await expect(page.locator("body")).toHaveAttribute(
       "data-frontend-renderer",
@@ -45,12 +48,12 @@ test("FM3 real chooser, public jobs and keyboard return", async ({ page }) => {
       (await new AxeBuilder({ page: page as never }).analyze()).violations,
     ).toEqual([]);
     await page.screenshot({
-      path: `${output}/jobs-live-${width}-${zoom}x.png`,
+      path: `${output}/candidate-profile-live-${width}-${zoom}x.png`,
       fullPage: true,
     });
     await page.goBack();
     await expect(
-      page.getByRole("heading", { name: "Choose your kingdom platform" }),
+      page.getByRole("heading", { name: "Welcome to Enter" }),
     ).toBeVisible();
   }
 });

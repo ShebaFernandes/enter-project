@@ -18,6 +18,8 @@ import {
 } from "./components";
 import { ApiError, responseJson } from "../shared/api-client";
 import { handoffToken } from "../shared/workflow-handoff";
+import { visualAssets } from "./visual-assets";
+import { SparklesCore } from "./components/ui/sparkles";
 import {
   CandidateDetail,
   fieldText,
@@ -30,6 +32,18 @@ type Results = {
   next_cursor: string | null;
 };
 type Selection = { search_id: string; candidate_ids: string[]; etag: string };
+function consolidatedFindingMessages(findings: SearchItem["findings"]) {
+  const grouped = new Map<string, Set<string>>();
+  for (const finding of findings) {
+    const records = grouped.get(finding.message) ?? new Set<string>();
+    records.add(finding.evidence.employment_record_id);
+    grouped.set(finding.message, records);
+  }
+  return [...grouped.entries()].map(([message, recordIds]) => ({
+    message,
+    recordCount: recordIds.size,
+  }));
+}
 function fragmentSelection() {
   const value = new URLSearchParams(location.hash.slice(1)).get("selection");
   return value && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : null;
@@ -117,6 +131,26 @@ export function ResultCard({
     .slice(0, 2)
     .map((part) => part[0])
     .join("");
+  const statusLabel =
+    typeof summary.internal_status === "string"
+      ? summary.internal_status
+          .replaceAll("_", " ")
+          .toLowerCase()
+          .replace(/^./, (letter) => letter.toUpperCase())
+      : "Status";
+  const updated =
+    typeof summary.updated_at === "string"
+      ? new Date(summary.updated_at)
+      : null;
+  const daysAgo = updated
+    ? Math.max(0, Math.floor((Date.now() - updated.getTime()) / 86400000))
+    : NaN;
+  const stageSignals = Array.isArray(summary.stage_signals)
+    ? summary.stage_signals.filter(
+        (signal): signal is string => typeof signal === "string",
+      )
+    : [];
+  const employmentNotices = consolidatedFindingMessages(item.findings);
   return (
     <article className="result-card">
       <div className="candidate-avatar" aria-hidden="true">
@@ -126,9 +160,12 @@ export function ResultCard({
         <div className="candidate-title-line">
           <h3>{name}</h3>
           {viewed && <span className="viewed-mark">Viewed</span>}
-          {typeof summary.updated_at === "string" && (
+          {Number.isFinite(daysAgo) && (
             <span className="freshness-pill">
-              Updated {new Date(summary.updated_at).toLocaleDateString("en-IN")}
+              Updated{" "}
+              {daysAgo === 0
+                ? "today"
+                : `${daysAgo} ${daysAgo === 1 ? "day" : "days"} ago`}
             </span>
           )}
         </div>
@@ -181,7 +218,7 @@ export function ResultCard({
           onChange={(event) => toggle(event.target.checked)}
         />
         <label className="side-label" htmlFor={`status-${item.candidate_id}`}>
-          Status
+          {statusLabel}
         </label>
         <select
           id={`status-${item.candidate_id}`}
@@ -244,12 +281,27 @@ export function ResultCard({
             View profile
           </Button>
         </div>
-        {item.findings.length > 0 && (
+        {stageSignals.length > 0 && (
+          <div className="side-signals">
+            <strong>Stage signals</strong>
+            <div className="stage-signal-chips">
+              {stageSignals.map((signal) => (
+                <Chip key={signal} tone="gold">
+                  {signal}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
+        {employmentNotices.length > 0 && (
           <div className="side-signals">
             <strong>Employment information</strong>
-            {item.findings.map((finding, index) => (
-              <Chip key={index} tone="gold">
+            {employmentNotices.map((finding) => (
+              <Chip key={finding.message} tone="gold">
                 {finding.message}
+                {finding.recordCount > 1
+                  ? ` (${finding.recordCount} separate employment records)`
+                  : ""}
               </Chip>
             ))}
           </div>
@@ -514,6 +566,10 @@ export function SearchResults({ bootstrap, request }: PageProps) {
         navigation={
           <>
             <PlatformNavigation active="results" tenantId={tenant} />
+            <span className="results-recruiter">
+              <span aria-hidden="true" />
+              Recruiter
+            </span>
             <Button
               variant="secondary"
               onClick={async () => {
@@ -543,7 +599,14 @@ export function SearchResults({ bootstrap, request }: PageProps) {
           </Alert>
         )}
         {noSearch && (
-          <EmptyState title="Your search results will appear here">
+          <EmptyState
+            title="Your search results will appear here"
+            illustration={{
+              src: visualAssets.talentDiscoveryEmpty,
+              width: 1024,
+              height: 1024,
+            }}
+          >
             <p>
               Start a search to find candidates. You can return here to your
               latest results.
@@ -559,6 +622,31 @@ export function SearchResults({ bootstrap, request }: PageProps) {
         {notice && <Alert tone="gold">{notice}</Alert>}
         {data && (
           <>
+            <section
+              className="results-sparkles-banner"
+              aria-labelledby="results-sparkles-title"
+            >
+              <div className="results-sparkles-field" aria-hidden="true">
+                <SparklesCore
+                  id="results-sparkles"
+                  background="transparent"
+                  minSize={0.4}
+                  maxSize={1.15}
+                  particleDensity={110}
+                  particleColor="#ffffff"
+                  speed={0.45}
+                />
+              </div>
+              <div className="results-sparkles-beam" aria-hidden="true" />
+              <div className="results-sparkles-copy">
+                <span>Authorized talent discovery</span>
+                <h2 id="results-sparkles-title">Talent matches</h2>
+                <p>
+                  {data.items.length} candidate
+                  {data.items.length === 1 ? "" : "s"} available in this search
+                </p>
+              </div>
+            </section>
             <details
               id="results-criteria"
               aria-label="Applied deterministic criteria"
@@ -658,7 +746,14 @@ export function SearchResults({ bootstrap, request }: PageProps) {
                   }}
                 />
                 {!data.items.length ? (
-                  <EmptyState title="No authorized candidates matched">
+                  <EmptyState
+                    title="No authorized candidates matched"
+                    illustration={{
+                      src: visualAssets.talentDiscoveryEmpty,
+                      width: 1024,
+                      height: 1024,
+                    }}
+                  >
                     Broaden deterministic criteria or choose another active
                     opening.
                   </EmptyState>
