@@ -159,8 +159,11 @@ make dev
 ```
 
 `make bootstrap` creates `.env` from `.env.example` only when it is missing and builds
-all frontend bundles. `make migrate` and `make fixtures` run inside the web container,
-using the Docker service names from `.env`. `make dev` starts both web and worker.
+all frontend bundles. `npm run build` builds both runtime bundles (the recovery/legacy
+bundle and the React bundle); `npm run build:all` additionally builds historical test
+fixtures. `make migrate` and `make fixtures` run inside the web container, using the
+Docker service names from `.env`. `make dev` rebuilds the application image and starts
+both web and worker without masking the image's reviewed React assets.
 Local sign-in uses synthetic identities; logout returns to the platform chooser.
 
 The web application is served at `http://localhost:8000`. Mailpit is available at `http://localhost:8025`, and the health check is at `http://localhost:8000/health/`.

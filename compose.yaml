@@ -32,7 +32,7 @@ services:
     platform: linux/amd64
     volumes: ["clamav_data:/var/lib/clamav"]
   web:
-    build: {context: ./app, target: runtime}
+    build: {context: ., dockerfile: app/Dockerfile, target: runtime}
     env_file:
       - path: .env
         required: false
@@ -48,7 +48,6 @@ services:
       FRONTEND_REACT_ROUTES: ${FRONTEND_REACT_ROUTES:-}
     command: ["web"]
     volumes:
-      - ./app:/workspace/app
       - ./specs:/workspace/specs:ro
     ports: ["8000:8000"]
     depends_on:
@@ -56,7 +55,7 @@ services:
       valkey: {condition: service_started}
       s3-local: {condition: service_started}
   worker:
-    build: {context: ./app, target: runtime}
+    build: {context: ., dockerfile: app/Dockerfile, target: runtime}
     env_file:
       - path: .env
         required: false
@@ -70,7 +69,6 @@ services:
       S3_INTERNAL_ENDPOINT_URL: http://s3-local:4566
       CLAMAV_HOST: resume-scanner
     command: ["worker"]
-    volumes: ["./app:/workspace/app"]
     depends_on:
       mail: {condition: service_started}
       valkey: {condition: service_started}

@@ -80,6 +80,7 @@ def test_bootstrap_is_escaped_and_has_no_executable_inline_script():
     assert "\\u003C/script\\u003E" in html
     assert 'type="application/json"' in html
     assert "data-page-fallback" in html
+    assert "data-page-fallback aria-label=\"Page recovery\" tabindex=\"-1\" hidden" in html
 
 
 def test_missing_manifest_keeps_verified_route_on_legacy():

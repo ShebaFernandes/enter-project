@@ -119,7 +119,7 @@ jobs:
         working-directory: app
       - run: uv run pytest tests/contract/test_openapi_conformance.py
         working-directory: app
-      - run: docker build --check ./app
+      - run: docker build --check --file app/Dockerfile .
       - run: docker compose config --quiet
       - uses: aquasecurity/trivy-action@0.33.1
         with:

@@ -1,7 +1,7 @@
 {{ page_bootstrap|json_script:"page-bootstrap" }}
 <div data-page-csrf hidden>{% csrf_token %}</div>
 <div data-react-page></div>
-<main data-page-fallback tabindex="-1" aria-label="Page recovery">
+<main data-page-fallback tabindex="-1" aria-label="Page recovery" hidden>
   <h1>Tenant governance unavailable</h1>
   <p>Reload to retry. No governance decision was submitted automatically.</p>
   <a href="/">Return to platform selection</a>

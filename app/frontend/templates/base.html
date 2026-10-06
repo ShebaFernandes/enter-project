@@ -14,6 +14,12 @@
   <body data-frontend-renderer="{{ frontend_renderer|default:'legacy' }}">
     {% if frontend_renderer == 'react' %}
     {% include frontend_template %}
+    <noscript>
+      <main aria-label="JavaScript required">
+        <h1>JavaScript is required</h1>
+        <p>Enable JavaScript and reload this page to use Enter.</p>
+      </main>
+    </noscript>
     {% else %}
     <a class="skip-link" href="#main">Skip to main content</a>
     <!-- prettier-ignore -->

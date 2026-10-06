@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => ({
-  base: mode === "react" ? "./" : "/",
+  base: ["react", "showcase"].includes(mode) ? "./" : "/",
   plugins: ["wip", "react", "showcase"].includes(mode) ? [tailwindcss()] : [],
   build: {
     manifest: true,
